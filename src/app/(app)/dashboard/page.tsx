@@ -1,5 +1,6 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { getBrandingSettings, setSetting } from "@/lib/settings"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import {
@@ -15,8 +16,10 @@ import {
   Video,
   FileText,
   LayoutDashboard,
+  Paintbrush,
 } from "lucide-react"
 import Link from "next/link"
+import { AppNameEditor } from "./app-name-editor"
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -24,10 +27,19 @@ export default async function DashboardPage() {
 
   if (!userId) return null
 
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: { name: true, email: true },
-  })
+  const [user, currentUser] = await Promise.all([
+    db.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true, role: true, isSuperAdmin: true },
+    }),
+    db.user.findUnique({
+      where: { id: userId },
+      select: { role: true, isSuperAdmin: true },
+    }),
+  ])
+
+  const isAdmin = currentUser?.isSuperAdmin || currentUser?.role === "owner" || currentUser?.role === "admin"
+  const branding = isAdmin ? await getBrandingSettings() : null
 
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -341,6 +353,9 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-2">
+              {isAdmin && branding && (
+                <AppNameEditor currentName={branding.appName} />
+              )}
               {quickActions.map((action) => (
                 <Button
                   key={action.label}
