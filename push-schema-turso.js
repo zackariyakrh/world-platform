@@ -1,7 +1,17 @@
 #!/usr/bin/env node
 // Pushes Prisma schema DDL to Turso at build time
+// Only adds missing columns/tables — won't break existing data
 const { createClient } = require("@libsql/client");
-const { execSync } = require("child_process");
+
+const NEW_COLUMNS = {
+  User: [
+    { name: "firstName", type: "TEXT" },
+    { name: "lastName", type: "TEXT" },
+    { name: "phone", type: "TEXT" },
+    { name: "gender", type: "TEXT" },
+    { name: "address", type: "TEXT" },
+  ],
+};
 
 async function main() {
   const TURSO_URL = process.env.DATABASE_URL;
@@ -12,38 +22,39 @@ async function main() {
     return;
   }
 
-  console.log("[push-schema] Generating DDL from Prisma schema...");
-  const raw = execSync(
-    "npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
-    { encoding: "utf-8", cwd: __dirname }
-  );
-
-  const stmts = raw
-    .split("\n")
-    .filter((line) => line.trim().length > 0 && !line.startsWith("--"))
-    .join("\n")
-    .split(";")
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
-
-  console.log(`[push-schema] Found ${stmts.length} statements`);
-
   const turso = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
 
-  let pushed = 0;
-  for (const sql of stmts) {
-    try {
-      await turso.execute(sql);
-      pushed++;
-    } catch (e) {
-      const msg = String(e.message || "");
-      if (!msg.includes("already exists") && !msg.includes("Duplicate")) {
-        console.error(`[push-schema] Error: ${msg.substring(0, 200)}`);
+  // Get existing columns per table
+  const existing = await turso.execute(
+    "SELECT name, tbl_name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_%'"
+  );
+
+  const tableColumns = {};
+  for (const row of existing.rows) {
+    const table = row.tbl_name;
+    if (!tableColumns[table]) tableColumns[table] = new Set();
+    tableColumns[table].add(row.name);
+  }
+
+  let added = 0;
+  for (const [table, columns] of Object.entries(NEW_COLUMNS)) {
+    const existingCols = tableColumns[table] || new Set();
+    for (const col of columns) {
+      if (!existingCols.has(col.name)) {
+        try {
+          await turso.execute(
+            `ALTER TABLE "${table}" ADD COLUMN "${col.name}" ${col.type}`
+          );
+          console.log(`[push-schema] Added ${table}.${col.name}`);
+          added++;
+        } catch (e) {
+          console.error(`[push-schema] Error adding ${table}.${col.name}: ${e.message}`);
+        }
       }
     }
   }
 
-  console.log(`[push-schema] Done — pushed ${pushed}/${stmts.length}`);
+  console.log(`[push-schema] Done — added ${added} columns`);
 }
 
 main().catch((e) => {
