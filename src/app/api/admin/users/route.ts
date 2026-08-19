@@ -28,7 +28,12 @@ export async function GET() {
     select: {
       id: true,
       name: true,
+      firstName: true,
+      lastName: true,
       email: true,
+      phone: true,
+      gender: true,
+      address: true,
       avatar: true,
       role: true,
       isActive: true,
@@ -46,13 +51,13 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { userId, role, isActive } = body
+    const { userId, role, isActive, firstName, lastName, phone, gender, address } = body
 
     if (!userId || typeof userId !== "string") {
       return NextResponse.json({ error: "userId is required" }, { status: 400 })
     }
 
-    const updateData: { role?: string; isActive?: boolean } = {}
+    const updateData: Record<string, string | boolean> = {}
 
     if (role !== undefined) {
       const validRoles = ["owner", "admin", "manager", "moderator", "member", "guest"]
@@ -66,6 +71,18 @@ export async function PATCH(request: NextRequest) {
       updateData.isActive = Boolean(isActive)
     }
 
+    if (firstName !== undefined) updateData.firstName = firstName
+    if (lastName !== undefined) updateData.lastName = lastName
+    if (firstName !== undefined || lastName !== undefined) {
+      const existing = await db.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } })
+      const fn = firstName ?? existing?.firstName ?? ""
+      const ln = lastName ?? existing?.lastName ?? ""
+      updateData.name = `${fn} ${ln}`.trim()
+    }
+    if (phone !== undefined) updateData.phone = phone
+    if (gender !== undefined) updateData.gender = gender
+    if (address !== undefined) updateData.address = address
+
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })
     }
@@ -76,7 +93,12 @@ export async function PATCH(request: NextRequest) {
       select: {
         id: true,
         name: true,
+        firstName: true,
+        lastName: true,
         email: true,
+        phone: true,
+        gender: true,
+        address: true,
         role: true,
         isActive: true,
       },
@@ -90,8 +112,12 @@ export async function PATCH(request: NextRequest) {
 }
 
 const createUserSchema = z.object({
-  name: z.string().min(1, "Name is required").max(100),
+  firstName: z.string().min(1, "First name is required").max(100),
+  lastName: z.string().min(1, "Last name is required").max(100),
   email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  gender: z.string().optional(),
+  address: z.string().optional(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(["admin", "manager", "moderator", "member", "guest"]).default("member"),
 })
@@ -111,7 +137,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { name, email, password, role } = parsed.data
+    const { firstName, lastName, email, password, role, phone, gender, address } = parsed.data
 
     const existingUser = await db.user.findUnique({ where: { email } })
     if (existingUser) {
@@ -122,11 +148,17 @@ export async function POST(request: NextRequest) {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12)
+    const name = `${firstName} ${lastName}`.trim()
 
     const user = await db.user.create({
       data: {
         name,
+        firstName,
+        lastName,
         email,
+        phone: phone || null,
+        gender: gender || null,
+        address: address || null,
         passwordHash: hashedPassword,
         role,
         isActive: true,
@@ -134,7 +166,12 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         name: true,
+        firstName: true,
+        lastName: true,
         email: true,
+        phone: true,
+        gender: true,
+        address: true,
         role: true,
         isActive: true,
         createdAt: true,

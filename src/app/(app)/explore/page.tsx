@@ -43,7 +43,12 @@ export default async function ExplorePage() {
       select: {
         id: true,
         name: true,
+        firstName: true,
+        lastName: true,
         email: true,
+        phone: true,
+        gender: true,
+        address: true,
         avatar: true,
         jobTitle: true,
         status: true,

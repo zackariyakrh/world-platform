@@ -56,7 +56,12 @@ import { toast } from "sonner"
 type UserRow = {
   id: string
   name: string | null
+  firstName: string | null
+  lastName: string | null
   email: string
+  phone: string | null
+  gender: string | null
+  address: string | null
   avatar: string | null
   role: string
   isActive: boolean
@@ -82,8 +87,12 @@ export function UserTable({ users }: { users: UserRow[] }) {
   const [creating, setCreating] = React.useState(false)
   const [showPassword, setShowPassword] = React.useState(false)
   const [form, setForm] = React.useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
+    phone: "",
+    gender: "",
+    address: "",
     password: "",
     role: "member",
   })
@@ -183,7 +192,8 @@ export function UserTable({ users }: { users: UserRow[] }) {
 
   function validateForm() {
     const errors: Record<string, string> = {}
-    if (!form.name.trim()) errors.name = "Name is required"
+    if (!form.firstName.trim()) errors.firstName = "First name is required"
+    if (!form.lastName.trim()) errors.lastName = "Last name is required"
     if (!form.email.trim()) errors.email = "Email is required"
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = "Invalid email"
     if (!form.password) errors.password = "Password is required"
@@ -201,8 +211,12 @@ export function UserTable({ users }: { users: UserRow[] }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name.trim(),
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
           email: form.email.trim(),
+          phone: form.phone.trim() || undefined,
+          gender: form.gender || undefined,
+          address: form.address.trim() || undefined,
           password: form.password,
           role: form.role,
         }),
@@ -217,7 +231,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
 
       toast.success(`User ${data.name || data.email} created`)
       setOpen(false)
-      setForm({ name: "", email: "", password: "", role: "member" })
+      setForm({ firstName: "", lastName: "", email: "", phone: "", gender: "", address: "", password: "", role: "member" })
       setFormErrors({})
       window.location.reload()
     } catch {
@@ -287,7 +301,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
             <Plus className="size-3.5" />
             Create User
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg">
             <DialogHeader>
               <DialogTitle>Create New User</DialogTitle>
               <DialogDescription>
@@ -296,23 +310,37 @@ export function UserTable({ users }: { users: UserRow[] }) {
             </DialogHeader>
 
             <div className="flex flex-col gap-4 py-2">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="cu-name">Full name</Label>
-                <Input
-                  id="cu-name"
-                  placeholder="Jane Doe"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  aria-invalid={!!formErrors.name}
-                  className="glow-input"
-                />
-                {formErrors.name && (
-                  <p className="text-xs text-destructive">{formErrors.name}</p>
-                )}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="cu-firstname">First Name *</Label>
+                  <Input
+                    id="cu-firstname"
+                    placeholder="Jane"
+                    value={form.firstName}
+                    onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                    aria-invalid={!!formErrors.firstName}
+                  />
+                  {formErrors.firstName && (
+                    <p className="text-xs text-destructive">{formErrors.firstName}</p>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="cu-lastname">Last Name *</Label>
+                  <Input
+                    id="cu-lastname"
+                    placeholder="Doe"
+                    value={form.lastName}
+                    onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                    aria-invalid={!!formErrors.lastName}
+                  />
+                  {formErrors.lastName && (
+                    <p className="text-xs text-destructive">{formErrors.lastName}</p>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="cu-email">Email</Label>
+                <Label htmlFor="cu-email">Email *</Label>
                 <Input
                   id="cu-email"
                   type="email"
@@ -320,56 +348,95 @@ export function UserTable({ users }: { users: UserRow[] }) {
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   aria-invalid={!!formErrors.email}
-                  className="glow-input"
                 />
                 {formErrors.email && (
                   <p className="text-xs text-destructive">{formErrors.email}</p>
                 )}
               </div>
 
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="cu-password">Password</Label>
-                <div className="relative">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="cu-phone">Phone</Label>
                   <Input
-                    id="cu-password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Minimum 8 characters"
-                    value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
-                    aria-invalid={!!formErrors.password}
-                    className="glow-input pr-9"
+                    id="cu-phone"
+                    placeholder="+1 234 567 890"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    tabIndex={-1}
-                  >
-                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
                 </div>
-                {formErrors.password && (
-                  <p className="text-xs text-destructive">{formErrors.password}</p>
-                )}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="cu-gender">Gender</Label>
+                  <Select
+                    value={form.gender}
+                    onValueChange={(v) => setForm({ ...form, gender: v ?? "" })}
+                  >
+                    <SelectTrigger id="cu-gender">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="flex flex-col gap-2">
-                <Label htmlFor="cu-role">Role</Label>
-                <Select
-                  value={form.role}
-                  onValueChange={(v) => setForm({ ...form, role: v ?? "member" })}
-                >
-                  <SelectTrigger id="cu-role">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ROLES.map((r) => (
-                      <SelectItem key={r} value={r}>
-                        {r.charAt(0).toUpperCase() + r.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="cu-address">Address</Label>
+                <Input
+                  id="cu-address"
+                  placeholder="Street, City, Country"
+                  value={form.address}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="cu-password">Password *</Label>
+                  <div className="relative">
+                    <Input
+                      id="cu-password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Minimum 8 characters"
+                      value={form.password}
+                      onChange={(e) => setForm({ ...form, password: e.target.value })}
+                      aria-invalid={!!formErrors.password}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                  {formErrors.password && (
+                    <p className="text-xs text-destructive">{formErrors.password}</p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="cu-role">Role</Label>
+                  <Select
+                    value={form.role}
+                    onValueChange={(v) => setForm({ ...form, role: v ?? "member" })}
+                  >
+                    <SelectTrigger id="cu-role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROLES.filter((r) => r !== "owner").map((r) => (
+                        <SelectItem key={r} value={r}>
+                          {r.charAt(0).toUpperCase() + r.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
@@ -382,7 +449,6 @@ export function UserTable({ users }: { users: UserRow[] }) {
               <Button
                 onClick={handleCreateUser}
                 disabled={creating}
-                className="glow-button"
               >
                 {creating ? (
                   <>

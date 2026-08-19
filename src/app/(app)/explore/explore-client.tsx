@@ -43,7 +43,7 @@ import {
 import { toast } from "sonner"
 
 interface Channel { id: string; name: string; description: string | null; type: string; _count: { messages: number } }
-interface User { id: string; name: string | null; email: string; avatar: string | null; jobTitle: string | null; status: string; role: string; isActive: boolean }
+interface User { id: string; name: string | null; firstName: string | null; lastName: string | null; email: string; phone: string | null; gender: string | null; address: string | null; avatar: string | null; jobTitle: string | null; status: string; role: string; isActive: boolean }
 interface Project { id: string; name: string; description: string | null; status: string; progress: number; _count: { tasks: number } }
 interface Message { id: string; content: string; createdAt: string; user: { id: string; name: string | null; avatar: string | null }; channel: { id: string; name: string } }
 interface Task { id: string; title: string; status: string; priority: string; dueDate: string | null; assignee: { id: string; name: string | null; avatar: string | null } | null; project: { id: string; name: string } | null }
@@ -107,7 +107,7 @@ export function ExploreClient({
   const [taskBusy, setTaskBusy] = React.useState(false)
 
   const [uOpen, setUOpen] = React.useState(false)
-  const [uForm, setUForm] = React.useState({ name: "", email: "", password: "", role: "member" })
+  const [uForm, setUForm] = React.useState({ firstName: "", lastName: "", email: "", phone: "", gender: "", address: "", password: "", role: "member" })
   const [uBusy, setUBusy] = React.useState(false)
 
   const f = React.useMemo(() => search.toLowerCase(), [search])
@@ -220,14 +220,23 @@ export function ExploreClient({
   }
 
   async function saveUser() {
-    if (!uForm.name.trim() || !uForm.email.trim() || uForm.password.length < 8) { toast.error("Fill all fields (password min 8 chars)"); return }
+    if (!uForm.firstName.trim() || !uForm.lastName.trim() || !uForm.email.trim() || uForm.password.length < 8) { toast.error("Fill all required fields (password min 8 chars)"); return }
     setUBusy(true)
     try {
-      const res = await api("/api/admin/users", "POST", { name: uForm.name.trim(), email: uForm.email.trim(), password: uForm.password, role: uForm.role })
+      const res = await api("/api/admin/users", "POST", {
+        firstName: uForm.firstName.trim(),
+        lastName: uForm.lastName.trim(),
+        email: uForm.email.trim(),
+        phone: uForm.phone.trim() || undefined,
+        gender: uForm.gender || undefined,
+        address: uForm.address.trim() || undefined,
+        password: uForm.password,
+        role: uForm.role,
+      })
       if (res.ok) {
         const u = await res.json()
-        setUsers((prev) => [...prev, { id: u.id, name: u.name, email: u.email, avatar: null, jobTitle: null, status: "offline", role: u.role, isActive: true }])
-        toast.success("User created"); setUOpen(false); setUForm({ name: "", email: "", password: "", role: "member" })
+        setUsers((prev) => [...prev, { id: u.id, name: u.name, firstName: u.firstName, lastName: u.lastName, email: u.email, phone: u.phone, gender: u.gender, address: u.address, avatar: null, jobTitle: null, status: "offline", role: u.role, isActive: true }])
+        toast.success("User created"); setUOpen(false); setUForm({ firstName: "", lastName: "", email: "", phone: "", gender: "", address: "", password: "", role: "member" })
       } else { toast.error((await res.json()).error || "Failed") }
     } catch { toast.error("Error") } finally { setUBusy(false) }
   }
@@ -330,11 +339,17 @@ export function ExploreClient({
                         <div className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background ${statusColor(u.status)}`} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <span className="text-sm font-medium text-foreground">{u.name ?? "Unnamed"}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-foreground">{u.name ?? "Unnamed"}</span>
+                          {u.phone && <span className="text-xs text-muted-foreground">{u.phone}</span>}
+                        </div>
                         <p className="text-xs text-muted-foreground">{u.jobTitle || u.email}</p>
+                        {u.gender && <p className="text-[10px] text-muted-foreground capitalize">{u.gender}</p>}
                       </div>
-                      <Badge variant="outline" className="h-5 text-[10px]">{u.role}</Badge>
-                      {!u.isActive && <Badge variant="destructive" className="h-5 text-[10px]">Suspended</Badge>}
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className="h-5 text-[10px]">{u.role}</Badge>
+                        {!u.isActive && <Badge variant="destructive" className="h-5 text-[10px]">Suspended</Badge>}
+                      </div>
                       {isAdmin && (
                         <DropdownMenu>
                           <DropdownMenuTrigger render={<Button variant="ghost" size="icon-xs" />}><MoreHorizontal className="size-3.5" /></DropdownMenuTrigger>
@@ -568,14 +583,34 @@ export function ExploreClient({
             <DialogDescription>Add a new user to the platform.</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-5 py-1">
-            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Full Name</Label><Input placeholder="Jane Doe" value={uForm.name} onChange={(e) => setUForm({ ...uForm, name: e.target.value })} /></div>
-            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Email</Label><Input type="email" placeholder="jane@example.com" value={uForm.email} onChange={(e) => setUForm({ ...uForm, email: e.target.value })} /></div>
-            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Password</Label><Input type="password" placeholder="Min 8 characters" value={uForm.password} onChange={(e) => setUForm({ ...uForm, password: e.target.value })} /></div>
-            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Role</Label>
-              <Select value={uForm.role} onValueChange={(v) => setUForm({ ...uForm, role: v ?? "member" })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{["admin", "manager", "member", "guest"].map((r) => <SelectItem key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</SelectItem>)}</SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">First Name *</Label><Input placeholder="Jane" value={uForm.firstName} onChange={(e) => setUForm({ ...uForm, firstName: e.target.value })} /></div>
+              <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Last Name *</Label><Input placeholder="Doe" value={uForm.lastName} onChange={(e) => setUForm({ ...uForm, lastName: e.target.value })} /></div>
+            </div>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Email *</Label><Input type="email" placeholder="jane@example.com" value={uForm.email} onChange={(e) => setUForm({ ...uForm, email: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Phone</Label><Input placeholder="+1 234 567 890" value={uForm.phone} onChange={(e) => setUForm({ ...uForm, phone: e.target.value })} /></div>
+              <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Gender</Label>
+                <Select value={uForm.gender} onValueChange={(v) => setUForm({ ...uForm, gender: v ?? "" })}>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Address</Label><Input placeholder="Street, City, Country" value={uForm.address} onChange={(e) => setUForm({ ...uForm, address: e.target.value })} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Password *</Label><Input type="password" placeholder="Min 8 characters" value={uForm.password} onChange={(e) => setUForm({ ...uForm, password: e.target.value })} /></div>
+              <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Role</Label>
+                <Select value={uForm.role} onValueChange={(v) => setUForm({ ...uForm, role: v ?? "member" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{["admin", "manager", "member", "guest"].map((r) => <SelectItem key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           <DialogFooter>

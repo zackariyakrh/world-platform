@@ -8,7 +8,12 @@ export default async function AdminUsersPage() {
     select: {
       id: true,
       name: true,
+      firstName: true,
+      lastName: true,
       email: true,
+      phone: true,
+      gender: true,
+      address: true,
       avatar: true,
       role: true,
       isActive: true,
