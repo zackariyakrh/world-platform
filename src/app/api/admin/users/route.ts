@@ -122,11 +122,11 @@ export async function PATCH(request: NextRequest) {
 const createUserSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
   lastName: z.string().min(1, "Last name is required").max(100),
-  username: z.string().min(3, "Username must be at least 3 characters").max(50).regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores, and hyphens").optional().or(z.literal("")).transform(v => v || undefined),
+  username: z.string().min(3).max(50).regex(/^[a-zA-Z0-9_-]+$/).optional(),
   email: z.string().email("Invalid email address"),
-  phone: z.string().optional().or(z.literal("")).transform(v => v || undefined),
-  gender: z.string().optional().or(z.literal("")).transform(v => v || undefined),
-  address: z.string().optional().or(z.literal("")).transform(v => v || undefined),
+  phone: z.string().optional(),
+  gender: z.string().optional(),
+  address: z.string().optional(),
   password: z.string().min(8, "Password must be at least 8 characters"),
   role: z.enum(["admin", "manager", "moderator", "member", "guest"]).default("member"),
 })
@@ -137,18 +137,22 @@ export async function POST(request: NextRequest) {
 
   try {
     const rawBody = await request.json()
+    console.log("[create-user] Received body:", JSON.stringify({ ...rawBody, password: rawBody.password ? "***" : undefined }))
 
     // Coerce empty strings to undefined for optional fields
     const body: Record<string, unknown> = { ...rawBody }
     for (const key of ["username", "phone", "gender", "address"]) {
       if (body[key] === "" || body[key] === null) body[key] = undefined
     }
+    console.log("[create-user] Coerced body:", JSON.stringify({ ...body, password: body.password ? "***" : undefined }))
 
     const parsed = createUserSchema.safeParse(body)
 
     if (!parsed.success) {
+      const flatError = parsed.error.flatten()
+      console.error("[create-user] Validation failed:", JSON.stringify(flatError))
       return NextResponse.json(
-        { error: "Invalid input", details: parsed.error.flatten().fieldErrors },
+        { error: "Invalid input", details: flatError.fieldErrors, formErrors: flatError.formErrors },
         { status: 400 }
       )
     }

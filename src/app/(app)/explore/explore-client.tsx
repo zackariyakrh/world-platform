@@ -248,7 +248,7 @@ export function ExploreClient({
         const u = await res.json()
         setUsers((prev) => [...prev, { id: u.id, name: u.name, firstName: u.firstName, lastName: u.lastName, email: u.email, username: u.username, phone: u.phone, gender: u.gender, address: u.address, avatar: null, jobTitle: null, status: "offline", role: u.role, isActive: true }])
         toast.success("User created"); setUOpen(false); setUForm({ firstName: "", lastName: "", username: "", email: "", phone: "", gender: "", address: "", password: "", role: "member" })
-      } else { toast.error((await res.json()).error || "Failed") }
+      } else { const err = await res.json(); const det = err.details ? Object.entries(err.details).map(([k, v]) => `${k}: ${(v as string[]).join(", ")}`).join("; ") : ""; toast.error(err.error + (det ? ` — ${det}` : "")) }
     } catch { toast.error("Error") } finally { setUBusy(false) }
   }
 
