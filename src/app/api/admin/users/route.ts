@@ -158,3 +158,52 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  const { error: adminError, user: adminUser } = await requireAdmin()
+  if (adminError) return adminError
+
+  try {
+    const body = await request.json()
+    const { userId } = body
+
+    if (!userId || typeof userId !== "string") {
+      return NextResponse.json({ error: "userId is required" }, { status: 400 })
+    }
+
+    const targetUser = await db.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, role: true },
+    })
+
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    if (targetUser.role === "owner") {
+      return NextResponse.json({ error: "Cannot delete the owner" }, { status: 400 })
+    }
+
+    if (userId === adminUser!.id) {
+      return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 })
+    }
+
+    await db.user.delete({ where: { id: userId } })
+
+    await db.auditLog.create({
+      data: {
+        userId: adminUser!.id,
+        action: "USER_DELETED",
+        resource: "user",
+        resourceId: userId,
+        details: JSON.stringify({ email: targetUser.email, deletedBy: adminUser!.id }),
+        ipAddress: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "unknown",
+      },
+    })
+
+    return new NextResponse(null, { status: 204 })
+  } catch (err) {
+    console.error("Failed to delete user:", err)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}

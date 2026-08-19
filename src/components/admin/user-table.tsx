@@ -49,6 +49,7 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  Trash2,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -74,6 +75,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
   const [sortDir, setSortDir] = React.useState<SortDir>("desc")
   const [roleFilter, setRoleFilter] = React.useState<string>("all")
   const [updatingId, setUpdatingId] = React.useState<string | null>(null)
+  const [deletingId, setDeletingId] = React.useState<string | null>(null)
 
   // Create user dialog state
   const [open, setOpen] = React.useState(false)
@@ -154,6 +156,28 @@ export function UserTable({ users }: { users: UserRow[] }) {
       window.location.reload()
     } finally {
       setUpdatingId(null)
+    }
+  }
+
+  async function deleteUser(userId: string) {
+    setDeletingId(userId)
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      })
+      if (res.ok) {
+        toast.success("User deleted")
+        window.location.reload()
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Failed to delete user")
+      }
+    } catch {
+      toast.error("Something went wrong")
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -485,6 +509,22 @@ export function UserTable({ users }: { users: UserRow[] }) {
                         disabled={updatingId === user.id}
                       >
                         {user.isActive ? "Suspend" : "Reactivate"}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => {
+                          if (window.confirm(`Delete ${user.name || user.email}? This cannot be undone.`)) {
+                            deleteUser(user.id)
+                          }
+                        }}
+                        disabled={deletingId === user.id || user.role === "owner"}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        {deletingId === user.id ? (
+                          <><Loader2 className="size-3.5 animate-spin" /> Deleting...</>
+                        ) : (
+                          <><Trash2 className="size-3.5" /> Delete User</>
+                        )}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>

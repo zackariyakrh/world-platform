@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import {
   CommandDialog,
   CommandInput,
@@ -13,118 +14,83 @@ import {
 } from "@/components/ui/command"
 import {
   Hash,
-  Volume2,
   FileText,
   CheckSquare,
   User,
   Clock,
   ArrowRight,
+  MessageSquare,
+  FolderKanban,
+  StickyNote,
+  Loader2,
 } from "lucide-react"
 
-interface SearchResult {
-  id: string
+interface SearchItem {
+  type: string
   title: string
-  subtitle?: string
-  type: "channel" | "message" | "file" | "task" | "person"
-  icon: React.ComponentType<{ className?: string }>
+  subtitle: string
+  url: string
 }
-
-const mockRecentSearches = [
-  { id: "r1", query: "project timeline", timestamp: "2 hours ago" },
-  { id: "r2", query: "design review meeting", timestamp: "Yesterday" },
-  { id: "r3", query: "API documentation", timestamp: "3 days ago" },
-]
-
-const mockResults: SearchResult[] = [
-  {
-    id: "ch-1",
-    title: "general",
-    subtitle: "Nexus Team",
-    type: "channel",
-    icon: Hash,
-  },
-  {
-    id: "ch-2",
-    title: "frontend",
-    subtitle: "Nexus Team",
-    type: "channel",
-    icon: Hash,
-  },
-  {
-    id: "ch-3",
-    title: "standup",
-    subtitle: "Nexus Team",
-    type: "channel",
-    icon: Volume2,
-  },
-  {
-    id: "p-1",
-    title: "Alice Chen",
-    subtitle: "alice@nexus.dev",
-    type: "person",
-    icon: User,
-  },
-  {
-    id: "p-2",
-    title: "Bob Williams",
-    subtitle: "bob@nexus.dev",
-    type: "person",
-    icon: User,
-  },
-  {
-    id: "f-1",
-    title: "Q4 Roadmap.pdf",
-    subtitle: "Shared in #general",
-    type: "file",
-    icon: FileText,
-  },
-  {
-    id: "t-1",
-    title: "Implement auth flow",
-    subtitle: "Assigned to you",
-    type: "task",
-    icon: CheckSquare,
-  },
-  {
-    id: "t-2",
-    title: "Design system update",
-    subtitle: "Due in 3 days",
-    type: "task",
-    icon: CheckSquare,
-  },
-]
 
 interface SearchDialogProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }
 
-function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
-  const [searchQuery, setSearchQuery] = React.useState("")
-  const [recentSearches, setRecentSearches] = React.useState(
-    mockRecentSearches
-  )
+const typeConfig: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
+  channel: { label: "Channels", icon: Hash },
+  user: { label: "People", icon: User },
+  file: { label: "Files", icon: FileText },
+  task: { label: "Tasks", icon: CheckSquare },
+  project: { label: "Projects", icon: FolderKanban },
+  note: { label: "Notes", icon: StickyNote },
+  message: { label: "Messages", icon: MessageSquare },
+}
 
-  const filteredResults = React.useMemo(() => {
-    if (!searchQuery) return []
-    const query = searchQuery.toLowerCase()
-    return mockResults.filter(
-      (r) =>
-        r.title.toLowerCase().includes(query) ||
-        r.subtitle?.toLowerCase().includes(query)
-    )
+function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
+  const router = useRouter()
+  const [searchQuery, setSearchQuery] = React.useState("")
+  const [results, setResults] = React.useState<Record<string, SearchItem[]>>({})
+  const [loading, setLoading] = React.useState(false)
+  const [recentSearches, setRecentSearches] = React.useState<Array<{ query: string; time: string }>>([])
+
+  React.useEffect(() => {
+    if (!searchQuery.trim()) {
+      setResults({})
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(searchQuery.trim())}`)
+        if (res.ok) {
+          const data = await res.json()
+          setResults(data)
+        }
+      } catch {
+        setResults({})
+      } finally {
+        setLoading(false)
+      }
+    }, 300)
+
+    return () => clearTimeout(timer)
   }, [searchQuery])
 
-  const handleSelect = () => {
-    if (searchQuery) {
+  function handleSelect(url: string) {
+    if (searchQuery.trim()) {
       setRecentSearches((prev) => [
-        { id: `r-${Date.now()}`, query: searchQuery, timestamp: "Just now" },
-        ...prev.slice(0, 4),
+        { query: searchQuery.trim(), time: "Just now" },
+        ...prev.filter((r) => r.query !== searchQuery.trim()).slice(0, 4),
       ])
     }
     setSearchQuery("")
     onOpenChange?.(false)
+    router.push(url)
   }
+
+  const hasResults = Object.values(results).some((arr) => arr.length > 0)
 
   return (
     <CommandDialog
@@ -139,25 +105,30 @@ function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
         onValueChange={setSearchQuery}
       />
       <CommandList>
-        <CommandEmpty>No results found.</CommandEmpty>
+        <CommandEmpty>
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 py-6 text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              Searching...
+            </div>
+          ) : (
+            "No results found."
+          )}
+        </CommandEmpty>
 
         {!searchQuery && recentSearches.length > 0 && (
           <>
             <CommandGroup heading="Recent Searches">
-              {recentSearches.map((search) => (
+              {recentSearches.map((search, i) => (
                 <CommandItem
-                  key={search.id}
-                  value={search.query}
-                  onSelect={() => {
-                    setSearchQuery(search.query)
-                  }}
+                  key={`${search.query}-${i}`}
+                  value={`recent-${search.query}`}
+                  onSelect={() => setSearchQuery(search.query)}
                 >
                   <Clock className="size-4 text-muted-foreground" />
                   <div className="flex flex-col">
                     <span>{search.query}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {search.timestamp}
-                    </span>
+                    <span className="text-xs text-muted-foreground">{search.time}</span>
                   </div>
                 </CommandItem>
               ))}
@@ -166,47 +137,35 @@ function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
           </>
         )}
 
-        {searchQuery && filteredResults.length > 0 && (
+        {searchQuery && hasResults && (
           <>
-            {["channel", "person", "file", "task"].map((type) => {
-              const typeResults = filteredResults.filter(
-                (r) => r.type === type
-              )
-              if (typeResults.length === 0) return null
-
-              const groupLabels: Record<string, string> = {
-                channel: "Channels",
-                person: "People",
-                file: "Files",
-                task: "Tasks",
-              }
-
+            {Object.entries(results).map(([type, items]) => {
+              if (!items.length) return null
+              const config = typeConfig[type] || { label: type, icon: Hash }
+              const Icon = config.icon
               return (
                 <React.Fragment key={type}>
-                  <CommandGroup heading={groupLabels[type]}>
-                    {typeResults.map((result) => {
-                      const Icon = result.icon
-                      return (
-                        <CommandItem
-                          key={result.id}
-                          value={`${type}-${result.id}`}
-                          onSelect={() => handleSelect()}
-                        >
-                          <Icon className="size-4 text-muted-foreground" />
-                          <div className="flex flex-col">
-                            <span>{result.title}</span>
-                            {result.subtitle && (
-                              <span className="text-xs text-muted-foreground">
-                                {result.subtitle}
-                              </span>
-                            )}
-                          </div>
-                          <CommandShortcut>
-                            <ArrowRight className="size-3" />
-                          </CommandShortcut>
-                        </CommandItem>
-                      )
-                    })}
+                  <CommandGroup heading={config.label}>
+                    {items.map((item, i) => (
+                      <CommandItem
+                        key={`${type}-${i}`}
+                        value={`${type}-${item.title}-${i}`}
+                        onSelect={() => handleSelect(item.url)}
+                      >
+                        <Icon className="size-4 text-muted-foreground" />
+                        <div className="flex flex-col min-w-0">
+                          <span className="truncate">{item.title}</span>
+                          {item.subtitle && (
+                            <span className="text-xs text-muted-foreground truncate">
+                              {item.subtitle}
+                            </span>
+                          )}
+                        </div>
+                        <CommandShortcut>
+                          <ArrowRight className="size-3" />
+                        </CommandShortcut>
+                      </CommandItem>
+                    ))}
                   </CommandGroup>
                   <CommandSeparator />
                 </React.Fragment>

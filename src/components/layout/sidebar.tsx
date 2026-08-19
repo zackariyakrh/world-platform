@@ -14,10 +14,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { StatusBadge, type StatusType } from "@/components/ui/status-badge"
 import {
   Hash,
@@ -35,21 +47,18 @@ import {
   Users,
   Pin,
   BellOff,
+  Loader2,
+  Trash2,
 } from "lucide-react"
 
 interface Channel {
   id: string
   name: string
   type: "text" | "voice"
+  description?: string | null
   unread?: number
   muted?: boolean
   mentionCount?: number
-}
-
-interface ChannelCategory {
-  id: string
-  name: string
-  channels: Channel[]
 }
 
 interface DirectMessage {
@@ -60,12 +69,6 @@ interface DirectMessage {
   unread?: number
 }
 
-interface Workspace {
-  id: string
-  name: string
-  icon?: string
-}
-
 interface SidebarProps extends React.ComponentProps<"aside"> {
   workspaceId?: string
   currentChannelId?: string
@@ -74,60 +77,8 @@ interface SidebarProps extends React.ComponentProps<"aside"> {
   onChannelSelect?: (channelId: string) => void
 }
 
-const mockWorkspace: Workspace = {
-  id: "ws-1",
-  name: "Nexus Team",
-}
-
-const mockCategories: ChannelCategory[] = [
-  {
-    id: "cat-1",
-    name: "Information",
-    channels: [
-      { id: "ch-1", name: "welcome", type: "text" },
-      { id: "ch-2", name: "announcements", type: "text", unread: 2 },
-      { id: "ch-3", name: "rules", type: "text" },
-    ],
-  },
-  {
-    id: "cat-2",
-    name: "General",
-    channels: [
-      { id: "ch-4", name: "general", type: "text", unread: 5, mentionCount: 3 },
-      { id: "ch-5", name: "off-topic", type: "text" },
-      { id: "ch-6", name: "introductions", type: "text" },
-    ],
-  },
-  {
-    id: "cat-3",
-    name: "Engineering",
-    channels: [
-      { id: "ch-7", name: "frontend", type: "text" },
-      { id: "ch-8", name: "backend", type: "text", unread: 1 },
-      { id: "ch-9", name: "devops", type: "text" },
-      { id: "ch-10", name: "standup", type: "voice" },
-      { id: "ch-11", name: "pair-programming", type: "voice" },
-    ],
-  },
-  {
-    id: "cat-4",
-    name: "Design",
-    channels: [
-      { id: "ch-12", name: "ui-ux", type: "text" },
-      { id: "ch-13", name: "branding", type: "text" },
-    ],
-  },
-]
-
-const mockDMs: DirectMessage[] = [
-  { id: "dm-1", name: "Alice Chen", status: "online", image: null },
-  { id: "dm-2", name: "Bob Williams", status: "away", unread: 1, image: null },
-  { id: "dm-3", name: "Carol Davis", status: "busy", image: null },
-  { id: "dm-4", name: "David Kim", status: "offline", image: null },
-]
-
 function Sidebar({
-  workspaceId: _workspaceId,
+  workspaceId,
   currentChannelId,
   open = false,
   onClose,
@@ -136,21 +87,68 @@ function Sidebar({
   ...props
 }: SidebarProps) {
   const router = useRouter()
-  const [collapsedCategories, setCollapsedCategories] = React.useState<
-    Set<string>
-  >(new Set())
+  const [channels, setChannels] = React.useState<Channel[]>([])
+  const [channelsLoading, setChannelsLoading] = React.useState(true)
   const [showDMs, setShowDMs] = React.useState(true)
+  const [createOpen, setCreateOpen] = React.useState(false)
+  const [createName, setCreateName] = React.useState("")
+  const [createDesc, setCreateDesc] = React.useState("")
+  const [creating, setCreating] = React.useState(false)
 
-  const toggleCategory = (categoryId: string) => {
-    setCollapsedCategories((prev) => {
-      const next = new Set(prev)
-      if (next.has(categoryId)) {
-        next.delete(categoryId)
-      } else {
-        next.add(categoryId)
+  React.useEffect(() => {
+    async function loadChannels() {
+      setChannelsLoading(true)
+      try {
+        const url = workspaceId ? `/api/channels?workspaceId=${workspaceId}` : "/api/channels"
+        const res = await fetch(url)
+        if (res.ok) {
+          const data = await res.json()
+          setChannels(data.map((ch: any) => ({
+            id: ch.id,
+            name: ch.name,
+            type: ch.type || "text",
+            description: ch.description,
+          })))
+        }
+      } catch {
+        // keep empty
+      } finally {
+        setChannelsLoading(false)
       }
-      return next
-    })
+    }
+    loadChannels()
+  }, [workspaceId])
+
+  async function handleCreateChannel() {
+    if (!createName.trim()) return
+    setCreating(true)
+    try {
+      const res = await fetch("/api/channels", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: createName.trim(),
+          description: createDesc.trim() || undefined,
+          workspaceId,
+        }),
+      })
+      if (res.ok) {
+        const ch = await res.json()
+        setChannels((prev) => [...prev, {
+          id: ch.id,
+          name: ch.name,
+          type: ch.type || "text",
+          description: ch.description,
+        }])
+        setCreateName("")
+        setCreateDesc("")
+        setCreateOpen(false)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setCreating(false)
+    }
   }
 
   return (
@@ -181,24 +179,19 @@ function Sidebar({
               }
             >
               <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
-                {mockWorkspace.name.charAt(0)}
+                N
               </span>
-              <span className="truncate">{mockWorkspace.name}</span>
+              <span className="truncate">Nexus</span>
               <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/settings")}>
                 <Settings className="size-4" />
-                Workspace Settings
+                Settings
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push("/admin/users")}>
                 <Users className="size-4" />
-                Invite People
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <Plus className="size-4" />
-                Create Workspace
+                Admin Panel
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -216,7 +209,13 @@ function Sidebar({
         </div>
 
         <div className="px-3 py-2">
-          <button className="flex h-8 w-full items-center gap-2 rounded-md bg-sidebar-accent/50 px-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent">
+          <button
+            onClick={() => {
+              const event = new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })
+              window.dispatchEvent(event)
+            }}
+            className="flex h-8 w-full items-center gap-2 rounded-md bg-sidebar-accent/50 px-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent"
+          >
             <Search className="size-4 shrink-0" />
             <span>Search</span>
             <kbd className="ml-auto rounded border bg-background px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -235,49 +234,81 @@ function Sidebar({
               <Separator />
             </div>
 
-            {mockCategories.map((category) => (
-              <Collapsible
-                key={category.id}
-                open={!collapsedCategories.has(category.id)}
-                onOpenChange={() => toggleCategory(category.id)}
-              >
-                <div className="flex items-center group/category">
-                  <CollapsibleTrigger
+            <Collapsible defaultOpen>
+              <div className="flex items-center group/category">
+                <CollapsibleTrigger
+                  render={
+                    <button className="flex flex-1 items-center gap-0.5 px-1 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" />
+                  }
+                >
+                  <ChevronDown className="size-3 transition-transform" />
+                  Channels
+                </CollapsibleTrigger>
+                <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                  <DialogTrigger
                     render={
-                      <button className="flex flex-1 items-center gap-0.5 px-1 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" />
+                      <button className="opacity-0 group-hover/category:opacity-100 transition-opacity p-0.5 rounded hover:bg-sidebar-accent" />
                     }
                   >
-                    <ChevronDown
-                      className={cn(
-                        "size-3 transition-transform",
-                        collapsedCategories.has(category.id) &&
-                          "-rotate-90"
-                      )}
-                    />
-                    {category.name}
-                  </CollapsibleTrigger>
-                  <Button
-                    variant="ghost"
-                    size="icon-xs"
-                    className="opacity-0 group-hover/category:opacity-100 transition-opacity"
-                  >
                     <Plus className="size-3" />
-                  </Button>
-                </div>
-                <CollapsibleContent>
-                  <div className="flex flex-col gap-0.5">
-                    {category.channels.map((channel) => (
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Create Channel</DialogTitle>
+                      <DialogDescription>Add a new channel to your workspace.</DialogDescription>
+                    </DialogHeader>
+                    <div className="flex flex-col gap-4 py-2">
+                      <div className="flex flex-col gap-2">
+                        <Label>Name</Label>
+                        <Input
+                          placeholder="e.g. marketing"
+                          value={createName}
+                          onChange={(e) => setCreateName(e.target.value)}
+                          className="glow-input"
+                          onKeyDown={(e) => { if (e.key === "Enter") handleCreateChannel() }}
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <Label>Description (optional)</Label>
+                        <Input
+                          placeholder="What is this channel about?"
+                          value={createDesc}
+                          onChange={(e) => setCreateDesc(e.target.value)}
+                          className="glow-input"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+                      <Button onClick={handleCreateChannel} disabled={creating || !createName.trim()} className="glow-button">
+                        {creating ? <Loader2 className="size-3.5 animate-spin" /> : "Create"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <CollapsibleContent>
+                <div className="flex flex-col gap-0.5">
+                  {channelsLoading ? (
+                    <div className="px-2 py-2 text-xs text-muted-foreground">Loading...</div>
+                  ) : channels.length === 0 ? (
+                    <div className="px-2 py-2 text-xs text-muted-foreground">No channels yet</div>
+                  ) : (
+                    channels.map((channel) => (
                       <ChannelItem
                         key={channel.id}
                         channel={channel}
                         isActive={currentChannelId === channel.id}
-                        onClick={() => onChannelSelect?.(channel.id)}
+                        onClick={() => {
+                          onChannelSelect?.(channel.id)
+                          router.push(`/channels/${channel.id}`)
+                        }}
                       />
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            ))}
+                    ))
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
 
             <div className="my-2">
               <Separator />
@@ -289,51 +320,22 @@ function Sidebar({
                 className="flex w-full items-center gap-0.5 px-1 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ChevronDown
-                  className={cn(
-                    "size-3 transition-transform",
-                    !showDMs && "-rotate-90"
-                  )}
+                  className={cn("size-3 transition-transform", !showDMs && "-rotate-90")}
                 />
                 Direct Messages
               </button>
-              {showDMs && (
-                <div className="flex flex-col gap-0.5">
-                  {mockDMs.map((dm) => (
-                    <DMItem key={dm.id} dm={dm} />
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </ScrollArea>
 
         <div className="mt-auto border-t">
           <div className="flex items-center gap-2 px-3 py-2">
-            <div className="relative">
-              <div className="flex size-8 items-center justify-center rounded-full bg-muted text-sm font-medium text-muted-foreground">
-                Y
-              </div>
-              <StatusBadge
-                status="online"
-                size="sm"
-                className="absolute -right-0.5 -bottom-0.5"
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">You</p>
-              <p className="truncate text-xs text-muted-foreground">Online</p>
-            </div>
-            <div className="flex items-center gap-0.5">
-              <Button variant="ghost" size="icon-xs">
-                <Mic className="size-4" />
-              </Button>
-              <Button variant="ghost" size="icon-xs">
-                <Headphones className="size-4" />
-              </Button>
-              <Button variant="ghost" size="icon-xs">
-                <Settings className="size-4" />
-              </Button>
-            </div>
+            <Button variant="ghost" size="icon-xs" onClick={() => router.push("/settings")}>
+              <Settings className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon-xs">
+              <Mic className="size-4" />
+            </Button>
           </div>
         </div>
       </aside>
@@ -377,8 +379,6 @@ function ChannelItem({
   isActive: boolean
   onClick?: () => void
 }) {
-  const Icon = channel.type === "voice" ? Volume2 : Hash
-
   return (
     <button
       onClick={onClick}
@@ -386,59 +386,26 @@ function ChannelItem({
         "group/channel flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-all duration-200",
         isActive
           ? "bg-sidebar-accent text-foreground shadow-[inset_0_0_24px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.08)] border-l-2 border-primary/50 -ml-px pl-[9px]"
-          : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground hover:shadow-[inset_0_0_20px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.04)]",
-        channel.mentionCount && channel.mentionCount > 0 && "text-foreground"
+          : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground hover:shadow-[inset_0_0_20px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.04)]"
       )}
     >
-      <Icon className={cn(
+      <Hash className={cn(
         "size-4 shrink-0 transition-all duration-200",
         isActive && "text-primary drop-shadow-[0_0_6px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.5)]"
       )} />
       <span className="truncate">{channel.name}</span>
       <div className="ml-auto flex items-center gap-1">
-        {channel.muted && (
-          <BellOff className="size-3 shrink-0 text-muted-foreground/50" />
-        )}
         {channel.mentionCount && channel.mentionCount > 0 && (
           <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.4)] animate-[glow-pulse_2s_ease-in-out_infinite]">
             {channel.mentionCount > 99 ? "99+" : channel.mentionCount}
           </span>
         )}
-        {!channel.muted &&
-          channel.unread &&
-          channel.unread > 0 &&
-          !channel.mentionCount && (
-            <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_6px_oklch(from_var(--primary)_l_c_h_/_0.5)]" />
-          )}
+        {!channel.muted && channel.unread && channel.unread > 0 && !channel.mentionCount && (
+          <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_6px_oklch(from_var(--primary)_l_c_h_/_0.5)]" />
+        )}
       </div>
     </button>
   )
 }
 
-function DMItem({ dm }: { dm: DirectMessage }) {
-  return (
-    <button className="flex w-full items-center gap-2 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground transition-colors">
-      <div className="relative shrink-0">
-        <div className="flex size-6 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
-          {dm.name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")}
-        </div>
-        <StatusBadge
-          status={dm.status}
-          size="sm"
-          className="absolute -right-0.5 -bottom-0.5"
-        />
-      </div>
-      <span className="truncate">{dm.name}</span>
-      {dm.unread && dm.unread > 0 && (
-        <span className="ml-auto flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
-          {dm.unread}
-        </span>
-      )}
-    </button>
-  )
-}
-
-export { Sidebar, type SidebarProps, type Channel, type ChannelCategory, type DirectMessage, type Workspace }
+export { Sidebar, type SidebarProps }
