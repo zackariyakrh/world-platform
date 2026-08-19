@@ -44,7 +44,7 @@ import {
 import { toast } from "sonner"
 
 interface Channel { id: string; name: string; description: string | null; type: string; _count: { messages: number } }
-interface User { id: string; name: string | null; firstName: string | null; lastName: string | null; email: string; phone: string | null; gender: string | null; address: string | null; avatar: string | null; jobTitle: string | null; status: string; role: string; isActive: boolean }
+interface User { id: string; name: string | null; firstName: string | null; lastName: string | null; email: string; username: string | null; phone: string | null; gender: string | null; address: string | null; avatar: string | null; jobTitle: string | null; status: string; role: string; isActive: boolean }
 interface Project { id: string; name: string; description: string | null; status: string; progress: number; _count: { tasks: number } }
 interface Message { id: string; content: string; createdAt: string; user: { id: string; name: string | null; avatar: string | null }; channel: { id: string; name: string } }
 interface Task { id: string; title: string; status: string; priority: string; dueDate: string | null; assignee: { id: string; name: string | null; avatar: string | null } | null; project: { id: string; name: string } | null }
@@ -108,7 +108,7 @@ export function ExploreClient({
   const [taskBusy, setTaskBusy] = React.useState(false)
 
   const [uOpen, setUOpen] = React.useState(false)
-  const [uForm, setUForm] = React.useState({ firstName: "", lastName: "", email: "", phone: "", gender: "", address: "", password: "", role: "member" })
+  const [uForm, setUForm] = React.useState({ firstName: "", lastName: "", username: "", email: "", phone: "", gender: "", address: "", password: "", role: "member" })
   const [uBusy, setUBusy] = React.useState(false)
 
   const [viewUser, setViewUser] = React.useState<User | null>(null)
@@ -236,6 +236,7 @@ export function ExploreClient({
       const res = await api("/api/admin/users", "POST", {
         firstName: uForm.firstName.trim(),
         lastName: uForm.lastName.trim(),
+        username: uForm.username.trim() || undefined,
         email: uForm.email.trim(),
         phone: uForm.phone.trim() || undefined,
         gender: uForm.gender || undefined,
@@ -245,8 +246,8 @@ export function ExploreClient({
       })
       if (res.ok) {
         const u = await res.json()
-        setUsers((prev) => [...prev, { id: u.id, name: u.name, firstName: u.firstName, lastName: u.lastName, email: u.email, phone: u.phone, gender: u.gender, address: u.address, avatar: null, jobTitle: null, status: "offline", role: u.role, isActive: true }])
-        toast.success("User created"); setUOpen(false); setUForm({ firstName: "", lastName: "", email: "", phone: "", gender: "", address: "", password: "", role: "member" })
+        setUsers((prev) => [...prev, { id: u.id, name: u.name, firstName: u.firstName, lastName: u.lastName, email: u.email, username: u.username, phone: u.phone, gender: u.gender, address: u.address, avatar: null, jobTitle: null, status: "offline", role: u.role, isActive: true }])
+        toast.success("User created"); setUOpen(false); setUForm({ firstName: "", lastName: "", username: "", email: "", phone: "", gender: "", address: "", password: "", role: "member" })
       } else { toast.error((await res.json()).error || "Failed") }
     } catch { toast.error("Error") } finally { setUBusy(false) }
   }
@@ -623,6 +624,7 @@ export function ExploreClient({
               <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Last Name *</Label><Input placeholder="Doe" value={uForm.lastName} onChange={(e) => setUForm({ ...uForm, lastName: e.target.value })} /></div>
             </div>
             <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Email *</Label><Input type="email" placeholder="jane@example.com" value={uForm.email} onChange={(e) => setUForm({ ...uForm, email: e.target.value })} /></div>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Username</Label><Input placeholder="Auto-generated if empty" value={uForm.username} onChange={(e) => setUForm({ ...uForm, username: e.target.value })} /><p className="text-[11px] text-muted-foreground">Letters, numbers, underscores, hyphens. Auto-generated if empty.</p></div>
             <div className="grid grid-cols-2 gap-4">
               <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Phone</Label><Input placeholder="+1 234 567 890" value={uForm.phone} onChange={(e) => setUForm({ ...uForm, phone: e.target.value })} /></div>
               <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Gender</Label>
@@ -679,6 +681,14 @@ export function ExploreClient({
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Email</span>
+                  <span className="text-foreground">{viewUser.email}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Username</span>
+                  <span className="text-foreground">{viewUser.username || "—"}</span>
+                </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-xs font-medium uppercase text-muted-foreground">First Name</span>
                   <span className="text-foreground">{viewUser.firstName || "—"}</span>

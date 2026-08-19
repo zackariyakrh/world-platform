@@ -31,6 +31,7 @@ export async function GET() {
       firstName: true,
       lastName: true,
       email: true,
+      username: true,
       phone: true,
       gender: true,
       address: true,
@@ -121,6 +122,7 @@ export async function PATCH(request: NextRequest) {
 const createUserSchema = z.object({
   firstName: z.string().min(1, "First name is required").max(100),
   lastName: z.string().min(1, "Last name is required").max(100),
+  username: z.string().min(3, "Username must be at least 3 characters").max(50).regex(/^[a-zA-Z0-9_-]+$/, "Username can only contain letters, numbers, underscores, and hyphens").optional(),
   email: z.string().email("Invalid email address"),
   phone: z.string().optional(),
   gender: z.string().optional(),
@@ -154,6 +156,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Generate username from firstName+lastName, ensure uniqueness
+    let username = parsed.data.username || `${firstName.toLowerCase()}.${lastName.toLowerCase()}`.replace(/[^a-z0-9._-]/g, "")
+    let baseUsername = username
+    let counter = 1
+    while (await db.user.findUnique({ where: { username } })) {
+      username = `${baseUsername}${counter}`
+      counter++
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12)
     const name = `${firstName} ${lastName}`.trim()
 
@@ -162,6 +173,7 @@ export async function POST(request: NextRequest) {
         name,
         firstName,
         lastName,
+        username,
         email,
         phone: phone || null,
         gender: gender || null,
@@ -176,6 +188,7 @@ export async function POST(request: NextRequest) {
         firstName: true,
         lastName: true,
         email: true,
+        username: true,
         phone: true,
         gender: true,
         address: true,

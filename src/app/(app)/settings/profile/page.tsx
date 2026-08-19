@@ -20,6 +20,11 @@ interface Profile {
   avatar: string | null
   bio: string | null
   jobTitle: string | null
+  firstName: string | null
+  lastName: string | null
+  phone: string | null
+  gender: string | null
+  address: string | null
   timezone: string
   language: string
   status: string
@@ -59,12 +64,18 @@ export default function ProfileSettingsPage() {
   const [name, setName] = useState("")
   const [bio, setBio] = useState("")
   const [jobTitle, setJobTitle] = useState("")
+  const [firstName, setFirstName] = useState("")
+  const [lastName, setLastName] = useState("")
+  const [phone, setPhone] = useState("")
+  const [gender, setGender] = useState("")
+  const [address, setAddress] = useState("")
   const [timezone, setTimezone] = useState("UTC")
   const [language, setLanguage] = useState("en")
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [removingAvatar, setRemovingAvatar] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -75,6 +86,11 @@ export default function ProfileSettingsPage() {
         setName(data.name || "")
         setBio(data.bio || "")
         setJobTitle(data.jobTitle || "")
+        setFirstName(data.firstName || "")
+        setLastName(data.lastName || "")
+        setPhone(data.phone || "")
+        setGender(data.gender || "")
+        setAddress(data.address || "")
         setTimezone(data.timezone)
         setLanguage(data.language)
       })
@@ -96,6 +112,7 @@ export default function ProfileSettingsPage() {
   function removeAvatar() {
     setAvatarFile(null)
     setAvatarPreview(null)
+    setRemovingAvatar(true)
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
@@ -104,14 +121,28 @@ export default function ProfileSettingsPage() {
     setSaved(false)
     try {
       let avatarUrl = profile?.avatar || null
-      if (avatarFile && avatarPreview) {
+      if (removingAvatar) {
+        avatarUrl = null
+      } else if (avatarFile && avatarPreview) {
         avatarUrl = avatarPreview
       }
 
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio, jobTitle, timezone, language, avatar: avatarUrl }),
+        body: JSON.stringify({
+          name,
+          bio,
+          jobTitle,
+          firstName,
+          lastName,
+          phone,
+          gender,
+          address,
+          timezone,
+          language,
+          avatar: avatarUrl,
+        }),
       })
 
       if (!res.ok) throw new Error("Failed to update")
@@ -120,6 +151,7 @@ export default function ProfileSettingsPage() {
       setProfile(updated)
       setAvatarFile(null)
       setAvatarPreview(null)
+      setRemovingAvatar(false)
       setSaved(true)
       toast.success("Profile updated")
       setTimeout(() => setSaved(false), 2000)
@@ -184,7 +216,7 @@ export default function ProfileSettingsPage() {
                 <Avatar className="size-16">
                   {avatarPreview ? (
                     <AvatarImage src={avatarPreview} />
-                  ) : profile.avatar ? (
+                  ) : profile.avatar && !removingAvatar ? (
                     <AvatarImage src={profile.avatar} />
                   ) : null}
                   <AvatarFallback className="text-lg">{initials}</AvatarFallback>
@@ -214,7 +246,7 @@ export default function ProfileSettingsPage() {
                   <Camera className="size-3.5" />
                   Upload Photo
                 </Button>
-                {avatarPreview && (
+                {(avatarPreview || (profile.avatar && !removingAvatar)) && (
                   <Button
                     type="button"
                     variant="ghost"
@@ -284,6 +316,44 @@ export default function ProfileSettingsPage() {
                 placeholder="Tell us about yourself..."
                 className="min-h-20"
               />
+            </div>
+
+            <div className="border-t pt-4 mt-2">
+              <p className="text-xs font-medium uppercase text-muted-foreground mb-3">Personal Details</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="firstName">First Name</Label>
+                  <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="Jane" />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="lastName">Last Name</Label>
+                  <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Doe" />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 mt-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 234 567 890" />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label>Gender</Label>
+                  <Select value={gender} onValueChange={(v) => setGender(v ?? "")}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5 mt-4">
+                <Label htmlFor="address">Address</Label>
+                <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street, City, Country" />
+              </div>
             </div>
           </CardContent>
         </Card>

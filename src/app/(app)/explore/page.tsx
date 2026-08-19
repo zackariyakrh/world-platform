@@ -47,6 +47,7 @@ export default async function ExplorePage() {
         firstName: true,
         lastName: true,
         email: true,
+        username: true,
         phone: true,
         gender: true,
         address: true,

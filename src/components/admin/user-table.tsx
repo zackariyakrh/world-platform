@@ -61,6 +61,7 @@ type UserRow = {
   firstName: string | null
   lastName: string | null
   email: string
+  username: string | null
   phone: string | null
   gender: string | null
   address: string | null
@@ -655,6 +656,10 @@ export function UserTable({ users }: { users: UserRow[] }) {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Username</span>
+                  <span className="text-foreground">{viewUser.username || "—"}</span>
+                </div>
                 <div className="flex flex-col gap-1">
                   <span className="text-xs font-medium uppercase text-muted-foreground">First Name</span>
                   <span className="text-foreground">{viewUser.firstName || "—"}</span>

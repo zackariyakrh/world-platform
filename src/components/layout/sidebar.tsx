@@ -50,6 +50,7 @@ import {
   Loader2,
   Trash2,
   HelpCircle,
+  Paintbrush,
 } from "lucide-react"
 
 interface Channel {
@@ -180,14 +181,14 @@ function Sidebar({
         )}
         {...props}
       >
-        <div className="flex h-12 items-center justify-between border-b px-3">
+        <div className="flex h-14 items-center justify-between border-b px-4">
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <button className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1 py-1 text-sm font-medium hover:bg-sidebar-accent transition-colors" />
+                <button className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-semibold hover:bg-sidebar-accent transition-colors" />
               }
             >
-              <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">
                 {appName.charAt(0).toUpperCase()}
               </span>
               <span className="truncate">{appName}</span>
@@ -206,6 +207,12 @@ function Sidebar({
                 <DropdownMenuItem onClick={() => router.push("/admin/users")}>
                   <Users className="size-4" />
                   Admin Panel
+                </DropdownMenuItem>
+              )}
+              {(userRole === "owner" || userRole === "admin") && (
+                <DropdownMenuItem onClick={() => router.push("/admin/branding")}>
+                  <Paintbrush className="size-4" />
+                  Branding
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

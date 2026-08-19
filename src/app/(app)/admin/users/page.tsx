@@ -11,6 +11,7 @@ export default async function AdminUsersPage() {
       firstName: true,
       lastName: true,
       email: true,
+      username: true,
       phone: true,
       gender: true,
       address: true,

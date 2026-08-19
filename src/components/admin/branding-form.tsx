@@ -49,10 +49,13 @@ export function BrandingForm({ branding, onSave }: BrandingFormProps) {
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="app.name">App Name</Label>
+            <p className="text-xs text-muted-foreground">This appears in the top-left corner of the sidebar</p>
             <Input
               id="app.name"
               name="app.name"
               defaultValue={branding.appName}
+              placeholder="e.g. Nexus, My Company, Team Hub"
+              className="max-w-md"
             />
           </div>
           <div className="flex flex-col gap-1.5">

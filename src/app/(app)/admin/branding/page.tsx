@@ -43,11 +43,13 @@ export default async function AdminBrandingPage() {
           Branding
         </h1>
         <p className="text-sm text-muted-foreground">
-          Customize the look and feel of your platform.
+          Customize the look and feel of your platform. The App Name appears in the sidebar top-left corner.
         </p>
       </div>
 
-      <BrandingForm branding={branding} onSave={updateBranding} />
+      <div className="max-w-3xl">
+        <BrandingForm branding={branding} onSave={updateBranding} />
+      </div>
     </div>
   )
 }
