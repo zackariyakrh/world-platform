@@ -77,6 +77,7 @@ interface SidebarProps extends React.ComponentProps<"aside"> {
   onClose?: () => void
   onChannelSelect?: (channelId: string) => void
   userRole?: string
+  appName?: string
 }
 
 function Sidebar({
@@ -86,6 +87,7 @@ function Sidebar({
   onClose,
   onChannelSelect,
   userRole,
+  appName = "Nexus",
   className,
   ...props
 }: SidebarProps) {
@@ -186,9 +188,9 @@ function Sidebar({
               }
             >
               <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-primary text-xs font-bold text-primary-foreground">
-                N
+                {appName.charAt(0).toUpperCase()}
               </span>
-              <span className="truncate">Nexus</span>
+              <span className="truncate">{appName}</span>
               <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56">

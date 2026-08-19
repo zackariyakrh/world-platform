@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { getBrandingSettings } from "@/lib/settings"
 import { AppLayout } from "@/components/layout/app-layout"
 
 export default async function AppGroupLayout({
@@ -46,6 +47,7 @@ export default async function AppGroupLayout({
   }
 
   const notificationCount = user.notifications.length
+  const branding = await getBrandingSettings()
 
   return (
     <AppLayout
@@ -54,6 +56,7 @@ export default async function AppGroupLayout({
       userEmail={user.email}
       userAvatar={user.avatar}
       userRole={user.role}
+      appName={branding.appName}
     >
       {children}
     </AppLayout>

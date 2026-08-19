@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 const DEFAULT_BRANDING = {
   appName: "Nexus",
   logo: "/logo.svg",
-  favicon: "/favicon.ico",
+  favicon: "/favicon.svg",
   primaryColor: "#6366f1",
   secondaryColor: "#8b5cf6",
   accentColor: "#06b6d4",

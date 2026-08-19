@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Save, Loader2, Check, User } from "lucide-react"
+import { Save, Loader2, Check, User, Camera, X } from "lucide-react"
 import { toast } from "sonner"
 import { SettingsTabs } from "@/components/settings/settings-tabs"
 
@@ -63,6 +63,9 @@ export default function ProfileSettingsPage() {
   const [language, setLanguage] = useState("en")
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch("/api/user/profile")
@@ -77,20 +80,46 @@ export default function ProfileSettingsPage() {
       })
   }, [])
 
+  function handleAvatarSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image must be under 2MB")
+      return
+    }
+    setAvatarFile(file)
+    const reader = new FileReader()
+    reader.onload = () => setAvatarPreview(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  function removeAvatar() {
+    setAvatarFile(null)
+    setAvatarPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setSaved(false)
     try {
+      let avatarUrl = profile?.avatar || null
+      if (avatarFile && avatarPreview) {
+        avatarUrl = avatarPreview
+      }
+
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, bio, jobTitle, timezone, language }),
+        body: JSON.stringify({ name, bio, jobTitle, timezone, language, avatar: avatarUrl }),
       })
 
       if (!res.ok) throw new Error("Failed to update")
 
       const updated = await res.json()
       setProfile(updated)
+      setAvatarFile(null)
+      setAvatarPreview(null)
       setSaved(true)
       toast.success("Profile updated")
       setTimeout(() => setSaved(false), 2000)
@@ -151,15 +180,54 @@ export default function ProfileSettingsPage() {
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             <div className="flex items-center gap-4">
-              <Avatar className="size-16">
-                {profile.avatar ? (
-                  <AvatarImage src={profile.avatar} alt={profile.name || ""} />
-                ) : null}
-                <AvatarFallback className="text-lg">{initials}</AvatarFallback>
-              </Avatar>
-              <Button variant="outline" size="sm" disabled>
-                Upload Avatar
-              </Button>
+              <div className="relative group">
+                <Avatar className="size-16">
+                  {avatarPreview ? (
+                    <AvatarImage src={avatarPreview} />
+                  ) : profile.avatar ? (
+                    <AvatarImage src={profile.avatar} />
+                  ) : null}
+                  <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+                </Avatar>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  <Camera className="size-5 text-white" />
+                </button>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarSelect}
+              />
+              <div className="flex flex-col gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Camera className="size-3.5" />
+                  Upload Photo
+                </Button>
+                {avatarPreview && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeAvatar}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <X className="size-3.5" />
+                    Remove
+                  </Button>
+                )}
+                <p className="text-xs text-muted-foreground">JPG, PNG or GIF. Max 2MB.</p>
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

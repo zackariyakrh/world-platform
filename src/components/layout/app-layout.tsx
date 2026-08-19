@@ -18,6 +18,7 @@ interface AppLayoutProps {
   userEmail?: string | null
   userAvatar?: string | null
   userRole?: string
+  appName?: string
 }
 
 function AppLayout({
@@ -32,6 +33,7 @@ function AppLayout({
   userEmail,
   userAvatar,
   userRole,
+  appName,
 }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
   const [searchOpen, setSearchOpen] = React.useState(false)
@@ -60,6 +62,7 @@ function AppLayout({
           setSidebarOpen(false)
         }}
         userRole={userRole}
+        appName={appName}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
