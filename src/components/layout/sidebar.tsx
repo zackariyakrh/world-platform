@@ -49,6 +49,7 @@ import {
   BellOff,
   Loader2,
   Trash2,
+  HelpCircle,
 } from "lucide-react"
 
 interface Channel {
@@ -75,6 +76,7 @@ interface SidebarProps extends React.ComponentProps<"aside"> {
   open?: boolean
   onClose?: () => void
   onChannelSelect?: (channelId: string) => void
+  userRole?: string
 }
 
 function Sidebar({
@@ -83,6 +85,7 @@ function Sidebar({
   open = false,
   onClose,
   onChannelSelect,
+  userRole,
   className,
   ...props
 }: SidebarProps) {
@@ -193,10 +196,16 @@ function Sidebar({
                 <Settings className="size-4" />
                 Settings
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/admin/users")}>
-                <Users className="size-4" />
-                Admin Panel
+              <DropdownMenuItem onClick={() => router.push("/help")}>
+                <HelpCircle className="size-4" />
+                Help & Support
               </DropdownMenuItem>
+              {(userRole === "owner" || userRole === "admin") && (
+                <DropdownMenuItem onClick={() => router.push("/admin/users")}>
+                  <Users className="size-4" />
+                  Admin Panel
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -334,6 +343,9 @@ function Sidebar({
           <div className="flex items-center gap-2 px-3 py-2">
             <Button variant="ghost" size="icon-xs" onClick={() => router.push("/settings")}>
               <Settings className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon-xs" onClick={() => router.push("/help")}>
+              <HelpCircle className="size-4" />
             </Button>
             <Button variant="ghost" size="icon-xs">
               <Mic className="size-4" />

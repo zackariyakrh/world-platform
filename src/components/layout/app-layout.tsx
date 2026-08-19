@@ -14,6 +14,10 @@ interface AppLayoutProps {
   onChannelSelect?: (channelId: string) => void
   headerActions?: React.ReactNode
   notificationCount?: number
+  userName?: string | null
+  userEmail?: string | null
+  userAvatar?: string | null
+  userRole?: string
 }
 
 function AppLayout({
@@ -24,6 +28,10 @@ function AppLayout({
   onChannelSelect,
   headerActions,
   notificationCount = 0,
+  userName,
+  userEmail,
+  userAvatar,
+  userRole,
 }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
   const [searchOpen, setSearchOpen] = React.useState(false)
@@ -51,6 +59,7 @@ function AppLayout({
           onChannelSelect?.(id)
           setSidebarOpen(false)
         }}
+        userRole={userRole}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -60,6 +69,9 @@ function AppLayout({
           onMenuClick={() => setSidebarOpen(true)}
           onSearchClick={() => setSearchOpen(true)}
           notificationCount={notificationCount}
+          userName={userName}
+          userEmail={userEmail}
+          userAvatar={userAvatar}
         />
 
         <main className="flex-1 overflow-y-auto pb-16 md:pb-0">

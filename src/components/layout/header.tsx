@@ -33,6 +33,9 @@ interface HeaderProps extends React.ComponentProps<"header"> {
   onMenuClick?: () => void
   onSearchClick?: () => void
   notificationCount?: number
+  userName?: string | null
+  userEmail?: string | null
+  userAvatar?: string | null
 }
 
 function Header({
@@ -41,6 +44,9 @@ function Header({
   onMenuClick,
   onSearchClick,
   notificationCount = 0,
+  userName,
+  userEmail,
+  userAvatar,
   className,
   ...props
 }: HeaderProps) {
@@ -104,9 +110,13 @@ function Header({
           }
         >
           <div className="relative">
-            <div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-              Y
-            </div>
+            {userAvatar ? (
+              <img src={userAvatar} alt={userName || ""} className="size-7 rounded-full object-cover" />
+            ) : (
+              <div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                {(userName || userEmail || "?").slice(0, 2).toUpperCase()}
+              </div>
+            )}
             <StatusBadge
               status="online"
               size="sm"

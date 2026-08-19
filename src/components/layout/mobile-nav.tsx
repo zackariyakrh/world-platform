@@ -9,7 +9,7 @@ import {
   CheckSquareIcon,
   CalendarIcon,
   SparklesIcon,
-  MoreHorizontalIcon,
+  SettingsIcon,
 } from "lucide-react"
 
 interface MobileNavItem {
@@ -21,11 +21,11 @@ interface MobileNavItem {
 
 const defaultItems: MobileNavItem[] = [
   { label: "Home", href: "/", icon: HomeIcon },
-  { label: "Messages", href: "/messages", icon: MessageSquareIcon, badge: 3 },
-  { label: "Tasks", href: "/tasks", icon: CheckSquareIcon },
+  { label: "DMs", href: "/dms", icon: MessageSquareIcon },
+  { label: "Tasks", href: "/projects", icon: CheckSquareIcon },
   { label: "Calendar", href: "/calendar", icon: CalendarIcon },
   { label: "AI", href: "/ai", icon: SparklesIcon },
-  { label: "More", href: "/more", icon: MoreHorizontalIcon },
+  { label: "Settings", href: "/settings", icon: SettingsIcon },
 ]
 
 interface MobileNavProps extends React.ComponentProps<"nav"> {

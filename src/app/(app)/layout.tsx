@@ -20,6 +20,8 @@ export default async function AppGroupLayout({
       id: true,
       name: true,
       email: true,
+      avatar: true,
+      role: true,
       workspaceMembers: {
         select: {
           workspace: {
@@ -46,7 +48,13 @@ export default async function AppGroupLayout({
   const notificationCount = user.notifications.length
 
   return (
-    <AppLayout notificationCount={notificationCount}>
+    <AppLayout
+      notificationCount={notificationCount}
+      userName={user.name}
+      userEmail={user.email}
+      userAvatar={user.avatar}
+      userRole={user.role}
+    >
       {children}
     </AppLayout>
   )
