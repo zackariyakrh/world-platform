@@ -10,6 +10,7 @@ import { Save, Loader2, Check, Sun, Moon, Monitor, Palette } from "lucide-react"
 import { useTheme } from "next-themes"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { SettingsTabs } from "@/components/settings/settings-tabs"
 
 const ACCENT_COLORS = [
   { name: "Indigo", value: "#6366f1" },
@@ -53,6 +54,7 @@ export default function AppearanceSettingsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+      <SettingsTabs />
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground glow-text">

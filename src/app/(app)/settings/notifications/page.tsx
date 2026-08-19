@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Save, Loader2, Check, Bell } from "lucide-react"
 import { toast } from "sonner"
+import { SettingsTabs } from "@/components/settings/settings-tabs"
 
 interface NotificationSettings {
   messages: boolean
@@ -67,6 +68,7 @@ export default function NotificationsSettingsPage() {
 
   return (
     <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
+      <SettingsTabs />
       <div className="flex items-center justify-between">
         <div className="flex flex-col gap-1">
           <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-foreground glow-text">

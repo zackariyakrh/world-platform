@@ -24,6 +24,8 @@ import {
   HelpCircle,
 } from "lucide-react"
 import { useTheme } from "next-themes"
+import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 
 interface HeaderProps extends React.ComponentProps<"header"> {
   title?: string
@@ -43,6 +45,7 @@ function Header({
   ...props
 }: HeaderProps) {
   const { theme, setTheme } = useTheme()
+  const router = useRouter()
 
   const themeLabel = theme === "dark" ? "Light Mode" : "Dark Mode"
   const ThemeIcon = theme === "dark" ? Sun : Moon
@@ -112,15 +115,15 @@ function Header({
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/settings/profile")}>
             <User className="size-4" />
             Profile
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/settings")}>
             <Settings className="size-4" />
             Settings
           </DropdownMenuItem>
-          <DropdownMenuItem>
+          <DropdownMenuItem onClick={() => router.push("/help")}>
             <HelpCircle className="size-4" />
             Help & Support
           </DropdownMenuItem>
@@ -132,7 +135,7 @@ function Header({
             {themeLabel}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive">
+          <DropdownMenuItem variant="destructive" onClick={() => signOut({ callbackUrl: "/auth/login" })}>
             <LogOut className="size-4" />
             Sign Out
           </DropdownMenuItem>
