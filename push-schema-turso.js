@@ -10,6 +10,7 @@ const NEW_COLUMNS = {
     { name: "phone", type: "TEXT" },
     { name: "gender", type: "TEXT" },
     { name: "address", type: "TEXT" },
+    { name: "usernameChangedAt", type: "DATETIME" },
   ],
 };
 

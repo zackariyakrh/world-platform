@@ -17,6 +17,7 @@ interface Profile {
   name: string | null
   email: string
   username: string | null
+  usernameChangedAt: string | null
   avatar: string | null
   bio: string | null
   jobTitle: string | null
@@ -62,6 +63,7 @@ const LANGUAGES = [
 export default function ProfileSettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [name, setName] = useState("")
+  const [username, setUsername] = useState("")
   const [bio, setBio] = useState("")
   const [jobTitle, setJobTitle] = useState("")
   const [firstName, setFirstName] = useState("")
@@ -84,6 +86,7 @@ export default function ProfileSettingsPage() {
       .then((data: Profile) => {
         setProfile(data)
         setName(data.name || "")
+        setUsername(data.username || "")
         setBio(data.bio || "")
         setJobTitle(data.jobTitle || "")
         setFirstName(data.firstName || "")
@@ -132,6 +135,7 @@ export default function ProfileSettingsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
+          username: username.trim() || undefined,
           bio,
           jobTitle,
           firstName,
@@ -145,7 +149,10 @@ export default function ProfileSettingsPage() {
         }),
       })
 
-      if (!res.ok) throw new Error("Failed to update")
+      if (!res.ok) {
+        const err = await res.json().catch(() => null)
+        throw new Error(err?.error || "Failed to update")
+      }
 
       const updated = await res.json()
       setProfile(updated)
@@ -155,8 +162,8 @@ export default function ProfileSettingsPage() {
       setSaved(true)
       toast.success("Profile updated")
       setTimeout(() => setSaved(false), 2000)
-    } catch {
-      toast.error("Failed to update profile")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update profile")
     } finally {
       setSaving(false)
     }
@@ -273,15 +280,36 @@ export default function ProfileSettingsPage() {
                 />
               </div>
               <div className="flex flex-col gap-1.5">
-                <Label>Username</Label>
+                <Label htmlFor="username">Username</Label>
                 <Input
-                  value={profile.username || ""}
-                  disabled
-                  className="opacity-60"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="your-username"
                 />
-                <p className="text-xs text-muted-foreground">
-                  Contact support to change your username
-                </p>
+                {profile.usernameChangedAt && (() => {
+                  const lastChanged = new Date(profile.usernameChangedAt)
+                  const cooldownEnd = new Date(lastChanged.getTime() + 7 * 24 * 60 * 60 * 1000)
+                  const now = new Date()
+                  if (now < cooldownEnd) {
+                    const daysLeft = Math.ceil((cooldownEnd.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+                    return (
+                      <p className="text-xs text-amber-500">
+                        You can change your username again in {daysLeft} day{daysLeft !== 1 ? "s" : ""}
+                      </p>
+                    )
+                  }
+                  return (
+                    <p className="text-xs text-muted-foreground">
+                      3+ characters. Letters, numbers, underscores, hyphens. You can change once every 7 days.
+                    </p>
+                  )
+                })()}
+                {!profile.usernameChangedAt && (
+                  <p className="text-xs text-muted-foreground">
+                    3+ characters. Letters, numbers, underscores, hyphens. You can change once every 7 days.
+                  </p>
+                )}
               </div>
             </div>
 

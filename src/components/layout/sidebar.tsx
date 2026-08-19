@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
+import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -51,6 +52,7 @@ import {
   Trash2,
   HelpCircle,
   Paintbrush,
+  LogOut,
 } from "lucide-react"
 
 interface Channel {
@@ -349,7 +351,7 @@ function Sidebar({
         </ScrollArea>
 
         <div className="mt-auto border-t">
-          <div className="flex items-center gap-2 px-3 py-2">
+          <div className="flex items-center gap-1 px-3 py-2">
             <Button variant="ghost" size="icon-xs" onClick={() => router.push("/settings")}>
               <Settings className="size-4" />
             </Button>
@@ -359,6 +361,11 @@ function Sidebar({
             <Button variant="ghost" size="icon-xs">
               <Mic className="size-4" />
             </Button>
+            <div className="ml-auto">
+              <Button variant="ghost" size="icon-xs" onClick={() => signOut({ callbackUrl: "/auth/login" })} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                <LogOut className="size-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </aside>

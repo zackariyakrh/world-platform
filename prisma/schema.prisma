@@ -19,6 +19,7 @@ model User {
   gender        String?
   address       String?
   username      String?   @unique
+  usernameChangedAt DateTime?
   passwordHash  String?
   avatar        String?
   bio           String?
