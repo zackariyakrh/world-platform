@@ -16,14 +16,14 @@ export default async function AuthLayout({
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      {/* ─── Branded Panel ───────────────────────────────────── */}
-      <div className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-[oklch(0.20_0.08_265)] via-[oklch(0.15_0.06_280)] to-[oklch(0.18_0.10_310)] p-10 lg:flex lg:w-[45%] xl:w-[48%]">
+      {/* ─── Branded Panel (Light: beige/red gradient) ───────────── */}
+      <div className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-[oklch(0.45_0.18_25)] via-[oklch(0.38_0.15_35)] to-[oklch(0.42_0.20_15)] p-10 lg:flex lg:w-[45%] xl:w-[48%]">
         {/* Animated glow orbs */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div
             className="absolute -left-32 -top-32 size-96 rounded-full opacity-40"
             style={{
-              background: "radial-gradient(circle, oklch(0.65 0.28 265 / 0.4), transparent 70%)",
+              background: "radial-gradient(circle, oklch(0.60 0.22 25 / 0.5), transparent 70%)",
               animation: "glow-drift 12s ease-in-out infinite",
               filter: "blur(60px)",
             }}
@@ -31,7 +31,7 @@ export default async function AuthLayout({
           <div
             className="absolute -bottom-24 -right-24 size-80 rounded-full opacity-30"
             style={{
-              background: "radial-gradient(circle, oklch(0.70 0.24 310 / 0.35), transparent 70%)",
+              background: "radial-gradient(circle, oklch(0.55 0.20 40 / 0.4), transparent 70%)",
               animation: "glow-drift 16s ease-in-out infinite reverse",
               filter: "blur(50px)",
             }}
@@ -39,18 +39,18 @@ export default async function AuthLayout({
           <div
             className="absolute left-1/2 top-1/3 size-64 -translate-x-1/2 rounded-full opacity-20"
             style={{
-              background: "radial-gradient(circle, oklch(0.70 0.20 160 / 0.3), transparent 70%)",
+              background: "radial-gradient(circle, oklch(0.50 0.18 15 / 0.3), transparent 70%)",
               animation: "glow-drift 20s ease-in-out infinite 3s",
               filter: "blur(40px)",
             }}
           />
           {/* Grid overlay */}
           <div
-            className="absolute inset-0 opacity-[0.03]"
+            className="absolute inset-0 opacity-[0.04]"
             style={{
               backgroundImage: `
-                linear-gradient(oklch(1 0 0 / 0.5) 1px, transparent 1px),
-                linear-gradient(90deg, oklch(1 0 0 / 0.5) 1px, transparent 1px)
+                linear-gradient(oklch(1 0 0 / 0.4) 1px, transparent 1px),
+                linear-gradient(90deg, oklch(1 0 0 / 0.4) 1px, transparent 1px)
               `,
               backgroundSize: "60px 60px",
             }}
@@ -59,7 +59,7 @@ export default async function AuthLayout({
           {[...Array(6)].map((_, i) => (
             <div
               key={i}
-              className="absolute size-1 rounded-full bg-white/30"
+              className="absolute size-1 rounded-full bg-white/25"
               style={{
                 left: `${15 + i * 15}%`,
                 bottom: "10%",
@@ -75,9 +75,9 @@ export default async function AuthLayout({
             <div
               className="flex size-11 items-center justify-center rounded-xl backdrop-blur-sm"
               style={{
-                background: "oklch(1 0 0 / 0.08)",
-                border: "1px solid oklch(1 0 0 / 0.12)",
-                boxShadow: "0 0 20px oklch(0.65 0.28 265 / 0.2), inset 0 0 20px oklch(1 0 0 / 0.05)",
+                background: "oklch(1 0 0 / 0.1)",
+                border: "1px solid oklch(1 0 0 / 0.15)",
+                boxShadow: "0 0 20px oklch(0.55 0.20 25 / 0.3), inset 0 0 20px oklch(1 0 0 / 0.05)",
                 animation: "glow-breathe 4s ease-in-out infinite",
               }}
             >
@@ -91,12 +91,12 @@ export default async function AuthLayout({
           <div>
             <h2
               className="text-3xl font-bold leading-tight text-white xl:text-4xl"
-              style={{ textShadow: "0 0 40px oklch(0.65 0.28 265 / 0.3)" }}
+              style={{ textShadow: "0 0 40px oklch(0.55 0.20 25 / 0.3)" }}
             >
               Where teams come
               <br />
               <span
-                className="bg-gradient-to-r from-[oklch(0.75_0.20_240)] via-[oklch(0.80_0.18_280)] to-[oklch(0.75_0.22_320)] bg-clip-text text-transparent"
+                className="bg-gradient-to-r from-[oklch(0.85_0.15_25)] via-[oklch(0.80_0.18_40)] to-[oklch(0.85_0.12_15)] bg-clip-text text-transparent"
                 style={{
                   backgroundSize: "200% auto",
                   animation: "gradient-shift 6s ease infinite",
@@ -105,7 +105,7 @@ export default async function AuthLayout({
                 together to build.
               </span>
             </h2>
-            <p className="mt-4 max-w-md text-lg text-zinc-400">
+            <p className="mt-4 max-w-md text-lg text-white/70">
               {branding.description}
             </p>
           </div>
@@ -131,14 +131,14 @@ export default async function AuthLayout({
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm font-medium text-white">{feature.title}</span>
-                  <span className="text-xs text-zinc-400">{feature.description}</span>
+                  <span className="text-xs text-white/60">{feature.description}</span>
                 </div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="relative z-10 text-sm text-zinc-500">
+        <div className="relative z-10 text-sm text-white/50">
           © {new Date().getFullYear()} {branding.appName}. All rights reserved.
         </div>
       </div>

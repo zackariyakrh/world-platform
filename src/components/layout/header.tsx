@@ -22,6 +22,7 @@ import {
   Moon,
   Sun,
   HelpCircle,
+  Phone,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
@@ -61,7 +62,7 @@ function Header({
       data-slot="header"
       className={cn(
         "sticky top-0 z-30 flex h-12 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-sm",
-        "shadow-[0_1px_2px_oklch(from_var(--glow)_l_c_h_/_0.06)]",
+        "shadow-[0_1px_3px_oklch(from_var(--glow)_l_c_h_/_0.08)]",
         className
       )}
       {...props}
@@ -95,10 +96,14 @@ function Header({
       <Button variant="ghost" size="icon-sm" className="relative shrink-0">
         <Bell className="size-4" />
         {notificationCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+          <span className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.3)]">
             {notificationCount > 99 ? "99+" : notificationCount}
           </span>
         )}
+      </Button>
+
+      <Button variant="ghost" size="icon-sm" className="shrink-0" onClick={() => router.push("/dms")}>
+        <Phone className="size-4" />
       </Button>
 
       <Separator orientation="vertical" className="mx-1 h-5" />
@@ -111,9 +116,9 @@ function Header({
         >
           <div className="relative">
             {userAvatar ? (
-              <img src={userAvatar} alt={userName || ""} className="size-7 rounded-full object-cover" />
+              <img src={userAvatar} alt={userName || ""} className="size-7 rounded-full object-cover ring-2 ring-primary/20" />
             ) : (
-              <div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+              <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                 {(userName || userEmail || "?").slice(0, 2).toUpperCase()}
               </div>
             )}

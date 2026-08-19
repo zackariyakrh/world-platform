@@ -20,7 +20,7 @@ export default function AppLoading() {
           />
         </div>
 
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-3">
           <span className="text-2xl font-bold tracking-tight text-foreground">
             Nexus
           </span>
