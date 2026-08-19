@@ -1,0 +1,863 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── Auth ───────────────────────────────────────────────────
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  username      String?   @unique
+  passwordHash  String?
+  avatar        String?
+  bio           String?
+  jobTitle      String?
+  timezone      String    @default("UTC")
+  language      String    @default("en")
+  status        String    @default("offline") // online, away, busy, dnd, offline
+  customStatus  String?
+  role          String    @default("member") // owner, admin, manager, moderator, member, guest
+  isActive      Boolean   @default(true)
+  isSuperAdmin  Boolean   @default(false)
+  lastSeenAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions         Session[]
+  accounts         Account[]
+  invitations      Invitation[]           @relation("InvitedBy")
+  acceptedInvites  Invitation[]           @relation("AcceptedBy")
+  profile          Profile?
+  ownedWorkspaces  Workspace[]            @relation("WorkspaceOwner")
+  workspaceMembers WorkspaceMember[]
+  ownedProjects    Project[]              @relation("ProjectOwner")
+  assignedTasks    Task[]                 @relation("TaskAssignee")
+  createdTasks     Task[]                 @relation("TaskCreator")
+  createdChannels  Channel[]              @relation("ChannelCreator")
+  messages         Message[]
+  reactions        Reaction[]
+  notifications    Notification[]
+  files            File[]
+  calendarEvents   CalendarEvent[]
+  eventParticipants EventParticipant[]
+  aiConversations  AIConversation[]
+  notes            Note[]
+  bookmarks        Bookmark[]
+  meetings         Meeting[]
+  meetingParticipants MeetingParticipant[]
+  callParticipants CallParticipant[]
+  initiatedCalls   Call[]
+  threads          Thread[]
+  comments         Comment[]
+  automations      Automation[]
+  integrations     Integration[]
+  auditLogs        AuditLog[]
+  dmConversations1 DMConversation[]       @relation("DMUser1")
+  dmConversations2 DMConversation[]       @relation("DMUser2")
+  dmParticipants   DMParticipant[]
+  pollVotes        PollVote[]
+  channelMembers   ChannelMember[]
+  projectMembers   ProjectMember[]
+  taskChecklists   TaskChecklist[]
+  knowledgeEntries KnowledgeEntry[]
+  onboardingSteps  OnboardingStep[]
+  dmMessages       DMMessage[]
+  threadFollowers  ThreadFollower[]
+  mentions         Mention[]
+  departmentId     String?
+  department       Department? @relation(fields: [departmentId], references: [id])
+}
+
+model Profile {
+  id        String @id @default(cuid())
+  userId    String @unique
+  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String?
+  address   String?
+  website   String?
+  company   String?
+  socialLinks String? // JSON string
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Workspaces ─────────────────────────────────────────────
+model Workspace {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  icon        String?
+  color       String?
+  isPublic    Boolean  @default(false)
+  ownerId     String
+  owner       User     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members          WorkspaceMember[]
+  channels         Channel[]
+  projects         Project[]
+  files            File[]
+  calendarEvents   CalendarEvent[]
+  meetings         Meeting[]
+  notes            Note[]
+  aiConversations  AIConversation[]
+  automations      Automation[]
+  integrations     Integration[]
+  departments      Department[]
+  knowledgeEntries KnowledgeEntry[]
+}
+
+model WorkspaceMember {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        String   @default("member") // owner, admin, manager, moderator, member, guest
+  isMuted     Boolean  @default(false)
+  joinedAt    DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+}
+
+model Department {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  color       String?
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  members User[]
+}
+
+// ─── Channels ───────────────────────────────────────────────
+model Channel {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String   @default("text") // text, voice, video, announcement, support
+  isPrivate   Boolean  @default(false)
+  isReadOnly  Boolean  @default(false)
+  topic       String?
+  pinnedCount Int      @default(0)
+  workspaceId String
+  creatorId   String?
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  creator     User?     @relation("ChannelCreator", fields: [creatorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members   ChannelMember[]
+  messages  Message[]
+  threads   Thread[]
+  files     File[]
+}
+
+model ChannelMember {
+  id        String   @id @default(cuid())
+  userId    String
+  channelId String
+  role      String   @default("member") // admin, moderator, member
+  isMuted   Boolean  @default(false)
+  lastRead  DateTime?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, channelId])
+}
+
+// ─── Messages ───────────────────────────────────────────────
+model Message {
+  id          String   @id @default(cuid())
+  content     String
+  type        String   @default("text") // text, image, video, audio, file, system, poll
+  isEdited    Boolean  @default(false)
+  isPinned    Boolean  @default(false)
+  isDeleted   Boolean  @default(false)
+  channelId   String?
+  userId      String
+  threadId    String?
+  replyToId   String?
+  parentId    String?
+  workspaceId String?
+  channel     Channel?  @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  user        User      @relation(fields: [userId], references: [id])
+  thread      Thread?   @relation(fields: [threadId], references: [id], onDelete: SetNull)
+  replyTo     Message?  @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies     Message[] @relation("MessageReplies")
+  parent      Message?  @relation("MessageParent", fields: [parentId], references: [id])
+  children    Message[] @relation("MessageParent")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  reactions    Reaction[]
+  attachments  Attachment[]
+  poll         Poll?
+  mentions     Mention[]
+}
+
+model Thread {
+  id          String   @id @default(cuid())
+  title       String?
+  channelId   String?
+  messageId   String?
+  creatorId   String
+  isClosed    Boolean  @default(false)
+  replyCount  Int      @default(0)
+  lastReplyAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  channel     Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  creator     User     @relation(fields: [creatorId], references: [id])
+  messages    Message[]
+  followers   ThreadFollower[]
+}
+
+model ThreadFollower {
+  id       String @id @default(cuid())
+  threadId String
+  userId   String
+  thread   Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([threadId, userId])
+}
+
+model Reaction {
+  id        String  @id @default(cuid())
+  emoji     String
+  messageId String
+  userId    String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+}
+
+model Mention {
+  id        String  @id @default(cuid())
+  messageId String
+  userId    String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Attachment {
+  id        String  @id @default(cuid())
+  filename  String
+  url       String
+  mimeType  String
+  size      Int
+  messageId String?
+  taskId    String?
+  fileId    String?
+  message   Message? @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  task      Task?    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model Poll {
+  id          String   @id @default(cuid())
+  question    String
+  isAnonymous Boolean  @default(false)
+  allowMultiple Boolean @default(false)
+  expiresAt   DateTime?
+  messageId   String   @unique
+  message     Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  options     PollOption[]
+  createdAt   DateTime @default(now())
+}
+
+model PollOption {
+  id     String @id @default(cuid())
+  text   String
+  pollId String
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes  PollVote[]
+}
+
+model PollVote {
+  id       String     @id @default(cuid())
+  optionId String
+  userId   String
+  option   PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, userId])
+}
+
+// ─── Direct Messages ────────────────────────────────────────
+model DMConversation {
+  id         String   @id @default(cuid())
+  isGroup    Boolean  @default(false)
+  name       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user1Id    String?
+  user2Id    String?
+  user1      User?    @relation("DMUser1", fields: [user1Id], references: [id])
+  user2      User?    @relation("DMUser2", fields: [user2Id], references: [id])
+  messages   DMMessage[]
+  participants DMParticipant[]
+}
+
+model DMMessage {
+  id              String         @id @default(cuid())
+  content         String
+  type            String         @default("text")
+  isEdited        Boolean        @default(false)
+  isDeleted       Boolean        @default(false)
+  conversationId  String
+  senderId        String
+  replyToId       String?
+  conversation    DMConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender          User           @relation(fields: [senderId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  attachments DMAttachment[]
+}
+
+model DMAttachment {
+  id         String    @id @default(cuid())
+  filename   String
+  url        String
+  mimeType   String
+  size       Int
+  messageId  String
+  message    DMMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model DMParticipant {
+  id              String         @id @default(cuid())
+  conversationId  String
+  userId          String
+  lastRead        DateTime?
+  conversation    DMConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+}
+
+// ─── Projects & Tasks ───────────────────────────────────────
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("active") // active, archived, completed
+  priority    String   @default("medium") // low, medium, high, urgent
+  startDate   DateTime?
+  dueDate     DateTime?
+  progress    Int      @default(0)
+  tags        String?  // JSON array
+  workspaceId String
+  ownerId     String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  owner       User      @relation("ProjectOwner", fields: [ownerId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members ProjectMember[]
+  tasks   Task[]
+  files   File[]
+}
+
+model ProjectMember {
+  id        String  @id @default(cuid())
+  projectId String
+  userId    String
+  role      String  @default("member") // lead, member, viewer
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+}
+
+model Task {
+  id              String    @id @default(cuid())
+  title           String
+  description     String?
+  status          String    @default("todo") // backlog, todo, in_progress, review, blocked, done
+  priority        String    @default("medium") // low, medium, high, urgent
+  dueDate         DateTime?
+  startDate       DateTime?
+  estimatedHours  Float?
+  completedAt     DateTime?
+  tags            String?   // JSON array
+  order           Int       @default(0)
+  projectId       String?
+  assigneeId      String?
+  creatorId       String
+  parentId        String?
+  project         Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  assignee        User?     @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  creator         User      @relation("TaskCreator", fields: [creatorId], references: [id])
+  parent          Task?     @relation("TaskSubtasks", fields: [parentId], references: [id])
+  subtasks        Task[]    @relation("TaskSubtasks")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  comments      Comment[]
+  attachments   Attachment[]
+  dependencies  TaskDependency[] @relation("TaskDependsOn")
+  dependents    TaskDependency[] @relation("TaskDependencyOf")
+  checklists    TaskChecklist[]
+  customFields  String? // JSON
+}
+
+model TaskDependency {
+  id           String @id @default(cuid())
+  taskId       String
+  dependsOnId  String
+  task         Task   @relation("TaskDependsOn", fields: [taskId], references: [id], onDelete: Cascade)
+  dependsOn    Task   @relation("TaskDependencyOf", fields: [dependsOnId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, dependsOnId])
+}
+
+model TaskChecklist {
+  id       String  @id @default(cuid())
+  text     String
+  isDone   Boolean @default(false)
+  order    Int     @default(0)
+  taskId   String
+  assigneeId String?
+  task     Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  assignee User?   @relation(fields: [assigneeId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  taskId    String
+  userId    String
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─── Calendar ───────────────────────────────────────────────
+model CalendarEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  location    String?
+  meetingLink String?
+  startTime   DateTime
+  endTime     DateTime
+  allDay      Boolean   @default(false)
+  recurrence  String?   // none, daily, weekly, monthly, yearly
+  color       String?
+  type        String    @default("event") // event, meeting, deadline, milestone
+  workspaceId String?
+  creatorId   String
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  creator     User       @relation(fields: [creatorId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  participants EventParticipant[]
+  reminders    EventReminder[]
+  meeting      Meeting?
+}
+
+model EventParticipant {
+  id        String        @id @default(cuid())
+  eventId   String
+  userId    String
+  status    String        @default("pending") // accepted, declined, pending
+  role      String        @default("attendee") // organizer, required, optional, attendee
+  event     CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+model EventReminder {
+  id        String        @id @default(cuid())
+  eventId   String
+  minutes   Int           @default(15)
+  sent      Boolean       @default(false)
+  event     CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+// ─── Meetings & Calls ──────────────────────────────────────
+model Meeting {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  status      String    @default("scheduled") // scheduled, active, ended, cancelled
+  isRecorded  Boolean   @default(false)
+  roomId      String    @unique
+  password    String?
+  maxParticipants Int?
+  workspaceId String?
+  creatorId   String
+  eventId     String?   @unique
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  creator     User       @relation(fields: [creatorId], references: [id])
+  event       CalendarEvent? @relation(fields: [eventId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  participants MeetingParticipant[]
+  recordings   MeetingRecording[]
+  chatMessages MeetingChat[]
+  aiNotes      String?
+}
+
+model MeetingParticipant {
+  id         String   @id @default(cuid())
+  meetingId  String
+  userId     String
+  role       String   @default("participant") // host, co-host, participant
+  joinedAt   DateTime?
+  leftAt     DateTime?
+  isMuted    Boolean  @default(false)
+  hasVideo   Boolean  @default(false)
+  isScreenSharing Boolean @default(false)
+  meeting    Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, userId])
+}
+
+model MeetingRecording {
+  id        String   @id @default(cuid())
+  meetingId String
+  url       String?
+  duration  Int?
+  size      Int?
+  status    String   @default("processing") // processing, ready, failed
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model MeetingChat {
+  id        String   @id @default(cuid())
+  meetingId String
+  senderId  String
+  content   String
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Call {
+  id         String    @id @default(cuid())
+  type       String    @default("voice") // voice, video
+  status     String    @default("active") // active, ended
+  startedAt  DateTime  @default(now())
+  endedAt    DateTime?
+  duration   Int?
+  initiatorId String
+  channel    String?   // for channel calls
+  initiator  User      @relation(fields: [initiatorId], references: [id])
+  participants CallParticipant[]
+}
+
+model CallParticipant {
+  id       String   @id @default(cuid())
+  callId   String
+  userId   String
+  joinedAt DateTime @default(now())
+  leftAt   DateTime?
+  call     Call     @relation(fields: [callId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Files ──────────────────────────────────────────────────
+model File {
+  id          String    @id @default(cuid())
+  name        String
+  originalName String
+  mimeType    String
+  size        Int
+  url         String
+  path        String
+  folder      String    @default("/")
+  isPublic    Boolean   @default(false)
+  workspaceId String?
+  projectId   String?
+  channelId   String?
+  uploaderId  String
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  project     Project?   @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  channel     Channel?   @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  uploader    User       @relation(fields: [uploaderId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  versions FileVersion[]
+}
+
+model FileVersion {
+  id       String @id @default(cuid())
+  fileId   String
+  version  Int
+  url      String
+  size     Int
+  file     File   @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+// ─── Notes / Knowledge Base ─────────────────────────────────
+model Note {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  icon        String?
+  coverImage  String?
+  isPublished Boolean  @default(false)
+  isTemplate  Boolean  @default(false)
+  workspaceId String?
+  creatorId   String
+  parentId    String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  creator     User       @relation(fields: [creatorId], references: [id])
+  parent      Note?      @relation("NoteParent", fields: [parentId], references: [id])
+  children    Note[]     @relation("NoteParent")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  tags NoteTag[]
+}
+
+model NoteTag {
+  id     String @id @default(cuid())
+  name   String
+  color  String?
+  noteId String
+  note   Note   @relation(fields: [noteId], references: [id], onDelete: Cascade)
+}
+
+// ─── AI System ──────────────────────────────────────────────
+model AIProvider {
+  id            String   @id @default(cuid())
+  name          String   @unique // openai, google, anthropic, xai, openrouter, mistral, deepseek, custom
+  displayName   String
+  apiKey        String   // encrypted
+  baseUrl       String?
+  isEnabled     Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  models AIModel[]
+}
+
+model AIModel {
+  id           String   @id @default(cuid())
+  name         String
+  displayName  String
+  modelId      String   // actual model identifier
+  providerId   String
+  maxTokens    Int      @default(4096)
+  temperature  Float    @default(0.7)
+  isEnabled    Boolean  @default(true)
+  isDefault    Boolean  @default(false)
+  provider     AIProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  conversations AIConversation[]
+  messages      AIMessage[]
+}
+
+model AIConversation {
+  id          String   @id @default(cuid())
+  title       String?
+  userId      String
+  modelId     String?
+  workspaceId String?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  model       AIModel? @relation(fields: [modelId], references: [id])
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+
+  messages AIMessage[]
+}
+
+model AIMessage {
+  id             String         @id @default(cuid())
+  content        String
+  role           String         // user, assistant, system
+  conversationId String
+  modelId        String?
+  tokens         Int?
+  sources        String?        // JSON array of source references
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  model          AIModel?       @relation(fields: [modelId], references: [id])
+  createdAt      DateTime       @default(now())
+}
+
+model KnowledgeEntry {
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  sourceType  String   // message, file, task, note, document
+  sourceId    String
+  embedding   String?  // vector embedding for semantic search
+  workspaceId String?
+  userId      String?
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  user        User?     @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ─── Notifications ──────────────────────────────────────────
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // mention, message, task, meeting, system, invitation, comment, reaction
+  title     String
+  content   String?
+  url       String?
+  isRead    Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+// ─── Bookmarks ──────────────────────────────────────────────
+model Bookmark {
+  id        String   @id @default(cuid())
+  type      String   // message, file, task, note, ai_response
+  refId     String
+  title     String?
+  category  String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+// ─── Automations ────────────────────────────────────────────
+model Automation {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  isEnabled   Boolean  @default(true)
+  trigger     String   // JSON: { type: "event", event: "task.overdue", conditions: {...} }
+  actions     String   // JSON: [{ type: "notify", target: "assignee", template: "..." }]
+  workspaceId String?
+  creatorId   String
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  creator     User       @relation(fields: [creatorId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// ─── Integrations ───────────────────────────────────────────
+model Integration {
+  id          String   @id @default(cuid())
+  name        String
+  type        String   // google_calendar, github, slack, etc.
+  config      String   // JSON config
+  isEnabled   Boolean  @default(true)
+  workspaceId String?
+  userId      String
+  workspace   Workspace? @relation(fields: [workspaceId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// ─── Audit Logs ─────────────────────────────────────────────
+model AuditLog {
+  id         String   @id @default(cuid())
+  action     String   // user.invite, user.remove, channel.create, etc.
+  resource   String?  // resource type
+  resourceId String?  // resource id
+  details    String?  // JSON details
+  userId     String?
+  ipAddress  String?
+  userAgent  String?
+  user       User?    @relation(fields: [userId], references: [id])
+  createdAt  DateTime @default(now())
+}
+
+// ─── Invitations ────────────────────────────────────────────
+model Invitation {
+  id           String    @id @default(cuid())
+  email        String
+  firstName    String?
+  lastName     String?
+  role         String    @default("member")
+  team         String?
+  message      String?
+  token        String    @unique
+  status       String    @default("pending") // pending, accepted, expired, cancelled
+  workspaceId  String?
+  invitedById  String
+  acceptedById String?
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  invitedBy    User      @relation("InvitedBy", fields: [invitedById], references: [id])
+  acceptedBy   User?     @relation("AcceptedBy", fields: [acceptedById], references: [id])
+}
+
+// ─── App Settings ───────────────────────────────────────────
+model AppSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+}
+
+// ─── Onboarding ─────────────────────────────────────────────
+model OnboardingStep {
+  id        String   @id @default(cuid())
+  userId    String
+  step      String
+  completed Boolean  @default(false)
+  data      String?  // JSON
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, step])
+}
