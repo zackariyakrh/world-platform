@@ -232,7 +232,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Cannot delete yourself" }, { status: 400 })
     }
 
-    await db.user.delete({ where: { id: userId } })
+    await db.$transaction(async (tx) => {
+      await tx.dMMessage.deleteMany({ where: { senderId: userId } })
+      await tx.dMConversation.updateMany({ where: { user1Id: userId }, data: { user1Id: null } })
+      await tx.dMConversation.updateMany({ where: { user2Id: userId }, data: { user2Id: null } })
+      await tx.invitation.deleteMany({ where: { invitedById: userId } })
+      await tx.invitation.updateMany({ where: { acceptedById: userId }, data: { acceptedById: null } })
+      await tx.user.delete({ where: { id: userId } })
+    })
 
     await db.auditLog.create({
       data: {

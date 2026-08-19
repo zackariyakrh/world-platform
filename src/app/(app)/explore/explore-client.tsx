@@ -117,6 +117,9 @@ export function ExploreClient({
   const [resetPwForm, setResetPwForm] = React.useState({ password: "", confirm: "" })
   const [resetPwBusy, setResetPwBusy] = React.useState(false)
 
+  const [delUser, setDelUser] = React.useState<User | null>(null)
+  const [delBusy, setDelBusy] = React.useState(false)
+
   const f = React.useMemo(() => search.toLowerCase(), [search])
   const fch = React.useMemo(() => f ? channels.filter((c) => c.name.toLowerCase().includes(f) || c.description?.toLowerCase().includes(f)) : channels, [channels, f])
   const fus = React.useMemo(() => f ? users.filter((u) => u.name?.toLowerCase().includes(f) || u.email.toLowerCase().includes(f)) : users, [users, f])
@@ -249,10 +252,12 @@ export function ExploreClient({
   }
 
   async function deleteUser(u: User) {
-    if (!confirm(`Delete ${u.name || u.email}?`)) return
-    const res = await api("/api/admin/users", "DELETE", { userId: u.id })
-    if (res.ok || res.status === 204) { setUsers((prev) => prev.filter((x) => x.id !== u.id)); toast.success("User deleted") }
-    else { const d = await res.json(); toast.error(d.error || "Failed") }
+    setDelBusy(true)
+    try {
+      const res = await api("/api/admin/users", "DELETE", { userId: u.id })
+      if (res.ok || res.status === 204) { setUsers((prev) => prev.filter((x) => x.id !== u.id)); toast.success("User deleted"); setDelUser(null) }
+      else { const d = await res.json(); toast.error(d.error || "Failed") }
+    } catch { toast.error("Error") } finally { setDelBusy(false) }
   }
 
   async function toggleUserActive(u: User) {
@@ -394,7 +399,7 @@ export function ExploreClient({
                             <DropdownMenuItem onClick={() => toggleUserActive(u)}>{u.isActive ? "Suspend" : "Reactivate"}</DropdownMenuItem>
                             {u.role !== "owner" && <>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => deleteUser(u)} className="text-destructive"><Trash2 className="size-3.5" />Delete</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => setDelUser(u)} className="text-destructive"><Trash2 className="size-3.5" />Delete</DropdownMenuItem>
                             </>}
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -734,6 +739,25 @@ export function ExploreClient({
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
             <Button onClick={resetUserPassword} disabled={resetPwBusy || resetPwForm.password.length < 8 || resetPwForm.password !== resetPwForm.confirm}>
               {resetPwBusy ? <Loader2 className="size-3.5 animate-spin" /> : "Reset Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={!!delUser} onOpenChange={(o) => { if (!o) setDelUser(null) }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. <strong>{delUser?.name || delUser?.email}</strong> will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button variant="destructive" onClick={() => delUser && deleteUser(delUser)} disabled={delBusy}>
+              {delBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+              {delBusy ? "Deleting..." : "Delete User"}
             </Button>
           </DialogFooter>
         </DialogContent>

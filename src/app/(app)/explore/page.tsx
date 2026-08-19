@@ -40,6 +40,7 @@ export default async function ExplorePage() {
       orderBy: { name: "asc" },
     }),
     db.user.findMany({
+      where: { role: { not: "owner" } },
       select: {
         id: true,
         name: true,

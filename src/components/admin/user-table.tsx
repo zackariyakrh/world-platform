@@ -106,6 +106,9 @@ export function UserTable({ users }: { users: UserRow[] }) {
   const [resetPwForm, setResetPwForm] = React.useState({ password: "", confirm: "" })
   const [resetPwBusy, setResetPwBusy] = React.useState(false)
 
+  const [delUser, setDelUser] = React.useState<UserRow | null>(null)
+  const [delBusy, setDelBusy] = React.useState(false)
+
   const filtered = React.useMemo(() => {
     let result = [...users]
 
@@ -177,7 +180,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
   }
 
   async function deleteUser(userId: string) {
-    setDeletingId(userId)
+    setDelBusy(true)
     try {
       const res = await fetch("/api/admin/users", {
         method: "DELETE",
@@ -186,6 +189,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
       })
       if (res.ok) {
         toast.success("User deleted")
+        setDelUser(null)
         window.location.reload()
       } else {
         const data = await res.json()
@@ -194,7 +198,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
     } catch {
       toast.error("Something went wrong")
     } finally {
-      setDeletingId(null)
+      setDelBusy(false)
     }
   }
 
@@ -612,19 +616,11 @@ export function UserTable({ users }: { users: UserRow[] }) {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => {
-                          if (window.confirm(`Delete ${user.name || user.email}? This cannot be undone.`)) {
-                            deleteUser(user.id)
-                          }
-                        }}
-                        disabled={deletingId === user.id || user.role === "owner"}
+                        onClick={() => setDelUser(user)}
+                        disabled={user.role === "owner"}
                         className="text-destructive focus:text-destructive"
                       >
-                        {deletingId === user.id ? (
-                          <><Loader2 className="size-3.5 animate-spin" /> Deleting...</>
-                        ) : (
-                          <><Trash2 className="size-3.5" /> Delete User</>
-                        )}
+                        <Trash2 className="size-3.5" /> Delete User
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -716,6 +712,25 @@ export function UserTable({ users }: { users: UserRow[] }) {
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
             <Button onClick={resetUserPassword} disabled={resetPwBusy || resetPwForm.password.length < 8 || resetPwForm.password !== resetPwForm.confirm}>
               {resetPwBusy ? <Loader2 className="size-3.5 animate-spin" /> : "Reset Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog open={!!delUser} onOpenChange={(o) => { if (!o) setDelUser(null) }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. <strong>{delUser?.name || delUser?.email}</strong> will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button variant="destructive" onClick={() => delUser && deleteUser(delUser.id)} disabled={delBusy}>
+              {delBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+              {delBusy ? "Deleting..." : "Delete User"}
             </Button>
           </DialogFooter>
         </DialogContent>
