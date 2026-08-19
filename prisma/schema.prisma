@@ -76,6 +76,11 @@ model User {
   dmMessages       DMMessage[]
   threadFollowers  ThreadFollower[]
   mentions         Mention[]
+  visibleEvents    EventVisibility[]
+  groupMembers     GroupMember[]
+  groupInvitations GroupInvitation[]
+  invitedByGroups  GroupInvitation[] @relation("InvitedByUser")
+  ownedGroups      Group[]
   departmentId     String?
   department       Department? @relation(fields: [departmentId], references: [id])
 }
@@ -153,6 +158,7 @@ model Workspace {
   automations      Automation[]
   integrations     Integration[]
   departments      Department[]
+  groups           Group[]
   knowledgeEntries KnowledgeEntry[]
 }
 
@@ -489,27 +495,39 @@ model Comment {
 
 // ─── Calendar ───────────────────────────────────────────────
 model CalendarEvent {
-  id          String    @id @default(cuid())
-  title       String
-  description String?
-  location    String?
-  meetingLink String?
-  startTime   DateTime
-  endTime     DateTime
-  allDay      Boolean   @default(false)
-  recurrence  String?   // none, daily, weekly, monthly, yearly
-  color       String?
-  type        String    @default("event") // event, meeting, deadline, milestone
-  workspaceId String?
-  creatorId   String
-  workspace   Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
-  creator     User       @relation(fields: [creatorId], references: [id])
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  id              String    @id @default(cuid())
+  title           String
+  description     String?
+  location        String?
+  meetingLink     String?
+  startTime       DateTime
+  endTime         DateTime
+  allDay          Boolean   @default(false)
+  recurrence      String?   // none, daily, weekly, monthly, yearly
+  color           String?
+  type            String    @default("event") // event, meeting, deadline, milestone
+  visibility      String    @default("private") // public, private, restricted
+  workspaceId     String?
+  creatorId       String
+  workspace       Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  creator         User       @relation(fields: [creatorId], references: [id])
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  participants EventParticipant[]
-  reminders    EventReminder[]
-  meeting      Meeting?
+  participants      EventParticipant[]
+  visibleToUsers    EventVisibility[]
+  reminders         EventReminder[]
+  meeting           Meeting?
+}
+
+model EventVisibility {
+  id        String        @id @default(cuid())
+  eventId   String
+  userId    String
+  event     CalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
 }
 
 model EventParticipant {
@@ -866,4 +884,48 @@ model OnboardingStep {
   createdAt DateTime @default(now())
 
   @@unique([userId, step])
+}
+
+// ─── Groups ────────────────────────────────────────────────
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  avatar      String?
+  isPrivate   Boolean  @default(false)
+  creatorId   String
+  workspaceId String
+  creator     User       @relation(fields: [creatorId], references: [id])
+  workspace   Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  members     GroupMember[]
+  invitations GroupInvitation[]
+}
+
+model GroupMember {
+  id        String  @id @default(cuid())
+  groupId   String
+  userId    String
+  role      String  @default("member") // admin, member
+  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime @default(now())
+
+  @@unique([groupId, userId])
+}
+
+model GroupInvitation {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  status    String   @default("pending") // pending, accepted, declined
+  invitedById String
+  group     Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitedBy User     @relation("InvitedByUser", fields: [invitedById], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([groupId, userId])
 }

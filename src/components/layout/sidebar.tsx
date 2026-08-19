@@ -53,6 +53,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Zap,
+  Calendar,
 } from "lucide-react"
 
 interface Channel {
@@ -315,6 +316,13 @@ function Sidebar({
               collapsed={collapsed}
               onClick={() => router.push("/notifications")}
             />
+            <SidebarItem
+              icon={Users}
+              label="Groups"
+              isActive={isActive("/groups")}
+              collapsed={collapsed}
+              onClick={() => router.push("/groups")}
+            />
 
             <div className="my-2">
               <Separator />
@@ -428,53 +436,71 @@ function Sidebar({
         </ScrollArea>
 
         {/* Bottom Actions */}
-        <div className="mt-auto border-t">
+        <div className="mt-auto shrink-0 border-t">
           {/* Admin Quick Access (when collapsed) */}
           {collapsed && isAdmin && (
             <div className="flex flex-col items-center gap-1 px-2 py-2">
-              <SidebarItem
-                icon={Shield}
-                label="Admin"
-                isActive={isActive("/admin")}
-                collapsed={collapsed}
+              <button
                 onClick={() => router.push("/admin/users")}
-              />
+                title="Admin"
+                className={cn(
+                  "flex size-10 items-center justify-center rounded-lg transition-all duration-200",
+                  isActive("/admin")
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                )}
+              >
+                <Shield className="size-5" />
+              </button>
             </div>
           )}
 
-          {/* Main Bottom Actions */}
-          <div className={cn(
-            "flex items-center gap-1",
-            collapsed ? "flex-col px-2 py-2" : "px-3 py-2"
-          )}>
-            <SidebarItem
-              icon={Phone}
-              label="Call"
-              collapsed={collapsed}
-              onClick={() => {}}
-            />
-            <SidebarItem
-              icon={Settings}
-              label="Settings"
-              isActive={isActive("/settings")}
-              collapsed={collapsed}
+          {/* Main Bottom Actions - Icon Only */}
+          <div className="flex items-center gap-1 px-2 py-2">
+            <button
+              onClick={() => router.push("/calendar")}
+              title="Calendar"
+              className={cn(
+                "flex size-9 items-center justify-center rounded-lg transition-all duration-200",
+                isActive("/calendar")
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+              )}
+            >
+              <Calendar className="size-4" />
+            </button>
+            <button
               onClick={() => router.push("/settings")}
-            />
-            <SidebarItem
-              icon={HelpCircle}
-              label="Help"
-              isActive={isActive("/help")}
-              collapsed={collapsed}
+              title="Settings"
+              className={cn(
+                "flex size-9 items-center justify-center rounded-lg transition-all duration-200",
+                isActive("/settings")
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+              )}
+            >
+              <Settings className="size-4" />
+            </button>
+            <button
               onClick={() => router.push("/help")}
-            />
-            <div className={cn(!collapsed && "ml-auto")}>
-              <SidebarItem
-                icon={LogOut}
-                label="Sign Out"
-                collapsed={collapsed}
+              title="Help"
+              className={cn(
+                "flex size-9 items-center justify-center rounded-lg transition-all duration-200",
+                isActive("/help")
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+              )}
+            >
+              <HelpCircle className="size-4" />
+            </button>
+            <div className="ml-auto">
+              <button
                 onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
-                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              />
+                title="Sign Out"
+                className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
+              >
+                <LogOut className="size-4" />
+              </button>
             </div>
           </div>
 

@@ -12,7 +12,56 @@ const NEW_COLUMNS = {
     { name: "address", type: "TEXT" },
     { name: "usernameChangedAt", type: "DATETIME" },
   ],
+  CalendarEvent: [
+    { name: "visibility", type: "TEXT DEFAULT 'private'" },
+  ],
 };
+
+const NEW_TABLES = [
+  `CREATE TABLE IF NOT EXISTS "EventVisibility" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "eventId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    FOREIGN KEY ("eventId") REFERENCES "CalendarEvent"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE,
+    UNIQUE("eventId", "userId")
+  )`,
+  `CREATE TABLE IF NOT EXISTS "Group" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "avatar" TEXT,
+    "isPrivate" BOOLEAN NOT NULL DEFAULT false,
+    "creatorId" TEXT NOT NULL,
+    "workspaceId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    FOREIGN KEY ("creatorId") REFERENCES "User"("id"),
+    FOREIGN KEY ("workspaceId") REFERENCES "Workspace"("id") ON DELETE CASCADE
+  )`,
+  `CREATE TABLE IF NOT EXISTS "GroupMember" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "groupId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "role" TEXT NOT NULL DEFAULT 'member',
+    "joinedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("groupId") REFERENCES "Group"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE,
+    UNIQUE("groupId", "userId")
+  )`,
+  `CREATE TABLE IF NOT EXISTS "GroupInvitation" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "groupId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'pending',
+    "invitedById" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("groupId") REFERENCES "Group"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("invitedById") REFERENCES "User"("id"),
+    UNIQUE("groupId", "userId")
+  )`,
+];
 
 async function main() {
   const TURSO_URL = process.env.DATABASE_URL;
@@ -24,6 +73,27 @@ async function main() {
   }
 
   const turso = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
+
+  // Get existing tables
+  const existingTables = await turso.execute(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_%'"
+  );
+  const existingTableNames = new Set(existingTables.rows.map(r => r.name));
+
+  // Create new tables
+  let tablesCreated = 0;
+  for (const ddl of NEW_TABLES) {
+    const match = ddl.match(/CREATE TABLE IF NOT EXISTS "(\w+)"/);
+    if (match && !existingTableNames.has(match[1])) {
+      try {
+        await turso.execute(ddl);
+        console.log(`[push-schema] Created table ${match[1]}`);
+        tablesCreated++;
+      } catch (e) {
+        console.error(`[push-schema] Error creating table ${match[1]}: ${e.message}`);
+      }
+    }
+  }
 
   // Get existing columns per table
   const existing = await turso.execute(
@@ -55,7 +125,7 @@ async function main() {
     }
   }
 
-  console.log(`[push-schema] Done — added ${added} columns`);
+  console.log(`[push-schema] Done — ${tablesCreated} tables, ${added} columns`);
 }
 
 main().catch((e) => {
