@@ -40,7 +40,9 @@ export default async function ExplorePage() {
       orderBy: { name: "asc" },
     }),
     db.user.findMany({
-      where: { role: { not: "owner" } },
+      where: isAdmin
+        ? { role: { not: "owner" } }
+        : { workspaceMembers: { some: { workspaceId: { in: workspaceIds } } }, role: { not: "owner" } },
       select: {
         id: true,
         name: true,
@@ -61,7 +63,9 @@ export default async function ExplorePage() {
       take: 50,
     }),
     db.project.findMany({
-      where: { workspaceId: { in: workspaceIds } },
+      where: isAdmin
+        ? { workspaceId: { in: workspaceIds } }
+        : { workspaceId: { in: workspaceIds }, tasks: { some: { assigneeId: userId } } },
       select: {
         id: true,
         name: true,
@@ -90,6 +94,7 @@ export default async function ExplorePage() {
       where: {
         project: { workspaceId: { in: workspaceIds } },
         status: { not: "done" },
+        ...(isAdmin ? {} : { assigneeId: userId }),
       },
       select: {
         id: true,

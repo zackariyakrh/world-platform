@@ -362,7 +362,7 @@ function Sidebar({
               <Mic className="size-4" />
             </Button>
             <div className="ml-auto">
-              <Button variant="ghost" size="icon-xs" onClick={() => signOut({ callbackUrl: "/auth/login" })} className="text-destructive hover:text-destructive hover:bg-destructive/10">
+              <Button variant="ghost" size="icon-xs" onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })} className="text-destructive hover:text-destructive hover:bg-destructive/10">
                 <LogOut className="size-4" />
               </Button>
             </div>

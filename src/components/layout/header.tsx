@@ -145,7 +145,7 @@ function Header({
             {themeLabel}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem variant="destructive" onClick={() => signOut({ callbackUrl: "/auth/login" })}>
+          <DropdownMenuItem variant="destructive" onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}>
             <LogOut className="size-4" />
             Sign Out
           </DropdownMenuItem>
