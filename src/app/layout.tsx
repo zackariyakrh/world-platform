@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { getBrandingSettings } from "@/lib/settings";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,13 +16,16 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Nexus",
-  description: "Collaboration platform for modern teams",
-  icons: {
-    icon: "/favicon.svg",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getBrandingSettings();
+  return {
+    title: branding.appName || "Nexus",
+    description: branding.description || "Collaboration platform for modern teams",
+    icons: {
+      icon: "/favicon.svg",
+    },
+  };
+}
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
