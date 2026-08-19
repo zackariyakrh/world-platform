@@ -51,13 +51,20 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { userId, role, isActive, firstName, lastName, phone, gender, address } = body
+    const { userId, role, isActive, firstName, lastName, phone, gender, address, resetPassword } = body
 
     if (!userId || typeof userId !== "string") {
       return NextResponse.json({ error: "userId is required" }, { status: 400 })
     }
 
     const updateData: Record<string, string | boolean> = {}
+
+    if (resetPassword) {
+      if (typeof resetPassword !== "string" || resetPassword.length < 8) {
+        return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 })
+      }
+      updateData.passwordHash = await bcrypt.hash(resetPassword, 12)
+    }
 
     if (role !== undefined) {
       const validRoles = ["owner", "admin", "manager", "moderator", "member", "guest"]

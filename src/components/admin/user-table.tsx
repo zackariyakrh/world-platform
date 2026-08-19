@@ -51,6 +51,7 @@ import {
   Eye,
   EyeOff,
   Trash2,
+  KeyRound,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -98,6 +99,12 @@ export function UserTable({ users }: { users: UserRow[] }) {
     role: "member",
   })
   const [formErrors, setFormErrors] = React.useState<Record<string, string>>({})
+
+  const [viewUser, setViewUser] = React.useState<UserRow | null>(null)
+  const [resetPwOpen, setResetPwOpen] = React.useState(false)
+  const [resetPwUser, setResetPwUser] = React.useState<UserRow | null>(null)
+  const [resetPwForm, setResetPwForm] = React.useState({ password: "", confirm: "" })
+  const [resetPwBusy, setResetPwBusy] = React.useState(false)
 
   const filtered = React.useMemo(() => {
     let result = [...users]
@@ -189,6 +196,28 @@ export function UserTable({ users }: { users: UserRow[] }) {
     } finally {
       setDeletingId(null)
     }
+  }
+
+  function openResetPw(u: UserRow) {
+    setResetPwUser(u)
+    setResetPwForm({ password: "", confirm: "" })
+    setResetPwOpen(true)
+  }
+
+  async function resetUserPassword() {
+    if (!resetPwUser) return
+    if (resetPwForm.password.length < 8) { toast.error("Password must be at least 8 characters"); return }
+    if (resetPwForm.password !== resetPwForm.confirm) { toast.error("Passwords do not match"); return }
+    setResetPwBusy(true)
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: resetPwUser.id, resetPassword: resetPwForm.password }),
+      })
+      if (res.ok) { toast.success(`Password reset for ${resetPwUser.name || resetPwUser.email}`); setResetPwOpen(false) }
+      else { const d = await res.json(); toast.error(d.error || "Failed") }
+    } catch { toast.error("Something went wrong") } finally { setResetPwBusy(false) }
   }
 
   function validateForm() {
@@ -559,8 +588,11 @@ export function UserTable({ users }: { users: UserRow[] }) {
                       <MoreHorizontal className="size-3.5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setViewUser(user)}><Eye className="size-3.5" />View Details</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openResetPw(user)}><KeyRound className="size-3.5" />Reset Password</DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuGroup>
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                      <DropdownMenuLabel>Change Role</DropdownMenuLabel>
                       {ROLES.filter((r) => r !== "owner").map((r) => (
                         <DropdownMenuItem
                           key={r}
@@ -602,6 +634,92 @@ export function UserTable({ users }: { users: UserRow[] }) {
           )}
         </TableBody>
       </Table>
+
+      {/* User Details Dialog */}
+      <Dialog open={!!viewUser} onOpenChange={(o) => { if (!o) setViewUser(null) }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>Full profile information for this user.</DialogDescription>
+          </DialogHeader>
+          {viewUser && (
+            <div className="flex flex-col gap-5 py-1">
+              <div className="flex items-center gap-4">
+                <Avatar className="size-14">
+                  <AvatarImage src={viewUser.avatar ?? undefined} />
+                  <AvatarFallback className="text-lg">{getInitials(viewUser.name, viewUser.email)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-base font-semibold text-foreground">{viewUser.name ?? "Unnamed"}</p>
+                  <p className="text-sm text-muted-foreground">{viewUser.email}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Badge variant={roleBadgeVariant(viewUser.role)}>{viewUser.role}</Badge>
+                    {!viewUser.isActive && <Badge variant="destructive" className="h-5 text-[10px]">Suspended</Badge>}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">First Name</span>
+                  <span className="text-foreground">{viewUser.firstName || "—"}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Last Name</span>
+                  <span className="text-foreground">{viewUser.lastName || "—"}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Phone</span>
+                  <span className="text-foreground">{viewUser.phone || "—"}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Gender</span>
+                  <span className="text-foreground capitalize">{viewUser.gender || "—"}</span>
+                </div>
+                <div className="col-span-2 flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Address</span>
+                  <span className="text-foreground">{viewUser.address || "—"}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Joined</span>
+                  <span className="text-foreground">{new Date(viewUser.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Close</DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPwOpen} onOpenChange={setResetPwOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>Set a new password for {resetPwUser?.name || resetPwUser?.email}.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-5 py-1">
+            <div className="flex flex-col gap-2">
+              <Label>New Password</Label>
+              <Input type="password" placeholder="Min 8 characters" value={resetPwForm.password} onChange={(e) => setResetPwForm({ ...resetPwForm, password: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") resetUserPassword() }} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Confirm Password</Label>
+              <Input type="password" placeholder="Re-enter password" value={resetPwForm.confirm} onChange={(e) => setResetPwForm({ ...resetPwForm, confirm: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") resetUserPassword() }} />
+            </div>
+            {resetPwForm.password && resetPwForm.confirm && resetPwForm.password !== resetPwForm.confirm && (
+              <p className="text-xs text-destructive">Passwords do not match</p>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button onClick={resetUserPassword} disabled={resetPwBusy || resetPwForm.password.length < 8 || resetPwForm.password !== resetPwForm.confirm}>
+              {resetPwBusy ? <Loader2 className="size-3.5 animate-spin" /> : "Reset Password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

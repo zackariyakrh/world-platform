@@ -39,7 +39,7 @@ import {
 import {
   Search, Hash, Users, Briefcase, MessageSquare, ListTodo,
   ArrowRight, Circle, Clock, Plus, MoreHorizontal, Pencil,
-  Trash2, Loader2,
+  Trash2, Loader2, Eye, KeyRound, Mail, Phone, MapPin, UserCheck,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -110,6 +110,12 @@ export function ExploreClient({
   const [uOpen, setUOpen] = React.useState(false)
   const [uForm, setUForm] = React.useState({ firstName: "", lastName: "", email: "", phone: "", gender: "", address: "", password: "", role: "member" })
   const [uBusy, setUBusy] = React.useState(false)
+
+  const [viewUser, setViewUser] = React.useState<User | null>(null)
+  const [resetPwOpen, setResetPwOpen] = React.useState(false)
+  const [resetPwUser, setResetPwUser] = React.useState<User | null>(null)
+  const [resetPwForm, setResetPwForm] = React.useState({ password: "", confirm: "" })
+  const [resetPwBusy, setResetPwBusy] = React.useState(false)
 
   const f = React.useMemo(() => search.toLowerCase(), [search])
   const fch = React.useMemo(() => f ? channels.filter((c) => c.name.toLowerCase().includes(f) || c.description?.toLowerCase().includes(f)) : channels, [channels, f])
@@ -259,6 +265,24 @@ export function ExploreClient({
     if (res.ok) { setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, role } : x)); toast.success(`Role changed to ${role}`) }
   }
 
+  function openResetPw(u: User) {
+    setResetPwUser(u)
+    setResetPwForm({ password: "", confirm: "" })
+    setResetPwOpen(true)
+  }
+
+  async function resetUserPassword() {
+    if (!resetPwUser) return
+    if (resetPwForm.password.length < 8) { toast.error("Password must be at least 8 characters"); return }
+    if (resetPwForm.password !== resetPwForm.confirm) { toast.error("Passwords do not match"); return }
+    setResetPwBusy(true)
+    try {
+      const res = await api("/api/admin/users", "PATCH", { userId: resetPwUser.id, resetPassword: resetPwForm.password })
+      if (res.ok) { toast.success(`Password reset for ${resetPwUser.name || resetPwUser.email}`); setResetPwOpen(false) }
+      else { const d = await res.json(); toast.error(d.error || "Failed") }
+    } catch { toast.error("Error") } finally { setResetPwBusy(false) }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div className="relative">
@@ -355,6 +379,9 @@ export function ExploreClient({
                         <DropdownMenu>
                           <DropdownMenuTrigger render={<Button variant="ghost" size="icon-xs" />}><MoreHorizontal className="size-3.5" /></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setViewUser(u)}><Eye className="size-3.5" />View Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => openResetPw(u)}><KeyRound className="size-3.5" />Reset Password</DropdownMenuItem>
+                            <DropdownMenuSeparator />
                             <DropdownMenuGroup>
                               <DropdownMenuLabel>Change Role</DropdownMenuLabel>
                               {["admin", "manager", "member", "guest"].map((r) => (
@@ -619,6 +646,95 @@ export function ExploreClient({
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
             <Button onClick={saveUser} disabled={uBusy}>{uBusy ? <Loader2 className="size-3.5 animate-spin" /> : "Create User"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Details Dialog */}
+      <Dialog open={!!viewUser} onOpenChange={(o) => { if (!o) setViewUser(null) }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>User Details</DialogTitle>
+            <DialogDescription>Full profile information for this user.</DialogDescription>
+          </DialogHeader>
+          {viewUser && (
+            <div className="flex flex-col gap-5 py-1">
+              <div className="flex items-center gap-4">
+                <Avatar className="size-14">
+                  <AvatarImage src={viewUser.avatar ?? undefined} />
+                  <AvatarFallback className="text-lg">{getInitials(viewUser.name, viewUser.email)}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-base font-semibold text-foreground">{viewUser.name ?? "Unnamed"}</p>
+                  <p className="text-sm text-muted-foreground">{viewUser.email}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Badge variant="outline" className="h-5 text-[10px]">{viewUser.role}</Badge>
+                    {!viewUser.isActive && <Badge variant="destructive" className="h-5 text-[10px]">Suspended</Badge>}
+                  </div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">First Name</span>
+                  <span className="text-foreground">{viewUser.firstName || "—"}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Last Name</span>
+                  <span className="text-foreground">{viewUser.lastName || "—"}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Phone</span>
+                  <span className="text-foreground">{viewUser.phone || "—"}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Gender</span>
+                  <span className="text-foreground capitalize">{viewUser.gender || "—"}</span>
+                </div>
+                <div className="col-span-2 flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Address</span>
+                  <span className="text-foreground">{viewUser.address || "—"}</span>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-medium uppercase text-muted-foreground">Status</span>
+                  <div className="flex items-center gap-2">
+                    <div className={`size-2 rounded-full ${statusColor(viewUser.status)}`} />
+                    <span className="text-foreground capitalize">{viewUser.status}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Close</DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Dialog */}
+      <Dialog open={resetPwOpen} onOpenChange={setResetPwOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reset Password</DialogTitle>
+            <DialogDescription>Set a new password for {resetPwUser?.name || resetPwUser?.email}.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-5 py-1">
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-medium uppercase text-muted-foreground">New Password</Label>
+              <Input type="password" placeholder="Min 8 characters" value={resetPwForm.password} onChange={(e) => setResetPwForm({ ...resetPwForm, password: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") resetUserPassword() }} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label className="text-xs font-medium uppercase text-muted-foreground">Confirm Password</Label>
+              <Input type="password" placeholder="Re-enter password" value={resetPwForm.confirm} onChange={(e) => setResetPwForm({ ...resetPwForm, confirm: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") resetUserPassword() }} />
+            </div>
+            {resetPwForm.password && resetPwForm.confirm && resetPwForm.password !== resetPwForm.confirm && (
+              <p className="text-xs text-destructive">Passwords do not match</p>
+            )}
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button onClick={resetUserPassword} disabled={resetPwBusy || resetPwForm.password.length < 8 || resetPwForm.password !== resetPwForm.confirm}>
+              {resetPwBusy ? <Loader2 className="size-3.5 animate-spin" /> : "Reset Password"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
