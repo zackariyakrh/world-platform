@@ -176,7 +176,7 @@ function Sidebar({
       <aside
         data-slot="sidebar"
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex flex-col text-sidebar-foreground",
+          "fixed inset-y-0 left-0 z-50 flex flex-col overflow-hidden text-sidebar-foreground",
           "border-r border-sidebar-border",
           "before:pointer-events-none before:absolute before:inset-y-0 before:right-0 before:w-px before:bg-gradient-to-b before:from-primary/20 before:via-primary/5 before:to-transparent",
           collapsed ? "w-[68px]" : "w-64",
@@ -525,7 +525,7 @@ function SidebarItem({
       onClick={onClick}
       title={collapsed ? label : undefined}
       className={cn(
-        "group flex items-center rounded-lg transition-all duration-200",
+        "group relative flex items-center rounded-lg transition-all duration-200",
         collapsed
           ? "size-10 justify-center"
           : "w-full gap-2.5 px-2.5 py-2",
