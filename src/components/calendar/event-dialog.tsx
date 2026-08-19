@@ -27,6 +27,9 @@ import {
   Bell,
   Repeat,
   Trash2,
+  Eye,
+  EyeOff,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -88,6 +91,15 @@ export function EventDialog({ event, onSave, onClose }: EventDialogProps) {
   const [recurrence, setRecurrence] = useState(event?.recurrence ?? "none")
   const [selectedReminders, setSelectedReminders] = useState<number[]>([])
   const [saving, setSaving] = useState(false)
+  const [visibility, setVisibility] = useState<string>(
+    (event as any)?.visibility ?? "private"
+  )
+  const [visibleToUserIds, setVisibleToUserIds] = useState<string[]>(
+    (event as any)?.visibleToUsers?.map((v: any) => v.userId) ?? []
+  )
+  const [workspaceUsers, setWorkspaceUsers] = useState<
+    { id: string; name: string; email: string; avatar: string | null }[]
+  >([])
 
   const defaultStart = event?.startTime
     ? new Date(event.startTime)
@@ -110,6 +122,23 @@ export function EventDialog({ event, onSave, onClose }: EventDialogProps) {
       setSelectedReminders(event.reminders.map((r) => r.minutes))
     }
   }, [event])
+
+  useEffect(() => {
+    if (visibility === "restricted" && workspaceUsers.length === 0) {
+      fetch("/api/workspaces")
+        .then((r) => r.json())
+        .then((data) => {
+          const users = data
+            .flatMap((w: any) => w.members?.map((m: any) => m.user) || [])
+            .filter(
+              (u: any, i: number, arr: any[]) =>
+                arr.findIndex((x: any) => x.id === u.id) === i
+            )
+          setWorkspaceUsers(users)
+        })
+        .catch(() => {})
+    }
+  }, [visibility])
 
   const handleSave = async () => {
     if (!title.trim()) return
@@ -142,6 +171,8 @@ export function EventDialog({ event, onSave, onClose }: EventDialogProps) {
           type,
           recurrence: recurrence === "none" ? null : recurrence,
           reminderMinutes: selectedReminders,
+          visibility,
+          visibleToUserIds: visibility === "restricted" ? visibleToUserIds : [],
         }),
       })
 
@@ -334,6 +365,63 @@ export function EventDialog({ event, onSave, onClose }: EventDialogProps) {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label className="gap-1.5">
+              <Eye className="size-3.5" />
+              Visibility
+            </Label>
+            <div className="flex gap-2">
+              {[
+                { value: "private", label: "Private", icon: EyeOff, desc: "Only you" },
+                { value: "public", label: "Public", icon: Eye, desc: "Everyone" },
+                { value: "restricted", label: "Restricted", icon: Users, desc: "Select people" },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setVisibility(opt.value)}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
+                    visibility === opt.value
+                      ? "border-foreground/20 bg-muted text-foreground"
+                      : "border-border text-muted-foreground hover:bg-muted/50"
+                  )}
+                >
+                  <opt.icon className="size-3.5" />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {visibility === "restricted" && (
+              <div className="flex flex-col gap-2 mt-1 max-h-40 overflow-y-auto rounded-lg border border-border p-2">
+                {workspaceUsers.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No users found</p>
+                ) : (
+                  workspaceUsers.map((user) => (
+                    <label
+                      key={user.id}
+                      className="flex items-center gap-2 rounded px-1 py-0.5 hover:bg-muted/50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={visibleToUserIds.includes(user.id)}
+                        onChange={(e) => {
+                          setVisibleToUserIds((prev) =>
+                            e.target.checked
+                              ? [...prev, user.id]
+                              : prev.filter((id) => id !== user.id)
+                          )
+                        }}
+                        className="size-3.5 rounded"
+                      />
+                      <span className="text-xs font-medium truncate">{user.name}</span>
+                      <span className="text-[10px] text-muted-foreground truncate">{user.email}</span>
+                    </label>
+                  ))
+                )}
+              </div>
+            )}
           </div>
         </div>
 

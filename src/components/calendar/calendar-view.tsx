@@ -25,6 +25,9 @@ import {
   CalendarDays,
   Clock,
   MapPin,
+  Eye,
+  EyeOff,
+  Users,
 } from "lucide-react"
 import { EventDialog } from "@/components/calendar/event-dialog"
 
@@ -40,6 +43,7 @@ type CalendarEvent = {
   recurrence?: string | null
   color?: string | null
   type: string
+  visibility?: string
   participants?: Array<{
     id: string
     user: { id: string; name: string | null; avatar: string | null }
@@ -61,6 +65,12 @@ const eventTypeBadgeColors: Record<string, string> = {
   deadline: "text-red-500 bg-red-500/10 border-red-500/20",
   milestone: "text-green-500 bg-green-500/10 border-green-500/20",
   event: "text-purple-500 bg-purple-500/10 border-purple-500/20",
+}
+
+function VisibilityIcon({ visibility, className }: { visibility?: string; className?: string }) {
+  if (visibility === "public") return <Eye className={cn("size-2.5 shrink-0", className)} />
+  if (visibility === "restricted") return <Users className={cn("size-2.5 shrink-0", className)} />
+  return <EyeOff className={cn("size-2.5 shrink-0", className)} />
 }
 
 interface CalendarViewProps {
@@ -264,6 +274,7 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
                             >
                               <span className={cn("size-1.5 shrink-0 rounded-full", colorClass)} />
                               <span className="truncate">{event.title}</span>
+                              <VisibilityIcon visibility={event.visibility} className="text-white/60" />
                             </button>
                           )
                         })}
@@ -431,6 +442,7 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
                         <span className="truncate text-xs font-medium text-foreground">
                           {event.title}
                         </span>
+                        <VisibilityIcon visibility={event.visibility} className="text-muted-foreground" />
                       </div>
                       <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
                         <Clock className="size-3" />
