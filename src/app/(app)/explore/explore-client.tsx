@@ -717,7 +717,7 @@ export function ExploreClient({
 
       {/* Reset Password Dialog */}
       <Dialog open={resetPwOpen} onOpenChange={setResetPwOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Reset Password</DialogTitle>
             <DialogDescription>Set a new password for {resetPwUser?.name || resetPwUser?.email}.</DialogDescription>
@@ -746,7 +746,7 @@ export function ExploreClient({
 
       {/* Delete User Confirmation Dialog */}
       <Dialog open={!!delUser} onOpenChange={(o) => { if (!o) setDelUser(null) }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>

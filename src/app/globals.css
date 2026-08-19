@@ -191,6 +191,12 @@
   .glow-card {
     position: relative;
     border: 1px solid oklch(from var(--glow) l c h / 0.12);
+    transition: border-color 0.2s ease, box-shadow 0.3s ease, transform 0.2s ease;
+  }
+
+  .glow-card:hover {
+    border-color: oklch(from var(--glow) l c h / 0.25);
+    box-shadow: 0 0 20px oklch(from var(--glow) l c h / 0.06);
   }
 
   .glow-border {
@@ -318,6 +324,27 @@
   html {
     font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
     scroll-behavior: smooth;
+  }
+
+  /* Global smooth transitions for interactive elements */
+  a, button, [role="button"], input, select, textarea {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform, filter;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+  }
+
+  /* Smooth page transitions */
+  [data-slot="sidebar"] a,
+  [data-slot="sidebar"] button {
+    transition-property: color, background-color, box-shadow, transform, opacity;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
+  /* Active press effect for interactive elements */
+  a:active:not([role="button"]),
+  button:active:not([disabled]) {
+    transform: scale(0.98);
   }
 
   /* Global glow focus ring */
