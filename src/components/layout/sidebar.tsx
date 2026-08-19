@@ -187,7 +187,7 @@ function Sidebar({
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
-                <button className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm font-semibold hover:bg-sidebar-accent transition-colors" />
+                <button className="flex min-w-0 flex-1 items-center gap-2.5 rounded-lg px-2 py-1.5 text-base font-semibold hover:bg-sidebar-accent transition-colors" />
               }
             >
               <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground">
@@ -238,7 +238,7 @@ function Sidebar({
               const event = new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })
               window.dispatchEvent(event)
             }}
-            className="flex h-8 w-full items-center gap-2 rounded-md bg-sidebar-accent/50 px-2 text-sm text-muted-foreground transition-colors hover:bg-sidebar-accent"
+            className="flex h-8 w-full items-center gap-2 rounded-md bg-sidebar-accent/50 px-2 text-base text-muted-foreground transition-colors hover:bg-sidebar-accent"
           >
             <Search className="size-4 shrink-0" />
             <span>Search</span>
@@ -387,7 +387,7 @@ function SidebarItem({
   return (
     <button
       onClick={onClick}
-      className="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-all duration-200 hover:shadow-[inset_0_0_20px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.06)]"
+      className="group flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-base text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-all duration-200 hover:shadow-[inset_0_0_20px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.06)]"
     >
       <Icon className="size-4 shrink-0 transition-all duration-200 group-hover:drop-shadow-[0_0_6px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.4)]" />
       <span className="truncate">{label}</span>
@@ -413,7 +413,7 @@ function ChannelItem({
     <button
       onClick={onClick}
       className={cn(
-        "group/channel flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-all duration-200",
+        "group/channel flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-base transition-all duration-200",
         isActive
           ? "bg-sidebar-accent text-foreground shadow-[inset_0_0_24px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.08)] border-l-2 border-primary/50 -ml-px pl-[9px]"
           : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground hover:shadow-[inset_0_0_20px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.04)]"

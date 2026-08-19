@@ -35,7 +35,7 @@ function LoadingSpinner({
         className={cn("animate-spin text-muted-foreground", spinnerSizes[size])}
       />
       {label && (
-        <p className="text-sm text-muted-foreground">{label}</p>
+        <p className="text-base text-muted-foreground">{label}</p>
       )}
       <span className="sr-only">Loading...</span>
     </div>

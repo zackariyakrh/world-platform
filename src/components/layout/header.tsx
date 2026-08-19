@@ -76,7 +76,7 @@ function Header({
       </Button>
 
       {title && (
-        <h1 className="truncate text-sm font-medium">{title}</h1>
+        <h1 className="truncate text-base font-medium">{title}</h1>
       )}
 
       <div className="flex-1" />

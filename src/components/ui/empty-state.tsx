@@ -38,9 +38,9 @@ function EmptyState({
         </div>
       )}
       <div className="flex flex-col gap-1">
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
+        <h3 className="text-base font-medium text-foreground">{title}</h3>
         {description && (
-          <p className="text-sm text-muted-foreground">{description}</p>
+          <p className="text-base text-muted-foreground">{description}</p>
         )}
       </div>
       {action && (
