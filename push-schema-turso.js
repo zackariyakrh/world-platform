@@ -1,8 +1,7 @@
 #!/usr/bin/env node
-// Pushes the local SQLite schema to Turso at build time
+// Pushes Prisma schema DDL to Turso at build time
 const { createClient } = require("@libsql/client");
-const Database = require("better-sqlite3");
-const path = require("path");
+const { execSync } = require("child_process");
 
 async function main() {
   const TURSO_URL = process.env.DATABASE_URL;
@@ -13,18 +12,20 @@ async function main() {
     return;
   }
 
-  console.log("[push-schema] Reading schema from local SQLite...");
-  const dbPath = path.join(__dirname, "prisma", "dev.db");
-  const sqlite = new Database(dbPath);
+  console.log("[push-schema] Generating DDL from Prisma schema...");
+  const raw = execSync(
+    "npx prisma migrate diff --from-empty --to-schema prisma/schema.prisma --script",
+    { encoding: "utf-8", cwd: __dirname }
+  );
 
-  const stmts = sqlite
-    .prepare(
-      "SELECT sql FROM sqlite_master WHERE type IN ('table','index') AND sql IS NOT NULL AND name NOT LIKE 'sqlite_%' AND name NOT LIKE '_prisma_%'"
-    )
-    .all()
-    .map((r) => r.sql);
+  const stmts = raw
+    .split("\n")
+    .filter((line) => line.trim().length > 0 && !line.startsWith("--"))
+    .join("\n")
+    .split(";")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
 
-  sqlite.close();
   console.log(`[push-schema] Found ${stmts.length} statements`);
 
   const turso = createClient({ url: TURSO_URL, authToken: TURSO_TOKEN });
@@ -35,8 +36,9 @@ async function main() {
       await turso.execute(sql);
       pushed++;
     } catch (e) {
-      if (!String(e.message || "").includes("already exists")) {
-        console.error(`[push-schema] Error: ${e.message}`);
+      const msg = String(e.message || "");
+      if (!msg.includes("already exists") && !msg.includes("Duplicate")) {
+        console.error(`[push-schema] Error: ${msg.substring(0, 200)}`);
       }
     }
   }
