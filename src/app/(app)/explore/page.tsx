@@ -9,6 +9,12 @@ export default async function ExplorePage() {
 
   if (!userId) return null
 
+  const currentUser = await db.user.findUnique({
+    where: { id: userId },
+    select: { role: true, isSuperAdmin: true },
+  })
+  const isAdmin = currentUser?.isSuperAdmin || currentUser?.role === "owner" || currentUser?.role === "admin"
+
   const userWorkspaces = await db.workspaceMember.findMany({
     where: { userId },
     select: { workspaceId: true },
@@ -34,7 +40,6 @@ export default async function ExplorePage() {
       orderBy: { name: "asc" },
     }),
     db.user.findMany({
-      where: { isActive: true },
       select: {
         id: true,
         name: true,
@@ -42,6 +47,8 @@ export default async function ExplorePage() {
         avatar: true,
         jobTitle: true,
         status: true,
+        role: true,
+        isActive: true,
       },
       orderBy: { name: "asc" },
       take: 50,
@@ -109,6 +116,7 @@ export default async function ExplorePage() {
         projects={projects as any}
         recentMessages={recentMessages as any}
         recentTasks={recentTasks as any}
+        isAdmin={isAdmin}
       />
     </div>
   )
