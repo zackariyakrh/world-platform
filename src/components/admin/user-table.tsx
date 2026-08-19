@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -558,8 +559,8 @@ export function UserTable({ users }: { users: UserRow[] }) {
                       <MoreHorizontal className="size-3.5" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuGroup>
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
                       {ROLES.filter((r) => r !== "owner").map((r) => (
                         <DropdownMenuItem
                           key={r}
@@ -569,6 +570,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
                           Make {r.charAt(0).toUpperCase() + r.slice(1)}
                         </DropdownMenuItem>
                       ))}
+                      </DropdownMenuGroup>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => toggleActive(user.id, user.isActive)}

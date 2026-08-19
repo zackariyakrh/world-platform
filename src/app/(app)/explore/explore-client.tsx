@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -354,12 +355,14 @@ export function ExploreClient({
                         <DropdownMenu>
                           <DropdownMenuTrigger render={<Button variant="ghost" size="icon-xs" />}><MoreHorizontal className="size-3.5" /></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Change Role</DropdownMenuLabel>
-                            {["admin", "manager", "member", "guest"].map((r) => (
-                              <DropdownMenuItem key={r} onClick={() => changeUserRole(u, r)} disabled={u.role === r}>
-                                Make {r.charAt(0).toUpperCase() + r.slice(1)}
-                              </DropdownMenuItem>
-                            ))}
+                            <DropdownMenuGroup>
+                              <DropdownMenuLabel>Change Role</DropdownMenuLabel>
+                              {["admin", "manager", "member", "guest"].map((r) => (
+                                <DropdownMenuItem key={r} onClick={() => changeUserRole(u, r)} disabled={u.role === r}>
+                                  Make {r.charAt(0).toUpperCase() + r.slice(1)}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuGroup>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => toggleUserActive(u)}>{u.isActive ? "Suspend" : "Reactivate"}</DropdownMenuItem>
                             {u.role !== "owner" && <>
