@@ -191,32 +191,6 @@
   .glow-card {
     position: relative;
     border: 1px solid oklch(from var(--glow) l c h / 0.12);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .glow-card::before {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    background: linear-gradient(135deg, oklch(from var(--glow) l c h / 0.15), transparent 50%, oklch(from var(--glow-accent) l c h / 0.1));
-    opacity: 0;
-    transition: opacity 0.4s ease;
-    pointer-events: none;
-    z-index: -1;
-  }
-
-  .glow-card:hover::before {
-    opacity: 1;
-  }
-
-  .glow-card:hover {
-    border-color: oklch(from var(--glow) l c h / 0.3);
-    box-shadow:
-      0 0 20px oklch(from var(--glow) l c h / 0.08),
-      0 0 40px oklch(from var(--glow) l c h / 0.04),
-      0 4px 20px oklch(from var(--glow) l c h / 0.06);
-    transform: translateY(-1px);
   }
 
   .glow-border {
@@ -384,14 +358,6 @@
 /* ─── Dark Mode Specific Glow Effects ─────────────────────── */
 .dark .glow-card {
   border-color: oklch(from var(--glow) l c h / 0.08);
-}
-
-.dark .glow-card:hover {
-  border-color: oklch(from var(--glow) l c h / 0.25);
-  box-shadow:
-    0 0 25px oklch(from var(--glow) l c h / 0.12),
-    0 0 50px oklch(from var(--glow) l c h / 0.06),
-    0 8px 32px oklch(from var(--glow) l c h / 0.08);
 }
 
 .dark .glow-input:focus {

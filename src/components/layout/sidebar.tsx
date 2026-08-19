@@ -117,6 +117,10 @@ function Sidebar({
       }
     }
     loadChannels()
+
+    function onChannelsChanged() { loadChannels() }
+    window.addEventListener("channels:changed", onChannelsChanged)
+    return () => window.removeEventListener("channels:changed", onChannelsChanged)
   }, [workspaceId])
 
   async function handleCreateChannel() {
@@ -252,36 +256,34 @@ function Sidebar({
                   >
                     <Plus className="size-3" />
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
+                  <DialogContent className="sm:max-w-lg">
                     <DialogHeader>
                       <DialogTitle>Create Channel</DialogTitle>
                       <DialogDescription>Add a new channel to your workspace.</DialogDescription>
                     </DialogHeader>
-                    <div className="flex flex-col gap-4 py-2">
+                    <div className="flex flex-col gap-5 py-1">
                       <div className="flex flex-col gap-2">
-                        <Label>Name</Label>
+                        <Label className="text-xs font-medium uppercase text-muted-foreground">Name</Label>
                         <Input
                           placeholder="e.g. marketing"
                           value={createName}
                           onChange={(e) => setCreateName(e.target.value)}
-                          className="glow-input"
                           onKeyDown={(e) => { if (e.key === "Enter") handleCreateChannel() }}
                         />
                       </div>
                       <div className="flex flex-col gap-2">
-                        <Label>Description (optional)</Label>
+                        <Label className="text-xs font-medium uppercase text-muted-foreground">Description</Label>
                         <Input
                           placeholder="What is this channel about?"
                           value={createDesc}
                           onChange={(e) => setCreateDesc(e.target.value)}
-                          className="glow-input"
                         />
                       </div>
                     </div>
                     <DialogFooter>
                       <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-                      <Button onClick={handleCreateChannel} disabled={creating || !createName.trim()} className="glow-button">
-                        {creating ? <Loader2 className="size-3.5 animate-spin" /> : "Create"}
+                      <Button onClick={handleCreateChannel} disabled={creating || !createName.trim()}>
+                        {creating ? <Loader2 className="size-3.5 animate-spin" /> : "Create Channel"}
                       </Button>
                     </DialogFooter>
                   </DialogContent>

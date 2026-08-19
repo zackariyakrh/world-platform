@@ -137,6 +137,7 @@ export function ExploreClient({
         } else {
           setChannels((p) => [...p, { id: ch.id, name: ch.name, description: ch.description, type: ch.type || "text", _count: ch._count || { messages: 0 } }])
           toast.success("Channel created")
+          window.dispatchEvent(new Event("channels:changed"))
         }
         setChOpen(false); setChEdit(null); setChForm({ name: "", description: "" })
       } else { toast.error((await res.json()).error || "Failed") }
@@ -146,7 +147,7 @@ export function ExploreClient({
   async function deleteCh(ch: Channel) {
     if (!confirm(`Delete #${ch.name}?`)) return
     const res = await api(`/api/channels/${ch.id}`, "DELETE")
-    if (res.ok || res.status === 204) { setChannels((p) => p.filter((c) => c.id !== ch.id)); toast.success(`#${ch.name} deleted`) }
+    if (res.ok || res.status === 204) { setChannels((p) => p.filter((c) => c.id !== ch.id)); toast.success(`#${ch.name} deleted`); window.dispatchEvent(new Event("channels:changed")) }
     else { toast.error("Failed") }
   }
 
@@ -252,7 +253,7 @@ export function ExploreClient({
     <div className="flex flex-col gap-6">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Search everything..." value={search} onChange={(e) => setSearch(e.target.value)} className="glow-input pl-9" />
+        <Input placeholder="Search everything..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
       </div>
 
       <Tabs defaultValue="channels" className="w-full">
@@ -271,7 +272,7 @@ export function ExploreClient({
               {isAdmin && (
                 <div className="flex items-center justify-between border-b px-4 py-2">
                   <span className="text-xs font-medium text-muted-foreground">Manage channels</span>
-                  <Button size="sm" className="glow-button h-7 gap-1" onClick={() => openChDialog(null)}>
+                  <Button size="sm" className="h-7 gap-1" onClick={() => openChDialog(null)}>
                     <Plus className="size-3" />New Channel
                   </Button>
                 </div>
@@ -315,7 +316,7 @@ export function ExploreClient({
               {isAdmin && (
                 <div className="flex items-center justify-between border-b px-4 py-2">
                   <span className="text-xs font-medium text-muted-foreground">Manage users</span>
-                  <Button size="sm" className="glow-button h-7 gap-1" onClick={() => setUOpen(true)}>
+                  <Button size="sm" className="h-7 gap-1" onClick={() => setUOpen(true)}>
                     <Plus className="size-3" />New User
                   </Button>
                 </div>
@@ -367,7 +368,7 @@ export function ExploreClient({
               {isAdmin && (
                 <div className="flex items-center justify-between border-b px-4 py-2">
                   <span className="text-xs font-medium text-muted-foreground">Manage projects</span>
-                  <Button size="sm" className="glow-button h-7 gap-1" onClick={() => openProjDialog(null)}>
+                  <Button size="sm" className="h-7 gap-1" onClick={() => openProjDialog(null)}>
                     <Plus className="size-3" />New Project
                   </Button>
                 </div>
@@ -438,7 +439,7 @@ export function ExploreClient({
               {isAdmin && (
                 <div className="flex items-center justify-between border-b px-4 py-2">
                   <span className="text-xs font-medium text-muted-foreground">Manage tasks</span>
-                  <Button size="sm" className="glow-button h-7 gap-1" onClick={() => openTaskDialog(null)}>
+                  <Button size="sm" className="h-7 gap-1" onClick={() => openTaskDialog(null)}>
                     <Plus className="size-3" />New Task
                   </Button>
                 </div>
@@ -477,27 +478,33 @@ export function ExploreClient({
 
       {/* Channel Dialog */}
       <Dialog open={chOpen} onOpenChange={setChOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>{chEdit ? "Edit Channel" : "Create Channel"}</DialogTitle><DialogDescription>{chEdit ? "Rename or update channel." : "Add a new channel to your workspace."}</DialogDescription></DialogHeader>
-          <div className="flex flex-col gap-4 py-2">
-            <div className="flex flex-col gap-2"><Label>Name</Label><Input placeholder="e.g. welcome" value={chForm.name} onChange={(e) => setChForm({ ...chForm, name: e.target.value })} className="glow-input" onKeyDown={(e) => { if (e.key === "Enter") saveCh() }} /></div>
-            <div className="flex flex-col gap-2"><Label>Description</Label><Input placeholder="Optional" value={chForm.description} onChange={(e) => setChForm({ ...chForm, description: e.target.value })} className="glow-input" /></div>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{chEdit ? "Edit Channel" : "Create Channel"}</DialogTitle>
+            <DialogDescription>{chEdit ? "Update the channel name or description." : "Add a new channel to your workspace."}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-5 py-1">
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Name</Label><Input placeholder="e.g. welcome" value={chForm.name} onChange={(e) => setChForm({ ...chForm, name: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") saveCh() }} /></div>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Description</Label><Input placeholder="What is this channel about?" value={chForm.description} onChange={(e) => setChForm({ ...chForm, description: e.target.value })} /></div>
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <Button onClick={saveCh} disabled={chBusy || !chForm.name.trim()} className="glow-button">{chBusy ? <Loader2 className="size-3.5 animate-spin" /> : chEdit ? "Save" : "Create"}</Button>
+            <Button onClick={saveCh} disabled={chBusy || !chForm.name.trim()}>{chBusy ? <Loader2 className="size-3.5 animate-spin" /> : chEdit ? "Save Changes" : "Create Channel"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Project Dialog */}
       <Dialog open={projOpen} onOpenChange={setProjOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>{projEdit ? "Edit Project" : "Create Project"}</DialogTitle></DialogHeader>
-          <div className="flex flex-col gap-4 py-2">
-            <div className="flex flex-col gap-2"><Label>Name</Label><Input placeholder="Project name" value={projForm.name} onChange={(e) => setProjForm({ ...projForm, name: e.target.value })} className="glow-input" onKeyDown={(e) => { if (e.key === "Enter") saveProj() }} /></div>
-            <div className="flex flex-col gap-2"><Label>Description</Label><Input placeholder="Optional" value={projForm.description} onChange={(e) => setProjForm({ ...projForm, description: e.target.value })} className="glow-input" /></div>
-            <div className="flex flex-col gap-2"><Label>Status</Label>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{projEdit ? "Edit Project" : "Create Project"}</DialogTitle>
+            <DialogDescription>{projEdit ? "Update project details." : "Set up a new project for your team."}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-5 py-1">
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Name</Label><Input placeholder="Project name" value={projForm.name} onChange={(e) => setProjForm({ ...projForm, name: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") saveProj() }} /></div>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Description</Label><Input placeholder="Brief description of the project" value={projForm.description} onChange={(e) => setProjForm({ ...projForm, description: e.target.value })} /></div>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Status</Label>
               <Select value={projForm.status} onValueChange={(v) => setProjForm({ ...projForm, status: v ?? "active" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -511,30 +518,35 @@ export function ExploreClient({
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <Button onClick={saveProj} disabled={projBusy || !projForm.name.trim()} className="glow-button">{projBusy ? <Loader2 className="size-3.5 animate-spin" /> : projEdit ? "Save" : "Create"}</Button>
+            <Button onClick={saveProj} disabled={projBusy || !projForm.name.trim()}>{projBusy ? <Loader2 className="size-3.5 animate-spin" /> : projEdit ? "Save Changes" : "Create Project"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Task Dialog */}
       <Dialog open={taskOpen} onOpenChange={setTaskOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>{taskEdit ? "Edit Task" : "Create Task"}</DialogTitle></DialogHeader>
-          <div className="flex flex-col gap-4 py-2">
-            <div className="flex flex-col gap-2"><Label>Title</Label><Input placeholder="Task title" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} className="glow-input" onKeyDown={(e) => { if (e.key === "Enter") saveTask() }} /></div>
-            <div className="flex flex-col gap-2"><Label>Status</Label>
-              <Select value={taskForm.status} onValueChange={(v) => setTaskForm({ ...taskForm, status: v ?? "todo" })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="todo">To Do</SelectItem><SelectItem value="in_progress">In Progress</SelectItem><SelectItem value="done">Done</SelectItem></SelectContent>
-              </Select>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{taskEdit ? "Edit Task" : "Create Task"}</DialogTitle>
+            <DialogDescription>{taskEdit ? "Update task details." : "Add a new task to track."}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-5 py-1">
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Title</Label><Input placeholder="Task title" value={taskForm.title} onChange={(e) => setTaskForm({ ...taskForm, title: e.target.value })} onKeyDown={(e) => { if (e.key === "Enter") saveTask() }} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Status</Label>
+                <Select value={taskForm.status} onValueChange={(v) => setTaskForm({ ...taskForm, status: v ?? "todo" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="todo">To Do</SelectItem><SelectItem value="in_progress">In Progress</SelectItem><SelectItem value="done">Done</SelectItem></SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Priority</Label>
+                <Select value={taskForm.priority} onValueChange={(v) => setTaskForm({ ...taskForm, priority: v ?? "medium" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="flex flex-col gap-2"><Label>Priority</Label>
-              <Select value={taskForm.priority} onValueChange={(v) => setTaskForm({ ...taskForm, priority: v ?? "medium" })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="low">Low</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-col gap-2"><Label>Project</Label>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Project</Label>
               <Select value={taskForm.projectId} onValueChange={(v) => setTaskForm({ ...taskForm, projectId: v ?? "" })}>
                 <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
                 <SelectContent><SelectItem value="">None</SelectItem>{projects.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
@@ -543,20 +555,23 @@ export function ExploreClient({
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <Button onClick={saveTask} disabled={taskBusy || !taskForm.title.trim()} className="glow-button">{taskBusy ? <Loader2 className="size-3.5 animate-spin" /> : taskEdit ? "Save" : "Create"}</Button>
+            <Button onClick={saveTask} disabled={taskBusy || !taskForm.title.trim()}>{taskBusy ? <Loader2 className="size-3.5 animate-spin" /> : taskEdit ? "Save Changes" : "Create Task"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* User Dialog */}
       <Dialog open={uOpen} onOpenChange={setUOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Create User</DialogTitle><DialogDescription>Add a new user to the platform.</DialogDescription></DialogHeader>
-          <div className="flex flex-col gap-4 py-2">
-            <div className="flex flex-col gap-2"><Label>Name</Label><Input placeholder="Jane Doe" value={uForm.name} onChange={(e) => setUForm({ ...uForm, name: e.target.value })} className="glow-input" /></div>
-            <div className="flex flex-col gap-2"><Label>Email</Label><Input type="email" placeholder="jane@example.com" value={uForm.email} onChange={(e) => setUForm({ ...uForm, email: e.target.value })} className="glow-input" /></div>
-            <div className="flex flex-col gap-2"><Label>Password</Label><Input type="password" placeholder="Min 8 characters" value={uForm.password} onChange={(e) => setUForm({ ...uForm, password: e.target.value })} className="glow-input" /></div>
-            <div className="flex flex-col gap-2"><Label>Role</Label>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create User</DialogTitle>
+            <DialogDescription>Add a new user to the platform.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-5 py-1">
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Full Name</Label><Input placeholder="Jane Doe" value={uForm.name} onChange={(e) => setUForm({ ...uForm, name: e.target.value })} /></div>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Email</Label><Input type="email" placeholder="jane@example.com" value={uForm.email} onChange={(e) => setUForm({ ...uForm, email: e.target.value })} /></div>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Password</Label><Input type="password" placeholder="Min 8 characters" value={uForm.password} onChange={(e) => setUForm({ ...uForm, password: e.target.value })} /></div>
+            <div className="flex flex-col gap-2"><Label className="text-xs font-medium uppercase text-muted-foreground">Role</Label>
               <Select value={uForm.role} onValueChange={(v) => setUForm({ ...uForm, role: v ?? "member" })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{["admin", "manager", "member", "guest"].map((r) => <SelectItem key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</SelectItem>)}</SelectContent>
@@ -565,7 +580,7 @@ export function ExploreClient({
           </div>
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <Button onClick={saveUser} disabled={uBusy} className="glow-button">{uBusy ? <Loader2 className="size-3.5 animate-spin" /> : "Create User"}</Button>
+            <Button onClick={saveUser} disabled={uBusy}>{uBusy ? <Loader2 className="size-3.5 animate-spin" /> : "Create User"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
