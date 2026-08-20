@@ -52,14 +52,20 @@ export function MusicClient() {
   const [queue, setQueue] = React.useState<Track[]>([])
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
-  const youtubePlayerRef = React.useRef<any>(null)
-  const youtubeContainerRef = React.useRef<HTMLDivElement | null>(null)
+  const ytPlayerRef = React.useRef<any>(null)
+  const ytContainerRef = React.useRef<HTMLDivElement>(null)
   const progressInterval = React.useRef<ReturnType<typeof setInterval> | null>(null)
   const ytReadyRef = React.useRef(false)
+  const queueRef = React.useRef<Track[]>([])
+  const currentTrackRef = React.useRef<Track | null>(null)
+
+  // Keep refs in sync
+  React.useEffect(() => { queueRef.current = queue }, [queue])
+  React.useEffect(() => { currentTrackRef.current = currentTrack }, [currentTrack])
 
   // Load YouTube IFrame API once
   React.useEffect(() => {
-    if (window.YT) {
+    if (window.YT?.Player) {
       ytReadyRef.current = true
       return
     }
@@ -72,23 +78,38 @@ export function MusicClient() {
     }
   }, [])
 
-  // Cleanup on unmount
+  // Cleanup
   React.useEffect(() => {
     return () => {
-      stopCurrentPlayback()
+      stopAll()
     }
   }, [])
 
-  // Track ended listener for Deezer
-  React.useEffect(() => {
+  function stopAll() {
     if (audioRef.current) {
-      const handleEnded = () => {
-        playNext()
-      }
-      audioRef.current.addEventListener("ended", handleEnded)
-      return () => audioRef.current?.removeEventListener("ended", handleEnded)
+      audioRef.current.pause()
+      audioRef.current.src = ""
+      audioRef.current = null
     }
-  }, [currentTrack, queue])
+    if (ytPlayerRef.current) {
+      try { ytPlayerRef.current.destroy() } catch {}
+      ytPlayerRef.current = null
+    }
+    if (progressInterval.current) clearInterval(progressInterval.current)
+  }
+
+  function startProgressTracker() {
+    if (progressInterval.current) clearInterval(progressInterval.current)
+    progressInterval.current = setInterval(() => {
+      if (audioRef.current && !audioRef.current.paused) {
+        setProgress(audioRef.current.currentTime)
+      }
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === "function") {
+        const t = ytPlayerRef.current.getCurrentTime()
+        if (typeof t === "number" && !isNaN(t)) setProgress(t)
+      }
+    }, 250)
+  }
 
   async function handleSearch(e?: React.FormEvent) {
     e?.preventDefault()
@@ -136,34 +157,23 @@ export function MusicClient() {
     }
   }
 
-  function stopCurrentPlayback() {
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.src = ""
-      audioRef.current = null
-    }
-    if (youtubePlayerRef.current) {
-      try { youtubePlayerRef.current.stopVideo() } catch {}
-    }
-    if (progressInterval.current) clearInterval(progressInterval.current)
-  }
-
-  function playTrack(track: Track, addToQueue = false) {
-    if (addToQueue) {
-      setQueue((prev) => [...prev, track])
+  function playTrack(track: Track) {
+    // Same track — toggle pause/resume
+    if (currentTrack?.id === track.id) {
+      if (isPlaying) {
+        pauseTrack()
+      } else {
+        resumeTrack()
+      }
       return
     }
 
-    if (currentTrack?.id === track.id && isPlaying) {
-      pauseTrack()
-      return
-    }
-
-    stopCurrentPlayback()
+    // New track
+    stopAll()
     setCurrentTrack(track)
-    setIsPlaying(true)
     setProgress(0)
     setDuration(0)
+    setIsPlaying(false)
 
     if (track.source === "deezer" && track.preview) {
       const audio = new Audio(track.preview)
@@ -172,32 +182,43 @@ export function MusicClient() {
 
       audio.addEventListener("loadedmetadata", () => {
         setDuration(audio.duration)
+        setIsPlaying(true)
+        startProgressTracker()
       })
-      audio.play().catch(() => setIsPlaying(false))
+      audio.play().then(() => {
+        setIsPlaying(true)
+        startProgressTracker()
+      }).catch(() => setIsPlaying(false))
 
-      if (progressInterval.current) clearInterval(progressInterval.current)
-      progressInterval.current = setInterval(() => {
-        if (audioRef.current) {
-          setProgress(audioRef.current.currentTime)
-        }
-      }, 250)
+      audio.addEventListener("ended", () => {
+        playNextInQueue()
+      })
     } else if (track.source === "youtube" && track.videoId) {
-      playYouTube(track.videoId)
+      createYouTubePlayer(track.videoId)
     }
   }
 
-  function playYouTube(videoId: string) {
-    const createPlayer = () => {
-      if (!youtubeContainerRef.current) return
-      // Clean up previous iframe
-      youtubeContainerRef.current.innerHTML = ""
+  function createYouTubePlayer(videoId: string) {
+    const doCreate = () => {
+      if (!ytContainerRef.current) return
 
-      const playerDiv = document.createElement("div")
-      playerDiv.id = `yt-player-${videoId}`
-      youtubeContainerRef.current.appendChild(playerDiv)
+      // Destroy previous
+      if (ytPlayerRef.current) {
+        try { ytPlayerRef.current.destroy() } catch {}
+        ytPlayerRef.current = null
+      }
 
-      const player = new window.YT.Player(playerDiv, {
+      // Create a fresh div for the player
+      const container = ytContainerRef.current
+      container.innerHTML = ""
+      const div = document.createElement("div")
+      div.id = `yt-player`
+      container.appendChild(div)
+
+      const player = new window.YT.Player(div, {
         videoId,
+        width: 1,
+        height: 1,
         playerVars: {
           autoplay: 1,
           controls: 0,
@@ -210,108 +231,103 @@ export function MusicClient() {
         },
         events: {
           onReady: (e: any) => {
-            youtubePlayerRef.current = e.target
-            e.target.setVolume(volume)
-            if (muted) e.target.mute()
+            ytPlayerRef.current = e.target
+            e.target.setVolume(muted ? 0 : volume)
             setDuration(e.target.getDuration())
+            setIsPlaying(true)
+            startProgressTracker()
           },
           onStateChange: (e: any) => {
             if (e.data === window.YT.PlayerState.PLAYING) {
               setIsPlaying(true)
-              if (progressInterval.current) clearInterval(progressInterval.current)
-              progressInterval.current = setInterval(() => {
-                if (youtubePlayerRef.current) {
-                  setProgress(youtubePlayerRef.current.getCurrentTime())
-                }
-              }, 250)
+              startProgressTracker()
             } else if (e.data === window.YT.PlayerState.PAUSED) {
               setIsPlaying(false)
+              if (progressInterval.current) clearInterval(progressInterval.current)
             } else if (e.data === window.YT.PlayerState.ENDED) {
               setIsPlaying(false)
               setProgress(0)
-              playNext()
+              if (progressInterval.current) clearInterval(progressInterval.current)
+              playNextInQueue()
             }
+          },
+          onError: (e: any) => {
+            console.error("YouTube player error:", e.data)
+            setIsPlaying(false)
           },
         },
       })
     }
 
-    if (ytReadyRef.current && window.YT) {
-      createPlayer()
+    if (ytReadyRef.current && window.YT?.Player) {
+      doCreate()
     } else {
-      const checkInterval = setInterval(() => {
-        if (ytReadyRef.current && window.YT) {
-          clearInterval(checkInterval)
-          createPlayer()
+      const check = setInterval(() => {
+        if (ytReadyRef.current && window.YT?.Player) {
+          clearInterval(check)
+          doCreate()
         }
       }, 100)
-      setTimeout(() => clearInterval(checkInterval), 10000)
+      setTimeout(() => clearInterval(check), 10000)
     }
   }
 
   function pauseTrack() {
     setIsPlaying(false)
     if (audioRef.current) audioRef.current.pause()
-    if (youtubePlayerRef.current) {
-      try { youtubePlayerRef.current.pauseVideo() } catch {}
+    if (ytPlayerRef.current) {
+      try { ytPlayerRef.current.pauseVideo() } catch {}
     }
     if (progressInterval.current) clearInterval(progressInterval.current)
   }
 
   function resumeTrack() {
-    if (!currentTrack) return
     setIsPlaying(true)
-    if (audioRef.current) audioRef.current.play().catch(() => setIsPlaying(false))
-    if (youtubePlayerRef.current) {
-      try { youtubePlayerRef.current.playVideo() } catch {}
+    if (audioRef.current) {
+      audioRef.current.play().catch(() => setIsPlaying(false))
     }
-    if (progressInterval.current) clearInterval(progressInterval.current)
-    progressInterval.current = setInterval(() => {
-      if (audioRef.current) setProgress(audioRef.current.currentTime)
-      if (youtubePlayerRef.current) setProgress(youtubePlayerRef.current.getCurrentTime())
-    }, 250)
+    if (ytPlayerRef.current) {
+      try { ytPlayerRef.current.playVideo() } catch {}
+    }
+    startProgressTracker()
   }
 
-  function playNext() {
-    if (queue.length > 0) {
-      const next = queue[0]
+  function playNextInQueue() {
+    const q = queueRef.current
+    if (q.length > 0) {
+      const next = q[0]
       setQueue((prev) => prev.slice(1))
-      playTrack(next)
+      // Need to call playTrack with the next track
+      // Use a timeout to avoid state batching issues
+      setTimeout(() => playTrack(next), 0)
     } else {
       setIsPlaying(false)
       setProgress(0)
-    }
-  }
-
-  function playPrev() {
-    setProgress(0)
-    if (audioRef.current) audioRef.current.currentTime = 0
-    if (youtubePlayerRef.current) {
-      try { youtubePlayerRef.current.seekTo(0, true) } catch {}
+      if (progressInterval.current) clearInterval(progressInterval.current)
     }
   }
 
   function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
     if (!duration) return
     const rect = e.currentTarget.getBoundingClientRect()
-    const pct = (e.clientX - rect.left) / rect.width
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
     const newTime = pct * duration
 
     if (audioRef.current) audioRef.current.currentTime = newTime
-    if (youtubePlayerRef.current) {
-      try { youtubePlayerRef.current.seekTo(newTime, true) } catch {}
+    if (ytPlayerRef.current) {
+      try { ytPlayerRef.current.seekTo(newTime, true) } catch {}
     }
     setProgress(newTime)
   }
 
   function handleVolumeChange(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect()
-    const pct = Math.round(((e.clientX - rect.left) / rect.width) * 100)
+    const pct = Math.round(Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)))
     setVolume(pct)
     setMuted(false)
     if (audioRef.current) audioRef.current.volume = pct / 100
-    if (youtubePlayerRef.current) {
-      try { youtubePlayerRef.current.setVolume(pct) } catch {}
+    if (ytPlayerRef.current) {
+      try { ytPlayerRef.current.setVolume(pct) } catch {}
     }
   }
 
@@ -319,23 +335,24 @@ export function MusicClient() {
     const newMuted = !muted
     setMuted(newMuted)
     if (audioRef.current) audioRef.current.volume = newMuted ? 0 : volume / 100
-    if (youtubePlayerRef.current) {
-      try {
-        newMuted ? youtubePlayerRef.current.mute() : youtubePlayerRef.current.unMute()
-      } catch {}
+    if (ytPlayerRef.current) {
+      try { newMuted ? ytPlayerRef.current.mute() : ytPlayerRef.current.unMute() } catch {}
     }
   }
 
   function formatTime(s: number) {
+    if (!s || isNaN(s)) return "0:00"
     const m = Math.floor(s / 60)
     const sec = Math.floor(s % 60)
     return `${m}:${sec.toString().padStart(2, "0")}`
   }
 
+  const remaining = duration > progress ? duration - progress : 0
+
   return (
     <div className="flex flex-1 flex-col">
-      {/* Hidden YouTube container */}
-      <div ref={youtubeContainerRef} className="hidden" />
+      {/* Hidden YouTube player mount point */}
+      <div ref={ytContainerRef} className="absolute w-0 h-0 overflow-hidden opacity-0" aria-hidden="true" />
 
       {/* Header */}
       <div className="flex flex-col gap-4 p-6 pb-4">
@@ -349,16 +366,13 @@ export function MusicClient() {
           </div>
         </div>
 
-        {/* Source tabs + Search */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex gap-1 rounded-xl bg-muted/50 p-1">
             <button
               onClick={() => { setSource("deezer"); setTracks([]); setError(null) }}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
-                source === "deezer"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                source === "deezer" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <Music className="size-4" />
@@ -368,9 +382,7 @@ export function MusicClient() {
               onClick={() => { setSource("youtube"); setTracks([]); setError(null) }}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all",
-                source === "youtube"
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                source === "youtube" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
               )}
             >
               <PlayCircle className="size-4" />
@@ -414,9 +426,7 @@ export function MusicClient() {
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Music className="mb-4 size-16 text-muted-foreground/20" />
             <h3 className="mb-1 text-lg font-medium text-foreground">Start listening</h3>
-            <p className="text-sm text-muted-foreground">
-              Search for a song or artist to get started
-            </p>
+            <p className="text-sm text-muted-foreground">Search for a song or artist to get started</p>
           </div>
         )}
 
@@ -431,11 +441,7 @@ export function MusicClient() {
               )}
             >
               <span className="w-6 text-center text-sm text-muted-foreground">{i + 1}</span>
-              <img
-                src={track.thumbnail}
-                alt={track.title}
-                className="size-12 rounded-lg object-cover"
-              />
+              <img src={track.thumbnail} alt={track.title} className="size-12 rounded-lg object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{track.title}</p>
                 <p className="truncate text-sm text-muted-foreground">{track.artist}</p>
@@ -465,7 +471,6 @@ export function MusicClient() {
           ))}
         </div>
 
-        {/* Queue */}
         {queue.length > 0 && (
           <div className="mt-6">
             <h3 className="mb-2 text-sm font-medium text-muted-foreground">Queue ({queue.length})</h3>
@@ -494,16 +499,16 @@ export function MusicClient() {
         )}
       </div>
 
-      {/* Always-visible Bottom Player */}
+      {/* Bottom Player — always visible, fixed */}
       <div className="fixed bottom-16 left-0 right-0 z-40 border-t border-border/50 bg-background/95 backdrop-blur-xl md:bottom-0 md:left-64">
-        <div className="flex items-center gap-4 px-4 py-3">
+        <div className="flex items-center gap-3 px-4 py-3 sm:gap-4">
           {/* Track info */}
           {currentTrack ? (
             <>
               <img
                 src={currentTrack.thumbnail}
                 alt={currentTrack.title}
-                className="size-12 rounded-lg object-cover"
+                className="size-12 rounded-lg object-cover shrink-0"
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{currentTrack.title}</p>
@@ -511,12 +516,28 @@ export function MusicClient() {
               </div>
             </>
           ) : (
-            <div className="flex-1 text-sm text-muted-foreground">No track selected</div>
+            <div className="flex-1 flex items-center gap-3">
+              <div className="size-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Music className="size-5 text-muted-foreground/40" />
+              </div>
+              <p className="text-sm text-muted-foreground">Select a track to play</p>
+            </div>
           )}
 
           {/* Controls */}
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={playPrev} disabled={!currentTrack}>
+          <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                if (currentTrack) {
+                  setProgress(0)
+                  if (audioRef.current) audioRef.current.currentTime = 0
+                  if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(0, true) } catch {}
+                }
+              }}
+              disabled={!currentTrack}
+            >
               <SkipBack className="size-4" />
             </Button>
 
@@ -524,42 +545,46 @@ export function MusicClient() {
               variant="ghost"
               size="icon"
               onClick={() => {
+                if (!currentTrack) return
                 if (isPlaying) pauseTrack()
-                else if (currentTrack) resumeTrack()
+                else resumeTrack()
               }}
-              disabled={!currentTrack}
+              className="size-10"
             >
               {isPlaying ? <Pause className="size-5" /> : <Play className="size-5" />}
             </Button>
 
-            <Button variant="ghost" size="icon" onClick={playNext} disabled={!currentTrack}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => playNextInQueue()}
+              disabled={!currentTrack}
+            >
               <SkipForward className="size-4" />
             </Button>
           </div>
 
-          {/* Progress bar */}
-          <div className="hidden sm:flex items-center gap-2 max-w-md">
-            <span className="w-10 text-right text-xs text-muted-foreground">{formatTime(progress)}</span>
+          {/* Progress */}
+          <div className="hidden sm:flex items-center gap-2 flex-1 max-w-md">
+            <span className="w-10 text-right text-xs text-muted-foreground tabular-nums">{formatTime(progress)}</span>
             <div
               onClick={handleSeek}
-              className="group relative h-1.5 flex-1 cursor-pointer rounded-full bg-muted min-w-[120px]"
+              className="group relative h-1.5 flex-1 cursor-pointer rounded-full bg-muted"
             >
               <div
-                className="absolute inset-y-0 left-0 rounded-full bg-primary transition-all"
+                className="absolute inset-y-0 left-0 rounded-full bg-primary transition-[width] duration-100"
                 style={{ width: duration ? `${(progress / duration) * 100}%` : "0%" }}
               />
               <div
-                className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-primary opacity-0 shadow-[0_0_6px_oklch(from_var(--primary)_l_c_h_/_0.4)] group-hover:opacity-100 transition-opacity"
-                style={{ left: duration ? `calc(${(progress / duration) * 100}% - 6px)` : "0%" }}
+                className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-primary opacity-0 shadow-sm group-hover:opacity-100 transition-opacity"
+                style={{ left: duration ? `calc(${(progress / duration) * 100}% - 6px)` : "-6px" }}
               />
             </div>
-            <span className="w-10 text-xs text-muted-foreground">
-              {duration > 0 ? formatTime(duration - progress) : formatTime(duration)}
-            </span>
+            <span className="w-10 text-xs text-muted-foreground tabular-nums">-{formatTime(remaining)}</span>
           </div>
 
           {/* Volume */}
-          <div className="hidden sm:flex items-center gap-1">
+          <div className="hidden sm:flex items-center gap-1 shrink-0">
             <Button variant="ghost" size="icon" onClick={toggleMute}>
               {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
             </Button>
@@ -574,13 +599,13 @@ export function MusicClient() {
             </div>
           </div>
 
-          {/* External link */}
+          {/* Link */}
           {currentTrack?.link && (
             <a
               href={currentTrack.link}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg p-2 text-muted-foreground hover:text-foreground"
+              className="rounded-lg p-2 text-muted-foreground hover:text-foreground shrink-0"
             >
               <ExternalLink className="size-4" />
             </a>
