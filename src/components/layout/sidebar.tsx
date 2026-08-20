@@ -37,7 +37,6 @@ import {
   ChevronDown,
   Settings,
   MessageSquare,
-  Search,
   Plus,
   X,
   Compass,
@@ -254,38 +253,6 @@ function Sidebar({
               <X className="size-4" />
             </Button>
           )}
-        </div>
-
-        {/* Search Bar */}
-        <div className={cn("px-3 py-2", collapsed && "px-2")}>
-          <button
-            onClick={() => {
-              if (collapsed) {
-                setCollapsed(false)
-                setTimeout(() => {
-                  const event = new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })
-                  window.dispatchEvent(event)
-                }, 350)
-              } else {
-                const event = new KeyboardEvent("keydown", { key: "k", ctrlKey: true, bubbles: true })
-                window.dispatchEvent(event)
-              }
-            }}
-            className={cn(
-              "flex items-center gap-2 rounded-lg bg-sidebar-accent/50 text-sidebar-accent-foreground transition-all duration-200 hover:bg-sidebar-accent",
-              collapsed ? "h-9 w-9 justify-center px-0" : "h-9 w-full px-2.5"
-            )}
-          >
-            <Search className="size-4 shrink-0" />
-            {!collapsed && (
-              <>
-                <span className="text-base">Search</span>
-                <kbd className="ml-auto rounded border bg-background px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
-                  Ctrl+K
-                </kbd>
-              </>
-            )}
-          </button>
         </div>
 
         {/* Navigation Items */}
