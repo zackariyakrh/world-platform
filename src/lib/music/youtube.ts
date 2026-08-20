@@ -31,9 +31,8 @@ export async function searchYouTube(
 
   const params = new URLSearchParams({
     part: "snippet",
-    q: query,
+    q: query + " music",
     type: "video",
-    videoCategoryId: "10",
     maxResults: String(maxResults),
     key: apiKey,
   })
@@ -47,12 +46,14 @@ export async function searchYouTube(
 
   const data = await res.json()
 
-  const videos: YouTubeVideo[] = data.items.map((item: any) => ({
-    id: item.id.videoId,
-    title: item.snippet.title,
-    channelTitle: item.snippet.channelTitle,
-    thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || "",
-  }))
+  const videos: YouTubeVideo[] = data.items
+    .filter((item: any) => item.id?.kind === "youtube#video" && item.id?.videoId)
+    .map((item: any) => ({
+      id: item.id.videoId,
+      title: item.snippet.title,
+      channelTitle: item.snippet.channelTitle,
+      thumbnail: item.snippet.thumbnails?.medium?.url || item.snippet.thumbnails?.default?.url || "",
+    }))
 
   return {
     videos,
