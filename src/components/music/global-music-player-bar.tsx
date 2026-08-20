@@ -125,7 +125,7 @@ export function GlobalMusicPlayerBar() {
   }, [])
 
   React.useEffect(() => () => {
-    stopAll()
+    if (progressInterval.current) clearInterval(progressInterval.current)
     if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current)
   }, [])
 
