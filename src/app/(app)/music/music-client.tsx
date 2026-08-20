@@ -143,7 +143,7 @@ export function MusicClient() {
   function fmt(s: number) { if (!s || isNaN(s)) return "0:00"; return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` }
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="relative flex h-full flex-col overflow-hidden">
       {/* Header */}
       <div className="flex shrink-0 flex-col gap-4 p-6 pb-4">
         <div className="flex items-center gap-3">

@@ -541,7 +541,7 @@ export function GlobalMusicPlayerBar() {
 
       {/* Lyrics Panel */}
       {lyricsOpen && (
-        <div className="fixed bottom-0 right-0 top-20 z-[60] w-96 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)" }}>
+        <div className="absolute bottom-0 right-0 top-0 z-[60] w-96 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)" }}>
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)" }}>
             <h3 className={cn("font-semibold", isDark ? "text-white" : "text-gray-900")}>Lyrics</h3>
             <Button variant="ghost" size="icon" onClick={() => setLyricsOpen(false)} className="size-8"><X className="size-4" /></Button>
@@ -558,7 +558,7 @@ export function GlobalMusicPlayerBar() {
 
       {/* Queue Side Panel */}
       {queueOpen && (
-        <div className="fixed bottom-0 right-0 top-20 z-[60] w-96 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)" }}>
+        <div className="absolute bottom-0 right-0 top-0 z-[60] w-96 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)" }}>
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)" }}>
             <h3 className={cn("font-semibold", isDark ? "text-white" : "text-gray-900")}>Queue</h3>
             <div className="flex items-center gap-1">
