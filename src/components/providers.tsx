@@ -5,7 +5,6 @@ import { ThemeProvider } from "next-themes"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { SessionProvider } from "next-auth/react"
 import { Toaster } from "@/components/ui/sonner"
-import { GlobalMusicPlayerBar } from "@/components/music/global-music-player-bar"
 
 function makeQueryClient() {
   return new QueryClient({
@@ -42,7 +41,6 @@ function Providers({ children }: { children: React.ReactNode }) {
           disableTransitionOnChange
         >
           {children}
-          <GlobalMusicPlayerBar />
           <Toaster />
         </ThemeProvider>
       </QueryClientProvider>
