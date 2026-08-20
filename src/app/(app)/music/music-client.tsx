@@ -15,8 +15,6 @@ import {
   LayoutList,
   LayoutGrid,
   RefreshCw,
-  Plus,
-  Share2,
   Heart,
 } from "lucide-react"
 
@@ -42,9 +40,9 @@ function decodeHtmlEntities(text: string): string {
 
 export function MusicClient() {
   const {
-    currentTrack, isPlaying, queue, favorites,
+    currentTrack, isPlaying, favorites,
     setCurrentTrack, setIsPlaying, setProgress, setDuration,
-    addToQueue, toggleFavorite, setQueue,
+    toggleFavorite, setQueue,
   } = useMusicStore()
 
   const [query, setQuery] = React.useState("")
@@ -128,16 +126,11 @@ export function MusicClient() {
   }
 
   function playTrackAtIndex(track: Track, index: number) {
-    const remaining = tracks.slice(index + 1)
-    setQueue(remaining)
+    setQueue([])
     setCurrentTrack(track)
     setProgress(0)
     setDuration(0)
     setIsPlaying(true)
-  }
-
-  function handleAddToQueue(track: Track) {
-    addToQueue(track)
   }
 
   function fmt(s: number) { if (!s || isNaN(s)) return "0:00"; return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` }
@@ -215,9 +208,6 @@ export function MusicClient() {
                   <Button variant="ghost" size="icon" onClick={() => toggleFavorite(track)} className="size-8" title="Like">
                     <Heart className={cn("size-4", favorites.some(t => t.id === track.id) ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-foreground")} />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleAddToQueue(track)} className="size-8" title="Add to queue">
-                    <Plus className="size-4 text-muted-foreground hover:text-foreground" />
-                  </Button>
                 </div>
               </div>
             ))}
@@ -246,9 +236,6 @@ export function MusicClient() {
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button variant="ghost" size="icon" onClick={() => toggleFavorite(track)} className="size-7" title="Like">
                     <Heart className={cn("size-3.5", favorites.some(t => t.id === track.id) ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleAddToQueue(track)} className="size-7" title="Add to queue">
-                    <Plus className="size-3.5 text-muted-foreground" />
                   </Button>
                 </div>
               </div>

@@ -66,7 +66,7 @@ export function GlobalMusicPlayerBar() {
     currentTrack, queue, history, isPlaying, progress, duration, volume, muted,
     shuffle, repeat, favorites, queueOpen, lyricsOpen, fullscreenOpen,
     sleepTimerMinutes, sleepTimerEnd,
-    setCurrentTrack, setQueue,
+    setCurrentTrack,
     setHistory, setIsPlaying, setProgress, setDuration, setVolume, setMuted,
     toggleMute, setShuffle, cycleRepeat, toggleFavorite, setQueueOpen,
     setLyricsOpen, setFullscreenOpen, setSleepTimerMinutes, setSleepTimerEnd,
@@ -256,30 +256,14 @@ export function GlobalMusicPlayerBar() {
 
   function playNext() {
     const s = useMusicStore.getState()
-    const { queue: q, shuffle: shuf, repeat: rep, currentTrack: ct } = s
+    const { history: h, repeat: rep, currentTrack: ct } = s
 
-    if (q.length > 0) {
-      let nextTrack: Track
-      let remainingQueue: Track[]
-
-      if (shuf) {
-        const randomIndex = Math.floor(Math.random() * q.length)
-        nextTrack = q[randomIndex]
-        remainingQueue = q.filter((_, i) => i !== randomIndex)
-      } else {
-        nextTrack = q[0]
-        remainingQueue = q.slice(1)
-      }
-
-      setQueue(remainingQueue)
-      if (ct) setHistory([ct, ...s.history].slice(0, 100))
-      setTimeout(() => playTrack(nextTrack), 0)
-    } else if (rep === "all" && s.history.length > 0) {
-      const lastPlayed = s.history[0]
-      const rest = s.history.slice(1)
-      setHistory([])
-      setQueue(rest)
-      setTimeout(() => playTrack(lastPlayed), 0)
+    if (h.length > 0) {
+      const prevTrack = h[0]
+      setHistory(h.slice(1))
+      setTimeout(() => playTrack(prevTrack), 0)
+    } else if (rep === "all" && ct) {
+      setTimeout(() => playTrack(ct), 0)
     } else {
       setIsPlaying(false)
       setProgress(0)
@@ -300,9 +284,8 @@ export function GlobalMusicPlayerBar() {
 
     if (h.length > 0) {
       const prevTrack = h[0]
-      const newHistory = h.slice(1)
-      setHistory(newHistory)
-      if (ct) setQueue([ct, ...s.queue])
+      setHistory(h.slice(1))
+      if (ct) setHistory([ct, ...s.history].slice(0, 100))
       setTimeout(() => playTrack(prevTrack), 0)
     } else if (ct) {
       setProgress(0)
@@ -566,7 +549,7 @@ export function GlobalMusicPlayerBar() {
           <div className="flex-1 overflow-y-auto p-2">
             {favorites.length > 0 ? (
               favorites.map((track, i) => (
-                <div key={`fav-${track.id}-${i}`} className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => { setCurrentTrack(track); setProgress(0); setDuration(0); setIsPlaying(true); setQueue(favorites.filter((_, j) => j !== i)); }}>
+                <div key={`fav-${track.id}-${i}`} className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => { setCurrentTrack(track); setProgress(0); setDuration(0); setIsPlaying(true); }}>
                   <img src={track.thumbnail} alt="" className="size-10 rounded-lg object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className={cn("truncate text-sm", isDark ? "text-white/80" : "text-gray-700")}>{decodeHtmlEntities(track.title)}</p>
