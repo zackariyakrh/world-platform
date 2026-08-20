@@ -615,15 +615,15 @@ export function GlobalMusicPlayerBar() {
           <div className="absolute top-1/2 size-3.5 -translate-y-1/2 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" style={{ left: `calc(${pct}% - 7px)`, boxShadow: isDark ? "0 0 8px rgba(255,255,255,0.5)" : "0 0 8px rgba(0,0,0,0.3)" }} />
         </div>
 
-        <div className="flex items-center gap-2 px-4 py-5 sm:gap-3 md:px-6">
+        <div className="flex items-center gap-2 px-4 py-2 sm:gap-3 md:px-6">
           {/* Track info */}
           <div className="flex items-center gap-3 min-w-0 flex-1 sm:flex-none sm:w-64 md:w-72">
-            <img src={currentTrack.thumbnail} alt={decodedTitle} className={cn("size-12 rounded-lg object-cover shrink-0 ring-1", isDark ? "ring-white/10" : "ring-black/[0.08]")} />
+            <img src={currentTrack.thumbnail} alt={decodedTitle} className={cn("size-9 rounded-lg object-cover shrink-0 ring-1", isDark ? "ring-white/10" : "ring-black/[0.08]")} />
             <div className="min-w-0 flex-1 sm:flex-none">
               <p className={cn("truncate text-sm font-semibold", isDark ? "text-white" : "text-gray-900")}>{decodedTitle}</p>
               <p className={cn("truncate text-xs", isDark ? "text-white/50" : "text-gray-500")}>{decodedArtist}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => toggleFavorite(currentTrack.id)} className="size-8 shrink-0 hidden sm:inline-flex" title={favorites.has(currentTrack.id) ? "Unlike" : "Like"}>
+            <Button variant="ghost" size="icon" onClick={() => toggleFavorite(currentTrack.id)} className="size-9 shrink-0 hidden sm:inline-flex" title={favorites.has(currentTrack.id) ? "Unlike" : "Like"}>
               <Heart className={cn("size-4", favorites.has(currentTrack.id) ? "fill-red-500 text-red-500" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} />
             </Button>
           </div>
@@ -631,16 +631,16 @@ export function GlobalMusicPlayerBar() {
           {/* Center controls */}
           <div className="flex flex-col items-center gap-1 flex-1">
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => setShuffle(!shuffle)} className={cn("size-8 hidden sm:inline-flex", shuffle ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Shuffle"><Shuffle className="size-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => setShuffle(!shuffle)} className={cn("size-9 hidden sm:inline-flex", shuffle ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Shuffle"><Shuffle className="size-4" /></Button>
               <Button variant="ghost" size="icon" onClick={playPrevious} className={cn("size-9", isDark ? "text-white/70 hover:text-white" : "text-gray-700 hover:text-primary")} title="Previous"><SkipBack className="size-5" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => seekRelative(-10)} className={cn("size-8 hidden md:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Rewind 10s"><Rewind className="size-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => isPlaying ? pausePlayback() : resumePlayback()} className={cn("size-11 mx-1", isDark ? "text-white hover:text-white" : "text-gray-900 hover:text-primary")} title={isPlaying ? "Pause" : "Play"} style={{ boxShadow: "0 0 16px oklch(0.65 0.28 300 / 0.35)" }}>
+              <Button variant="ghost" size="icon" onClick={() => seekRelative(-10)} className={cn("size-9 hidden md:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Rewind 10s"><Rewind className="size-5" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => isPlaying ? pausePlayback() : resumePlayback()} className={cn("size-9 mx-1", isDark ? "text-white hover:text-white" : "text-gray-900 hover:text-primary")} title={isPlaying ? "Pause" : "Play"} style={{ boxShadow: "0 0 16px oklch(0.65 0.28 300 / 0.35)" }}>
                 {isPlaying ? <Pause className="size-5" /> : <Play className="size-5 ml-0.5" />}
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => seekRelative(10)} className={cn("size-8 hidden md:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Forward 10s"><FastForward className="size-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => seekRelative(10)} className={cn("size-9 hidden md:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Forward 10s"><FastForward className="size-5" /></Button>
               <Button variant="ghost" size="icon" onClick={playNext} className={cn("size-9", isDark ? "text-white/70 hover:text-white" : "text-gray-700 hover:text-primary")} title="Next"><SkipForward className="size-5" /></Button>
-              <Button variant="ghost" size="icon" onClick={cycleRepeat} className={cn("size-8 hidden sm:inline-flex", repeat !== "off" ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={`Repeat: ${repeat}`}>
-                {repeat === "one" ? <Repeat1 className="size-4" /> : <Repeat className="size-4" />}
+              <Button variant="ghost" size="icon" onClick={cycleRepeat} className={cn("size-9 hidden sm:inline-flex", repeat !== "off" ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={`Repeat: ${repeat}`}>
+                {repeat === "one" ? <Repeat1 className="size-5" /> : <Repeat className="size-5" />}
               </Button>
             </div>
             {/* Time + seek (shown on small screens) */}
@@ -664,12 +664,12 @@ export function GlobalMusicPlayerBar() {
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <Button variant="ghost" size="icon" onClick={handleShare} className={cn("size-8 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Share"><Share2 className="size-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={handleDownload} className={cn("size-8 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Open on YouTube"><Download className="size-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={() => setQueueOpen(!queueOpen)} className={cn("size-8", queueOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Queue"><ListMusic className="size-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={() => setLyricsOpen(!lyricsOpen)} className={cn("size-8 hidden sm:inline-flex", lyricsOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Lyrics"><Mic2 className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={handleShare} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Share"><Share2 className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={handleDownload} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Open on YouTube"><Download className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setQueueOpen(!queueOpen)} className={cn("size-9", queueOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Queue"><ListMusic className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setLyricsOpen(!lyricsOpen)} className={cn("size-9 hidden sm:inline-flex", lyricsOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Lyrics"><Mic2 className="size-4" /></Button>
             <div className="relative hidden sm:flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => setShowSleepMenu(!showSleepMenu)} className={cn("size-8", sleepTimerEnd ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={sleepTimerEnd ? `Sleep timer: ${getSleepTimerDisplay()}` : "Sleep timer"}>
+              <Button variant="ghost" size="icon" onClick={() => setShowSleepMenu(!showSleepMenu)} className={cn("size-9", sleepTimerEnd ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={sleepTimerEnd ? `Sleep timer: ${getSleepTimerDisplay()}` : "Sleep timer"}>
                 <Moon className="size-4" />
               </Button>
               {showSleepMenu && (
@@ -685,14 +685,14 @@ export function GlobalMusicPlayerBar() {
               )}
             </div>
             <div className="hidden sm:flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={toggleMuteFn} className={cn("size-8", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={muted ? "Unmute" : "Mute"}>
+              <Button variant="ghost" size="icon" onClick={toggleMuteFn} className={cn("size-9", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={muted ? "Unmute" : "Mute"}>
                 {muted || volume === 0 ? <VolumeX className="size-4" /> : volume < 50 ? <Volume1 className="size-4" /> : <Volume2 className="size-4" />}
               </Button>
               <div onClick={handleVolumeChange} className="relative h-1 w-20 cursor-pointer rounded-full" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
                 <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-75" style={{ width: `${muted ? 0 : volume}%`, background: isDark ? "rgba(255,255,255,0.6)" : "oklch(0.52 0.22 25)" }} />
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(true)} className={cn("size-8 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Fullscreen"><Maximize2 className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(true)} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Fullscreen"><Maximize2 className="size-4" /></Button>
           </div>
         </div>
       </div>
