@@ -3,7 +3,6 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -46,14 +45,12 @@ import {
   Loader2,
   HelpCircle,
   Paintbrush,
-  LogOut,
   Phone,
   Shield,
   Bell,
   ChevronLeft,
   ChevronRight,
   Zap,
-  Calendar,
   Briefcase,
   FolderOpen,
   Music,
@@ -455,55 +452,6 @@ function Sidebar({
               </Link>
             </div>
           )}
-
-          {/* Main Bottom Actions - Icon Only */}
-          <div className="flex items-center gap-1 px-2 py-2">
-            <Link
-              href="/calendar"
-              title="Calendar"
-              className={cn(
-                "flex size-9 items-center justify-center rounded-lg transition-all duration-200",
-                isActive("/calendar")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-              )}
-            >
-              <Calendar className="size-4" />
-            </Link>
-            <Link
-              href="/settings"
-              title="Settings"
-              className={cn(
-                "flex size-9 items-center justify-center rounded-lg transition-all duration-200",
-                isActive("/settings")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-              )}
-            >
-              <Settings className="size-4" />
-            </Link>
-            <Link
-              href="/help"
-              title="Help"
-              className={cn(
-                "flex size-9 items-center justify-center rounded-lg transition-all duration-200",
-                isActive("/help")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-              )}
-            >
-              <HelpCircle className="size-4" />
-            </Link>
-            <div className="ml-auto">
-              <button
-                onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
-                title="Sign Out"
-                className="flex size-9 items-center justify-center rounded-lg text-muted-foreground transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
-              >
-                <LogOut className="size-4" />
-              </button>
-            </div>
-          </div>
 
           {/* Collapse Toggle */}
           <div className={cn(
