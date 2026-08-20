@@ -83,7 +83,7 @@ function AppLayout({
           userAvatar={userAvatar}
         />
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="relative flex-1 overflow-y-auto" id="main-content">
           {children}
         </main>
 

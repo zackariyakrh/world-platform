@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { useTheme } from "next-themes"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -20,7 +21,6 @@ import {
   Heart,
   ListMusic,
   Mic2,
-  Moon,
   Maximize2,
   Minimize2,
   Rewind,
@@ -51,14 +51,6 @@ function fmt(s: number): string {
   const sec = Math.floor(s % 60)
   return `${m}:${String(sec).padStart(2, "0")}`
 }
-
-const SLEEP_OPTIONS = [
-  { label: "15 min", minutes: 15 },
-  { label: "30 min", minutes: 30 },
-  { label: "45 min", minutes: 45 },
-  { label: "1 hour", minutes: 60 },
-  { label: "2 hours", minutes: 120 },
-]
 
 // Module-level persistent state — survives component remounts across navigations
 let persistentYTContainer: HTMLDivElement | null = null
@@ -91,11 +83,11 @@ export function GlobalMusicPlayerBar() {
   const {
     currentTrack, queue, history, isPlaying, progress, duration, volume, muted,
     shuffle, repeat, favorites, queueOpen, lyricsOpen, fullscreenOpen,
-    sleepTimerMinutes, sleepTimerEnd, playerVisible,
+    playerVisible,
     setCurrentTrack,
     setHistory, setIsPlaying, setProgress, setDuration, setVolume, setMuted,
     toggleMute, setShuffle, cycleRepeat, toggleFavorite, setQueueOpen,
-    setLyricsOpen, setFullscreenOpen, setSleepTimerMinutes, setSleepTimerEnd,
+    setLyricsOpen, setFullscreenOpen,
     setPlayerVisible,
   } = useMusicStore()
 
@@ -112,10 +104,8 @@ export function GlobalMusicPlayerBar() {
   const shuffleRef = React.useRef(false)
   const repeatRef = React.useRef<RepeatMode>("off")
   const isDraggingRef = React.useRef(false)
-  const sleepTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [dragProgress, setDragProgress] = React.useState<number | null>(null)
-  const [showSleepMenu, setShowSleepMenu] = React.useState(false)
   const [expandedMobile, setExpandedMobile] = React.useState(false)
 
   React.useEffect(() => { queueRef.current = queue }, [queue])
@@ -145,27 +135,7 @@ export function GlobalMusicPlayerBar() {
 
   React.useEffect(() => () => {
     if (persistentProgressInterval) clearInterval(persistentProgressInterval)
-    if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current)
   }, [])
-
-  React.useEffect(() => {
-    if (sleepTimerEnd) {
-      if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current)
-      const remaining = sleepTimerEnd - Date.now()
-      if (remaining <= 0) {
-        pausePlayback()
-        setSleepTimerEnd(null)
-        setSleepTimerMinutes(null)
-      } else {
-        sleepTimerRef.current = setTimeout(() => {
-          pausePlayback()
-          setSleepTimerEnd(null)
-          setSleepTimerMinutes(null)
-        }, remaining)
-      }
-    }
-    return () => { if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current) }
-  }, [sleepTimerEnd])
 
   function stopAll() {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; audioRef.current = null }
@@ -400,25 +370,6 @@ export function GlobalMusicPlayerBar() {
   }
 
 
-  function startSleepTimer(minutes: number) {
-    setSleepTimerMinutes(minutes)
-    setSleepTimerEnd(Date.now() + minutes * 60 * 1000)
-    setShowSleepMenu(false)
-  }
-
-  function cancelSleepTimer() {
-    setSleepTimerMinutes(null)
-    setSleepTimerEnd(null)
-    setShowSleepMenu(false)
-  }
-
-  function getSleepTimerDisplay(): string {
-    if (!sleepTimerEnd) return ""
-    const remaining = Math.max(0, sleepTimerEnd - Date.now())
-    const m = Math.floor(remaining / 60000)
-    const s = Math.floor((remaining % 60000) / 1000)
-    return `${m}:${String(s).padStart(2, "0")}`
-  }
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -495,10 +446,10 @@ export function GlobalMusicPlayerBar() {
 
       <div className="sr-only" aria-hidden="true" />
 
-      {/* Fullscreen player overlay */}
-      {fullscreenOpen && (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6" style={{ background: isDark ? "oklch(0.1 0.02 280)" : "oklch(0.96 0.005 80)" }}>
-          <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(false)} className="absolute top-4 right-4"><Minimize2 className="size-5" /></Button>
+      {/* Fullscreen player overlay — portal into main content only */}
+      {fullscreenOpen && createPortal(
+        <div className="absolute inset-0 z-[200] flex flex-col items-center justify-center gap-6 overflow-y-auto" style={{ background: isDark ? "oklch(0.1 0.02 280)" : "oklch(0.96 0.005 80)" }}>
+          <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(false)} className="absolute top-4 right-4 z-10"><Minimize2 className="size-5" /></Button>
           <img src={currentTrack.thumbnail} alt={decodedTitle} className="size-64 rounded-2xl object-cover shadow-2xl ring-2 ring-white/10" />
           <div className="text-center">
             <h2 className={cn("text-2xl font-bold", isDark ? "text-white" : "text-gray-900")}>{decodedTitle}</h2>
@@ -530,7 +481,8 @@ export function GlobalMusicPlayerBar() {
               <Heart className={cn("size-5", favorites.some(t => t.id === currentTrack.id) ? "fill-red-500 text-red-500" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} />
             </Button>
           </div>
-        </div>
+        </div>,
+        document.getElementById("main-content") || document.body
       )}
 
       {/* Lyrics Panel */}
@@ -639,31 +591,15 @@ export function GlobalMusicPlayerBar() {
 
           <div className="flex items-center gap-1 shrink-0">
             <Button variant="ghost" size="icon" onClick={() => setQueueOpen(!queueOpen)} className={cn("size-9", queueOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Favorites"><ListMusic className="size-4" /></Button>
-            <div className="relative flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => setShowSleepMenu(!showSleepMenu)} className={cn("size-9", sleepTimerEnd ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={sleepTimerEnd ? `Sleep timer: ${getSleepTimerDisplay()}` : "Sleep timer"}>
-                <Moon className="size-4" />
-              </Button>
-              {showSleepMenu && (
-                <div className="absolute bottom-full right-0 mb-2 w-44 rounded-xl border p-1 shadow-xl" style={{ background: isDark ? "oklch(0.16 0.02 280)" : "white", borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.1)" }}>
-                  <p className={cn("px-3 py-1.5 text-xs font-medium", isDark ? "text-white/40" : "text-gray-400")}>Sleep Timer</p>
-                  {SLEEP_OPTIONS.map(opt => (
-                    <button key={opt.minutes} onClick={() => startSleepTimer(opt.minutes)} className={cn("w-full rounded-lg px-3 py-2 text-left text-sm transition-colors", isDark ? "text-white/80 hover:bg-white/5" : "text-gray-700 hover:bg-gray-100")}>{opt.label}</button>
-                  ))}
-                  {sleepTimerEnd && (
-                    <button onClick={cancelSleepTimer} className={cn("w-full rounded-lg px-3 py-2 text-left text-sm text-red-500 transition-colors", isDark ? "hover:bg-white/5" : "hover:bg-gray-100")}>Cancel Timer</button>
-                  )}
-                </div>
-              )}
-            </div>
             <div className="flex items-center gap-2 group/vol">
               <Button variant="ghost" size="icon" onClick={toggleMuteFn} className={cn("size-9", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={muted ? "Unmute" : "Mute"}>
                 {muted || volume === 0 ? <VolumeX className="size-4" /> : volume < 50 ? <Volume1 className="size-4" /> : <Volume2 className="size-4" />}
               </Button>
-              <div className="relative w-24 h-5 flex items-center cursor-pointer" onMouseDown={handleVolumeDragStart}>
-                <div className="absolute inset-y-0 my-auto h-1 w-full rounded-full" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
-                  <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-75" style={{ width: `${muted ? 0 : volume}%`, background: isDark ? "rgba(255,255,255,0.6)" : "oklch(0.52 0.22 25)" }} />
+              <div className="relative w-28 h-6 flex items-center cursor-pointer group/vol" onMouseDown={handleVolumeDragStart}>
+                <div className="absolute inset-y-0 my-auto h-1.5 w-full rounded-full transition-all duration-200" style={{ background: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)" }}>
+                  <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-100 ease-out" style={{ width: `${muted ? 0 : volume}%`, background: isDark ? "rgba(255,255,255,0.7)" : "oklch(0.52 0.22 25)" }} />
                 </div>
-                <div className="absolute top-1/2 -translate-y-1/2 size-3 rounded-full bg-white shadow-md transition-[left] duration-75 pointer-events-none" style={{ left: `calc(${muted ? 0 : volume}% - 6px)` }} />
+                <div className="absolute top-1/2 -translate-y-1/2 size-3.5 rounded-full bg-white shadow-lg opacity-80 group-hover/vol:opacity-100 transition-all duration-200 pointer-events-none" style={{ left: `calc(${muted ? 0 : volume}% - 7px)` }} />
               </div>
             </div>
             {isMusicPage && <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(true)} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Fullscreen"><Maximize2 className="size-4" /></Button>}
