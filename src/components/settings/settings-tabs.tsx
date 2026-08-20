@@ -3,13 +3,12 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { User, Bell, Palette, Settings, Music } from "lucide-react"
+import { User, Bell, Palette, Settings } from "lucide-react"
 
 const TABS = [
   { href: "/settings/profile", label: "Profile", icon: User },
   { href: "/settings/notifications", label: "Notifications", icon: Bell },
   { href: "/settings/appearance", label: "Appearance", icon: Palette },
-  { href: "/settings/spotify", label: "Spotify", icon: Music },
 ]
 
 export function SettingsTabs() {

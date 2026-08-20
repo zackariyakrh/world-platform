@@ -310,9 +310,9 @@ function Sidebar({
             />
             <SidebarLink
               icon={Music}
-              label="Spotify"
-              href="/spotify"
-              isActive={isActive("/spotify")}
+              label="Music"
+              href="/music"
+              isActive={isActive("/music")}
               collapsed={collapsed}
             />
 
