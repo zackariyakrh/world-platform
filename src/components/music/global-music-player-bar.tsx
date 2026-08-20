@@ -26,9 +26,6 @@ import {
   Rewind,
   FastForward,
   X,
-
-
-  ChevronUp,
 } from "lucide-react"
 
 declare global {

@@ -22,7 +22,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  CalendarDays,
   Clock,
   MapPin,
   Eye,
