@@ -1,7 +1,6 @@
 "use client"
 
 import * as React from "react"
-import * as ReactDOM from "react-dom"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -245,7 +244,7 @@ export function MusicClient() {
       </div>
 
       {/* Scrollable Results */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-24">
+      <div className="min-h-0 flex-1 overflow-y-auto px-6">
         {error && <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{error}</div>}
         {tracks.length === 0 && !loading && !error && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -286,47 +285,44 @@ export function MusicClient() {
             </div>
           </div>
         )}
-      </div>
 
-      {/* Bottom Player — portaled to body, always at viewport bottom */}
-      {ReactDOM.createPortal(
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/50 bg-background/95 backdrop-blur-xl md:left-64">
-          <div className="flex items-center gap-3 px-4 py-3 sm:gap-4">
+        {/* Player Bar — inside scroll area, sticky to bottom */}
+        <div className="sticky bottom-0 -mx-6 mt-4 px-6 pb-6 pt-4" style={{ background: "linear-gradient(135deg, oklch(0.22 0.03 300 / 0.97), oklch(0.18 0.04 320 / 0.97), oklch(0.15 0.03 280 / 0.97))", boxShadow: "0 -8px 32px oklch(0.4 0.15 var(--hue, 280) / 0.2), 0 -2px 12px oklch(0.5 0.2 var(--hue, 280) / 0.15), inset 0 1px 0 oklch(1 0 0 / 0.05)" }}>
+          <div className="flex items-center gap-3 sm:gap-4">
             {currentTrack ? (
               <>
-                <img src={currentTrack.thumbnail} alt={currentTrack.title} className="size-12 rounded-lg object-cover shrink-0" />
-                <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-foreground">{currentTrack.title}</p><p className="truncate text-xs text-muted-foreground">{currentTrack.artist}</p></div>
+                <img src={currentTrack.thumbnail} alt={currentTrack.title} className="size-12 rounded-lg object-cover shrink-0 ring-2 ring-white/10" />
+                <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-white">{currentTrack.title}</p><p className="truncate text-xs text-white/60">{currentTrack.artist}</p></div>
               </>
             ) : (
               <div className="flex flex-1 items-center gap-3">
-                <div className="size-12 rounded-lg bg-muted flex items-center justify-center shrink-0"><Music className="size-5 text-muted-foreground/40" /></div>
-                <p className="text-sm text-muted-foreground">Select a track to play</p>
+                <div className="size-12 rounded-lg bg-white/10 flex items-center justify-center shrink-0"><Music className="size-5 text-white/40" /></div>
+                <p className="text-sm text-white/50">Select a track to play</p>
               </div>
             )}
             <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
-              <Button variant="ghost" size="icon" onClick={() => { if (currentTrack) { setProgress(0); if (audioRef.current) audioRef.current.currentTime = 0; if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(0, true) } catch {} } }} disabled={!currentTrack}><SkipBack className="size-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => { if (!currentTrack) return; if (isPlaying) pauseTrack(); else resumeTrack(); }} className="size-10">{isPlaying ? <Pause className="size-5" /> : <Play className="size-5" />}</Button>
-              <Button variant="ghost" size="icon" onClick={() => playNextInQueue()} disabled={!currentTrack}><SkipForward className="size-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => { if (currentTrack) { setProgress(0); if (audioRef.current) audioRef.current.currentTime = 0; if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(0, true) } catch {} } }} disabled={!currentTrack} className="text-white/70 hover:text-white hover:bg-white/10"><SkipBack className="size-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => { if (!currentTrack) return; if (isPlaying) pauseTrack(); else resumeTrack(); }} className="size-10 text-white hover:text-white hover:bg-white/10">{isPlaying ? <Pause className="size-5" /> : <Play className="size-5" />}</Button>
+              <Button variant="ghost" size="icon" onClick={() => playNextInQueue()} disabled={!currentTrack} className="text-white/70 hover:text-white hover:bg-white/10"><SkipForward className="size-4" /></Button>
             </div>
             <div className="hidden sm:flex items-center gap-2 flex-1 max-w-md">
-              <span className="w-10 text-right text-xs text-muted-foreground tabular-nums">{fmt(progress)}</span>
-              <div onClick={handleSeek} className="group relative h-1.5 flex-1 cursor-pointer rounded-full bg-muted">
-                <div className="absolute inset-y-0 left-0 rounded-full bg-primary transition-[width] duration-100" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%" }} />
-                <div className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-primary opacity-0 shadow-sm group-hover:opacity-100 transition-opacity" style={{ left: duration ? `calc(${(progress / duration) * 100}% - 6px)` : "-6px" }} />
+              <span className="w-10 text-right text-xs text-white/50 tabular-nums">{fmt(progress)}</span>
+              <div onClick={handleSeek} className="group relative h-1.5 flex-1 cursor-pointer rounded-full bg-white/10">
+                <div className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 transition-[width] duration-100" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%", boxShadow: "0 0 8px oklch(0.7 0.2 320 / 0.5)" }} />
+                <div className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-white opacity-0 shadow-[0_0_8px_rgba(255,255,255,0.5)] group-hover:opacity-100 transition-opacity" style={{ left: duration ? `calc(${(progress / duration) * 100}% - 6px)` : "-6px" }} />
               </div>
-              <span className="w-10 text-xs text-muted-foreground tabular-nums">-{fmt(duration > progress ? duration - progress : 0)}</span>
+              <span className="w-10 text-xs text-white/50 tabular-nums">-{fmt(duration > progress ? duration - progress : 0)}</span>
             </div>
             <div className="hidden sm:flex items-center gap-1 shrink-0">
-              <Button variant="ghost" size="icon" onClick={toggleMute}>{muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}</Button>
-              <div onClick={handleVolumeChange} className="relative h-1 w-20 cursor-pointer rounded-full bg-muted">
-                <div className="absolute inset-y-0 left-0 rounded-full bg-primary" style={{ width: `${muted ? 0 : volume}%` }} />
+              <Button variant="ghost" size="icon" onClick={toggleMute} className="text-white/70 hover:text-white hover:bg-white/10">{muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}</Button>
+              <div onClick={handleVolumeChange} className="relative h-1 w-20 cursor-pointer rounded-full bg-white/10">
+                <div className="absolute inset-y-0 left-0 rounded-full bg-white/70" style={{ width: `${muted ? 0 : volume}%` }} />
               </div>
             </div>
-            {currentTrack?.link && <a href={currentTrack.link} target="_blank" rel="noopener noreferrer" className="rounded-lg p-2 text-muted-foreground hover:text-foreground shrink-0"><ExternalLink className="size-4" /></a>}
+            {currentTrack?.link && <a href={currentTrack.link} target="_blank" rel="noopener noreferrer" className="rounded-lg p-2 text-white/50 hover:text-white shrink-0"><ExternalLink className="size-4" /></a>}
           </div>
-        </div>,
-        document.body
-      )}
+        </div>
+      </div>
     </div>
   )
 }
