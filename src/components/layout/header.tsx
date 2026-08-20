@@ -83,14 +83,15 @@ function Header({
       <button
         onClick={onSearchClick}
         className={cn(
-          "hidden md:flex items-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground",
-          "transition-all duration-200 hover:bg-muted/70 hover:border-border hover:text-foreground",
+          "hidden md:flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-5 py-3 text-sm text-muted-foreground",
+          "shadow-[0_4px_24px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.1)]",
+          "transition-all duration-300 hover:bg-white/20 hover:border-white/30 hover:text-foreground hover:shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.15)]",
           "max-w-lg flex-1"
         )}
       >
-        <Search className="size-4 shrink-0" />
-        <span className="truncate">Search anything...</span>
-        <kbd className="ml-auto shrink-0 rounded-md border border-border/60 bg-background/80 px-2 py-0.5 text-xs font-medium text-muted-foreground">
+        <Search className="size-4 shrink-0 opacity-60" />
+        <span className="truncate opacity-70">Search anything...</span>
+        <kbd className="ml-auto shrink-0 rounded-lg border border-white/15 bg-white/10 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-muted-foreground/80 shadow-sm">
           Ctrl+K
         </kbd>
       </button>
