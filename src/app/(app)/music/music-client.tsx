@@ -200,7 +200,7 @@ export function MusicClient() {
           <div className="space-y-1">
             {tracks.map((track, i) => (
               <div key={`${track.id}-${i}`} className={cn("group flex w-full items-center gap-[10px] rounded-xl p-3 text-left transition-all hover:bg-muted/50", currentTrack?.id === track.id && "bg-primary/5 ring-1 ring-primary/20")}>
-                <button onClick={() => playTrackAtIndex(track, i)} className="flex flex-1 items-center gap-[10px] min-w-0 text-left">
+                <button onClick={() => playTrackAtIndex(track, i)} className="flex flex-1 items-center gap-4 min-w-0 text-left">
                   <span className="w-6 text-center text-sm text-muted-foreground">{i + 1}</span>
                   <img src={track.thumbnail} alt={track.title} className="size-12 rounded-lg object-cover shrink-0" />
                   <div className="min-w-0 flex-1 text-left">
