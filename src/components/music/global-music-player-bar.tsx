@@ -614,15 +614,15 @@ export function GlobalMusicPlayerBar() {
           {/* Center controls */}
           <div className="flex flex-col items-center gap-1 flex-1">
             <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => setShuffle(!shuffle)} className={cn("size-9 hidden sm:inline-flex", shuffle ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Shuffle"><Shuffle className="size-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => setShuffle(!shuffle)} className={cn("size-9 inline-flex", shuffle ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Shuffle"><Shuffle className="size-4" /></Button>
               <Button variant="ghost" size="icon" onClick={playPrevious} className={cn("size-9", isDark ? "text-white/70 hover:text-white" : "text-gray-700 hover:text-primary")} title="Previous"><SkipBack className="size-5" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => seekRelative(-10)} className={cn("size-9 hidden md:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Rewind 10s"><Rewind className="size-5" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => seekRelative(-10)} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Rewind 10s"><Rewind className="size-5" /></Button>
               <Button variant="ghost" size="icon" onClick={() => isPlaying ? pausePlayback() : resumePlayback()} className={cn("size-9 mx-1", isDark ? "text-white hover:text-white" : "text-gray-900 hover:text-primary")} title={isPlaying ? "Pause" : "Play"} style={{ boxShadow: "0 0 16px oklch(0.65 0.28 300 / 0.35)" }}>
                 {isPlaying ? <Pause className="size-5" /> : <Play className="size-5 ml-0.5" />}
               </Button>
-              <Button variant="ghost" size="icon" onClick={() => seekRelative(10)} className={cn("size-9 hidden md:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Forward 10s"><FastForward className="size-5" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => seekRelative(10)} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Forward 10s"><FastForward className="size-5" /></Button>
               <Button variant="ghost" size="icon" onClick={playNext} className={cn("size-9", isDark ? "text-white/70 hover:text-white" : "text-gray-700 hover:text-primary")} title="Next"><SkipForward className="size-5" /></Button>
-              <Button variant="ghost" size="icon" onClick={cycleRepeat} className={cn("size-9 hidden sm:inline-flex", repeat !== "off" ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={`Repeat: ${repeat}`}>
+              <Button variant="ghost" size="icon" onClick={cycleRepeat} className={cn("size-9 inline-flex", repeat !== "off" ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={`Repeat: ${repeat}`}>
                 {repeat === "one" ? <Repeat1 className="size-5" /> : <Repeat className="size-5" />}
               </Button>
             </div>
@@ -637,7 +637,7 @@ export function GlobalMusicPlayerBar() {
           </div>
 
           {/* Right controls */}
-          <div className="hidden md:flex items-center gap-2 flex-1 max-w-xs justify-end">
+          <div className="flex items-center gap-2 flex-1 max-w-xs justify-end">
             <span className={cn("w-10 text-right text-xs tabular-nums", isDark ? "text-white/40" : "text-gray-400")}>{fmt(displayProgress)}</span>
             <div onClick={handleSeek} onMouseDown={handleDragStart} className="group/seek relative h-1.5 flex-1 cursor-pointer rounded-full max-w-48" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
               <div className="absolute inset-y-0 left-0 rounded-full player-progress-fill transition-[width] duration-75" style={{ width: `${pct}%` }} />
@@ -647,11 +647,11 @@ export function GlobalMusicPlayerBar() {
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <Button variant="ghost" size="icon" onClick={handleShare} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Share"><Share2 className="size-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={handleDownload} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Open on YouTube"><Download className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={handleShare} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Share"><Share2 className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={handleDownload} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Open on YouTube"><Download className="size-4" /></Button>
             <Button variant="ghost" size="icon" onClick={() => setQueueOpen(!queueOpen)} className={cn("size-9", queueOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Queue"><ListMusic className="size-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={() => setLyricsOpen(!lyricsOpen)} className={cn("size-9 hidden sm:inline-flex", lyricsOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Lyrics"><Mic2 className="size-4" /></Button>
-            <div className="relative hidden sm:flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={() => setLyricsOpen(!lyricsOpen)} className={cn("size-9 inline-flex", lyricsOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Lyrics"><Mic2 className="size-4" /></Button>
+            <div className="relative flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={() => setShowSleepMenu(!showSleepMenu)} className={cn("size-9", sleepTimerEnd ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={sleepTimerEnd ? `Sleep timer: ${getSleepTimerDisplay()}` : "Sleep timer"}>
                 <Moon className="size-4" />
               </Button>
@@ -667,7 +667,7 @@ export function GlobalMusicPlayerBar() {
                 </div>
               )}
             </div>
-            <div className="hidden sm:flex items-center gap-1">
+            <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={toggleMuteFn} className={cn("size-9", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={muted ? "Unmute" : "Mute"}>
                 {muted || volume === 0 ? <VolumeX className="size-4" /> : volume < 50 ? <Volume1 className="size-4" /> : <Volume2 className="size-4" />}
               </Button>
@@ -675,7 +675,7 @@ export function GlobalMusicPlayerBar() {
                 <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-75" style={{ width: `${muted ? 0 : volume}%`, background: isDark ? "rgba(255,255,255,0.6)" : "oklch(0.52 0.22 25)" }} />
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(true)} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Fullscreen"><Maximize2 className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(true)} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Fullscreen"><Maximize2 className="size-4" /></Button>
             <Button variant="ghost" size="icon" onClick={() => { stopAll(); setIsPlaying(false); setCurrentTrack(null); setPlayerVisible(false) }} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Close player"><X className="size-4" /></Button>
           </div>
         </div>
