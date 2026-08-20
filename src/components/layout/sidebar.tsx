@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
@@ -234,12 +235,12 @@ function Sidebar({
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <button
-              onClick={() => router.push("/dashboard")}
+            <Link
+              href="/dashboard"
               className="flex size-9 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground shadow-[0_0_12px_oklch(from_var(--primary)_l_c_h_/_0.3)] hover:shadow-[0_0_20px_oklch(from_var(--primary)_l_c_h_/_0.4)] transition-shadow"
             >
               {appName.charAt(0).toUpperCase()}
-            </button>
+            </Link>
           )}
 
           {/* Mobile close */}
@@ -291,61 +292,61 @@ function Sidebar({
         <ScrollArea className="flex-1 px-2">
           <div className="flex flex-col gap-0.5">
             {/* Main Navigation */}
-            <SidebarItem
+            <SidebarLink
               icon={Compass}
               label="Explore"
+              href="/explore"
               isActive={isActive("/explore")}
               collapsed={collapsed}
-              onClick={() => router.push("/explore")}
             />
-            <SidebarItem
+            <SidebarLink
               icon={MessageSquare}
               label="Threads"
+              href="/threads"
               isActive={isActive("/threads")}
               collapsed={collapsed}
-              onClick={() => router.push("/threads")}
             />
-            <SidebarItem
+            <SidebarLink
               icon={Pin}
               label="Saved Items"
+              href="/bookmarks"
               isActive={isActive("/bookmarks")}
               collapsed={collapsed}
-              onClick={() => router.push("/bookmarks")}
             />
-            <SidebarItem
+            <SidebarLink
               icon={Bell}
               label="Notifications"
+              href="/notifications"
               isActive={isActive("/notifications")}
               collapsed={collapsed}
-              onClick={() => router.push("/notifications")}
             />
-            <SidebarItem
+            <SidebarLink
               icon={Users}
               label="Groups"
+              href="/groups"
               isActive={isActive("/groups")}
               collapsed={collapsed}
-              onClick={() => router.push("/groups")}
             />
-            <SidebarItem
+            <SidebarLink
               icon={Briefcase}
               label="Projects"
+              href="/projects"
               isActive={isActive("/projects")}
               collapsed={collapsed}
-              onClick={() => router.push("/projects")}
             />
-            <SidebarItem
+            <SidebarLink
               icon={FolderOpen}
               label="Workspaces"
+              href="/workspaces"
               isActive={isActive("/workspaces")}
               collapsed={collapsed}
-              onClick={() => router.push("/workspaces")}
             />
-            <SidebarItem
+            <SidebarLink
               icon={Music}
               label="Spotify"
+              href="/spotify"
               isActive={isActive("/spotify")}
               collapsed={collapsed}
-              onClick={() => router.push("/spotify")}
             />
 
             <div className="my-2">
@@ -429,9 +430,10 @@ function Sidebar({
                 </CollapsibleContent>
               </Collapsible>
             ) : (
-              <SidebarItem
+              <SidebarLink
                 icon={Hash}
                 label="Channels"
+                href="#"
                 isActive={false}
                 collapsed={collapsed}
                 onClick={() => setCollapsed(false)}
@@ -464,8 +466,8 @@ function Sidebar({
           {/* Admin Quick Access (when collapsed) */}
           {collapsed && isAdmin && (
             <div className="flex flex-col items-center gap-1 px-2 py-2">
-              <button
-                onClick={() => router.push("/admin/users")}
+              <Link
+                href="/admin/users"
                 title="Admin"
                 className={cn(
                   "flex size-10 items-center justify-center rounded-lg transition-all duration-200",
@@ -475,14 +477,14 @@ function Sidebar({
                 )}
               >
                 <Shield className="size-5" />
-              </button>
+              </Link>
             </div>
           )}
 
           {/* Main Bottom Actions - Icon Only */}
           <div className="flex items-center gap-1 px-2 py-2">
-            <button
-              onClick={() => router.push("/calendar")}
+            <Link
+              href="/calendar"
               title="Calendar"
               className={cn(
                 "flex size-9 items-center justify-center rounded-lg transition-all duration-200",
@@ -492,9 +494,9 @@ function Sidebar({
               )}
             >
               <Calendar className="size-4" />
-            </button>
-            <button
-              onClick={() => router.push("/settings")}
+            </Link>
+            <Link
+              href="/settings"
               title="Settings"
               className={cn(
                 "flex size-9 items-center justify-center rounded-lg transition-all duration-200",
@@ -504,9 +506,9 @@ function Sidebar({
               )}
             >
               <Settings className="size-4" />
-            </button>
-            <button
-              onClick={() => router.push("/help")}
+            </Link>
+            <Link
+              href="/help"
               title="Help"
               className={cn(
                 "flex size-9 items-center justify-center rounded-lg transition-all duration-200",
@@ -516,7 +518,7 @@ function Sidebar({
               )}
             >
               <HelpCircle className="size-4" />
-            </button>
+            </Link>
             <div className="ml-auto">
               <button
                 onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
@@ -553,9 +555,10 @@ function Sidebar({
   )
 }
 
-function SidebarItem({
+function SidebarLink({
   icon: Icon,
   label,
+  href,
   isActive = false,
   collapsed = false,
   badge,
@@ -564,27 +567,15 @@ function SidebarItem({
 }: {
   icon: React.ComponentType<{ className?: string }>
   label: string
+  href: string
   isActive?: boolean
   collapsed?: boolean
   badge?: number
   onClick?: () => void
   className?: string
 }) {
-  return (
-    <button
-      onClick={onClick}
-      title={collapsed ? label : undefined}
-      className={cn(
-        "group relative flex items-center rounded-lg transition-all duration-200",
-        collapsed
-          ? "size-10 justify-center"
-          : "w-full gap-2.5 px-2.5 py-2",
-        isActive
-          ? "bg-primary/10 text-primary shadow-[inset_0_0_20px_oklch(from_var(--primary)_l_c_h_/_0.08)]"
-          : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:shadow-[inset_0_0_20px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.06)]",
-        className
-      )}
-    >
+  const inner = (
+    <>
       <Icon className={cn(
         "shrink-0 transition-all duration-200",
         collapsed ? "size-5" : "size-4",
@@ -602,7 +593,44 @@ function SidebarItem({
       {isActive && !collapsed && (
         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.4)]" />
       )}
-    </button>
+    </>
+  )
+
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        title={collapsed ? label : undefined}
+        className={cn(
+          "group relative flex items-center rounded-lg transition-all duration-200",
+          collapsed ? "size-10 justify-center" : "w-full gap-2.5 px-2.5 py-2",
+          isActive
+            ? "bg-primary/10 text-primary shadow-[inset_0_0_20px_oklch(from_var(--primary)_l_c_h_/_0.08)]"
+            : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:shadow-[inset_0_0_20px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.06)]",
+          className
+        )}
+      >
+        {inner}
+      </button>
+    )
+  }
+
+  return (
+    <Link
+      href={href}
+      prefetch={true}
+      title={collapsed ? label : undefined}
+      className={cn(
+        "group relative flex items-center rounded-lg transition-all duration-200",
+        collapsed ? "size-10 justify-center" : "w-full gap-2.5 px-2.5 py-2",
+        isActive
+          ? "bg-primary/10 text-primary shadow-[inset_0_0_20px_oklch(from_var(--primary)_l_c_h_/_0.08)]"
+          : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground hover:shadow-[inset_0_0_20px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.06)]",
+        className
+      )}
+    >
+      {inner}
+    </Link>
   )
 }
 
@@ -659,7 +687,7 @@ function ChannelItem({
           </span>
         )}
         {!channel.muted && channel.unread && channel.unread > 0 && !channel.mentionCount && (
-          <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_6px_oklch(from_var(--primary)_l_c_h_/_0.5)]" />
+          <span className="size-2 shrink-0 rounded-full bg-primary shadow-[0_0_6px_oklch(from_var(--sidebar-primary)_l_c_h_/_0.5)]" />
         )}
       </div>
       {isActive && (

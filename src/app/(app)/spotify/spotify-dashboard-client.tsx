@@ -106,9 +106,14 @@ export function SpotifyDashboardClient({ connection: initialConnection, justConn
         denied: "Spotify authorization was denied.",
         missing_params: "Missing authorization parameters.",
         invalid_state: "Invalid authorization state. Please try again.",
+        token_exchange_failed: "Failed to exchange authorization code. Check Spotify app credentials.",
+        profile_fetch_failed: "Failed to fetch Spotify profile.",
+        profile_error: "Error fetching Spotify profile.",
+        db_save_failed: "Failed to save Spotify connection to database.",
+        db_lookup_failed: "Database error during Spotify connection.",
         callback_failed: "Failed to complete Spotify connection.",
       }
-      toast.error(messages[error] || "Spotify connection failed.")
+      toast.error(messages[error] || `Spotify connection failed: ${error}`)
     }
   }, [justConnected, error])
 
