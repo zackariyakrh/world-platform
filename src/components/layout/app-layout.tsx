@@ -1,10 +1,13 @@
 "use client"
 
 import * as React from "react"
+import { cn } from "@/lib/utils"
 import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { SearchDialog } from "@/components/ui/search-dialog"
+import { GlobalMusicPlayerBar } from "@/components/music/global-music-player-bar"
+import { useMusicStore } from "@/stores/music-store"
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -37,6 +40,7 @@ function AppLayout({
 }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
   const [searchOpen, setSearchOpen] = React.useState(false)
+  const currentTrack = useMusicStore(s => s.currentTrack)
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -77,7 +81,7 @@ function AppLayout({
           userAvatar={userAvatar}
         />
 
-        <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+        <main className={cn("flex-1 overflow-y-auto pb-16 md:pb-0", currentTrack && "pb-24 md:pb-20")}>
           {children}
         </main>
       </div>
@@ -85,6 +89,8 @@ function AppLayout({
       <MobileNav
         activeHref={channelId ? `/channels/${channelId}` : "/"}
       />
+
+      <GlobalMusicPlayerBar />
 
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </div>
