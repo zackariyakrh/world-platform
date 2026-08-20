@@ -88,6 +88,7 @@ function AppLayout({
 
       <MobileNav
         activeHref={channelId ? `/channels/${channelId}` : "/"}
+        className={currentTrack ? "bottom-[76px] md:bottom-0" : ""}
       />
 
       <GlobalMusicPlayerBar />
