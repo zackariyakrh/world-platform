@@ -1,15 +1,21 @@
 import { db } from "@/lib/db"
 import { SPOTIFY_SCOPES } from "./types"
 
-const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID
-const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET
-const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || `${process.env.APP_URL || "https://nexus-khaki-one-43.vercel.app"}/api/spotify/callback`
+function getClientId() {
+  return process.env.SPOTIFY_CLIENT_ID!
+}
+function getClientSecret() {
+  return process.env.SPOTIFY_CLIENT_SECRET!
+}
+function getRedirectUri() {
+  return process.env.SPOTIFY_REDIRECT_URI || `${process.env.APP_URL || "https://nexus-khaki-one-43.vercel.app"}/api/spotify/callback`
+}
 
 export function getSpotifyAuthUrl(state: string): string {
   const params = new URLSearchParams({
-    client_id: CLIENT_ID!,
+    client_id: getClientId(),
     response_type: "code",
-    redirect_uri: REDIRECT_URI,
+    redirect_uri: getRedirectUri(),
     scope: SPOTIFY_SCOPES,
     state,
     show_dialog: "true",
@@ -27,17 +33,18 @@ export async function exchangeCodeForTokens(code: string): Promise<{
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64")}`,
+      Authorization: `Basic ${Buffer.from(`${getClientId()}:${getClientSecret()}`).toString("base64")}`,
     },
     body: new URLSearchParams({
       grant_type: "authorization_code",
       code,
-      redirect_uri: REDIRECT_URI,
+      redirect_uri: getRedirectUri(),
     }),
   })
 
   if (!res.ok) {
-    throw new Error("Failed to exchange code for tokens")
+    const body = await res.text()
+    throw new Error(`Failed to exchange code for tokens: ${res.status} ${body}`)
   }
 
   return res.json()
@@ -51,7 +58,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<{
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString("base64")}`,
+      Authorization: `Basic ${Buffer.from(`${getClientId()}:${getClientSecret()}`).toString("base64")}`,
     },
     body: new URLSearchParams({
       grant_type: "refresh_token",

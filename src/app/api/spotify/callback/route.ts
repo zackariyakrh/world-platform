@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { exchangeCodeForTokens } from "@/lib/spotify/auth"
-import { getSpotifyProfile } from "@/lib/spotify/api"
+import { SPOTIFY_API_BASE, SpotifyUserProfile } from "@/lib/spotify/types"
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -33,10 +33,13 @@ export async function GET(request: NextRequest) {
 
     const tokens = await exchangeCodeForTokens(code)
 
-    const profile = await getSpotifyProfile(userId)
-    if (!profile) {
+    const profileRes = await fetch(`${SPOTIFY_API_BASE}/me`, {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    })
+    if (!profileRes.ok) {
       return NextResponse.redirect(new URL("/spotify?error=profile_failed", request.url))
     }
+    const profile: SpotifyUserProfile = await profileRes.json()
 
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000)
 
