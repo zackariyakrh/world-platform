@@ -245,15 +245,15 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
                       className={cn(
                         "relative min-h-[80px] border-b border-r border-border p-1 text-left transition-colors hover:bg-muted/50",
                         !inMonth && "bg-muted/20 text-muted-foreground/50",
-                        today && !selected && "bg-primary/10 ring-1 ring-primary/30",
-                        selected && "bg-blue-500/15 ring-2 ring-blue-500",
+                        today && !selected && "bg-primary",
+                        selected && !today && "bg-emerald-500",
                       )}
                     >
                       <span
                         className={cn(
                           "inline-flex size-6 items-center justify-center rounded-full text-xs font-medium",
-                          today && !selected && "bg-primary text-primary-foreground",
-                          selected && "bg-blue-500 text-white",
+                          today && !selected && "bg-white/25 text-white",
+                          selected && !today && "bg-white/25 text-white",
                           !today && !selected && "text-foreground"
                         )}
                       >
@@ -304,18 +304,18 @@ export function CalendarView({ initialEvents }: CalendarViewProps) {
                       key={day.toISOString()}
                       className={cn(
                         "px-2 py-3 text-center border-r border-border last:border-r-0",
-                        today && !selected && "bg-primary/10 ring-1 ring-primary/30",
-                        selected && "bg-blue-500/15 ring-2 ring-blue-500"
+                        today && !selected && "bg-primary",
+                        selected && !today && "bg-emerald-500"
                       )}
                     >
-                      <div className="text-xs font-medium text-muted-foreground">
+                      <div className={cn("text-xs font-medium", today && !selected ? "text-white/70" : selected && !today ? "text-white/70" : "text-muted-foreground")}>
                         {format(day, "EEE")}
                       </div>
                       <div
                         className={cn(
                           "mt-1 inline-flex size-7 items-center justify-center rounded-full text-sm font-semibold",
-                          today && "bg-primary text-primary-foreground",
-                          selected && !today && "bg-blue-500 text-white"
+                          today && !selected && "bg-white/25 text-white",
+                          selected && !today && "bg-white/25 text-white"
                         )}
                       >
                         {format(day, "d")}
@@ -577,7 +577,7 @@ function MiniCalendar({
                 !inMonth && "text-muted-foreground/30",
                 today && !selected && "bg-primary text-primary-foreground font-bold",
                 selected && today && "bg-primary text-primary-foreground font-bold ring-2 ring-offset-1 ring-primary",
-                selected && !today && "bg-blue-500 text-white font-bold ring-2 ring-blue-500",
+                selected && !today && "bg-emerald-500 text-white font-bold ring-2 ring-emerald-400",
                 hasEvents && !today && !selected && "font-semibold text-foreground"
               )}
             >
