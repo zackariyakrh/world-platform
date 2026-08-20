@@ -598,10 +598,10 @@ export function GlobalMusicPlayerBar() {
           <div className="absolute top-1/2 size-3.5 -translate-y-1/2 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" style={{ left: `calc(${pct}% - 7px)`, boxShadow: isDark ? "0 0 8px rgba(255,255,255,0.5)" : "0 0 8px rgba(0,0,0,0.3)" }} />
         </div>
 
-        <div className="flex items-center gap-2 px-4 sm:gap-3 md:px-6 flex-1">
+        <div className="flex items-center gap-4 px-6 py-6 sm:gap-6 md:px-10 flex-1">
           {/* Track info */}
           <div className="flex items-center gap-4 min-w-0 flex-1 sm:flex-none sm:w-64 md:w-72">
-            <img src={currentTrack.thumbnail} alt={decodedTitle} className={cn("size-9 rounded-lg object-cover shrink-0 ring-1", isDark ? "ring-white/10" : "ring-black/[0.08]")} />
+            <img src={currentTrack.thumbnail} alt={decodedTitle} className={cn("size-14 rounded-xl object-cover shrink-0 ring-1", isDark ? "ring-white/10" : "ring-black/[0.08]")} />
             <div className="min-w-0 flex-1 sm:flex-none">
               <p className={cn("truncate text-sm font-semibold", isDark ? "text-white" : "text-gray-900")}>{decodedTitle}</p>
               <p className={cn("truncate text-xs", isDark ? "text-white/50" : "text-gray-500")}>{decodedArtist}</p>
