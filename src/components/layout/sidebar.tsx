@@ -280,7 +280,7 @@ function Sidebar({
             {!collapsed && (
               <>
                 <span className="text-base">Search</span>
-                <kbd className="ml-auto rounded border bg-background px-1 py-0.5 text-[10px] font-medium text-muted-foreground">
+                <kbd className="ml-auto rounded border bg-background px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
                   Ctrl+K
                 </kbd>
               </>
@@ -359,7 +359,7 @@ function Sidebar({
                 <div className="flex items-center group/category">
                   <CollapsibleTrigger
                     render={
-                      <button className="flex flex-1 items-center gap-0.5 px-1 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" />
+                      <button className="flex flex-1 items-center gap-0.5 px-1 py-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors" />
                     }
                   >
                     <ChevronDown className="size-3 transition-transform" />
@@ -380,7 +380,7 @@ function Sidebar({
                       </DialogHeader>
                       <div className="flex flex-col gap-5 py-1">
                         <div className="flex flex-col gap-2">
-                          <Label className="text-xs font-medium uppercase text-muted-foreground">Name</Label>
+                          <Label className="text-sm font-medium text-muted-foreground">Name</Label>
                           <Input
                             placeholder="e.g. marketing"
                             value={createName}
@@ -389,7 +389,7 @@ function Sidebar({
                           />
                         </div>
                         <div className="flex flex-col gap-2">
-                          <Label className="text-xs font-medium uppercase text-muted-foreground">Description</Label>
+                          <Label className="text-sm font-medium text-muted-foreground">Description</Label>
                           <Input
                             placeholder="What is this channel about?"
                             value={createDesc}
@@ -409,9 +409,9 @@ function Sidebar({
                 <CollapsibleContent>
                   <div className="flex flex-col gap-0.5">
                     {channelsLoading ? (
-                      <div className="px-2 py-2 text-xs text-muted-foreground">Loading...</div>
+                      <div className="px-2 py-2 text-sm text-muted-foreground">Loading...</div>
                     ) : channels.length === 0 ? (
-                      <div className="px-2 py-2 text-xs text-muted-foreground">No channels yet</div>
+                      <div className="px-2 py-2 text-sm text-muted-foreground">No channels yet</div>
                     ) : (
                       channels.map((channel) => (
                         <ChannelItem
@@ -449,7 +449,7 @@ function Sidebar({
               <div className="group/dm-section">
                 <button
                   onClick={() => setShowDMs(!showDMs)}
-                  className="flex w-full items-center gap-0.5 px-1 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex w-full items-center gap-0.5 px-1 py-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <ChevronDown
                     className={cn("size-3 transition-transform", !showDMs && "-rotate-90")}
@@ -537,7 +537,7 @@ function Sidebar({
           )}>
             <button
               onClick={() => setCollapsed(!collapsed)}
-              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all duration-200"
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all duration-200"
             >
               {collapsed ? (
                 <ChevronRight className="size-4" />
@@ -586,7 +586,7 @@ function SidebarLink({
         <span className="truncate text-base">{label}</span>
       )}
       {!collapsed && badge !== undefined && badge > 0 && (
-        <span className="ml-auto flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.3)]">
+        <span className="ml-auto flex size-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.3)]">
           {badge > 99 ? "99+" : badge}
         </span>
       )}
@@ -682,7 +682,7 @@ function ChannelItem({
       <span className="truncate">{channel.name}</span>
       <div className="ml-auto flex items-center gap-1">
         {channel.mentionCount && channel.mentionCount > 0 && (
-          <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.4)] animate-[glow-pulse_2s_ease-in-out_infinite]">
+          <span className="flex size-5 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.4)] animate-[glow-pulse_2s_ease-in-out_infinite]">
             {channel.mentionCount > 99 ? "99+" : channel.mentionCount}
           </span>
         )}
