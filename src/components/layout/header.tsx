@@ -58,7 +58,7 @@ function Header({
     <header
       data-slot="header"
       className={cn(
-        "sticky top-0 z-30 flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border/50 bg-background/60 px-6 backdrop-blur-xl",
+        "sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border/50 bg-background/60 px-5 backdrop-blur-xl",
         "shadow-[0_1px_3px_oklch(from_var(--glow)_l_c_h_/_0.06)]",
         className
       )}
@@ -70,9 +70,9 @@ function Header({
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="shrink-0 md:hidden"
+          className="shrink-0 md:hidden rounded-full size-9"
         >
-          <Menu className="size-5" />
+          <Menu className="size-4" />
         </Button>
         {title && (
           <h1 className="truncate text-lg font-semibold">{title}</h1>
@@ -83,7 +83,7 @@ function Header({
       <button
         onClick={onSearchClick}
         className={cn(
-          "hidden md:flex items-center gap-3 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-xl px-5 py-3 text-sm text-muted-foreground",
+          "hidden md:flex items-center gap-3 rounded-full border border-white/20 bg-white/10 backdrop-blur-xl px-5 py-2.5 text-sm text-muted-foreground",
           "shadow-[0_4px_24px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.1)]",
           "transition-all duration-300 hover:bg-white/20 hover:border-white/30 hover:text-foreground hover:shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.15)]",
           "max-w-lg flex-1"
@@ -102,15 +102,15 @@ function Header({
           variant="ghost"
           size="icon"
           onClick={onSearchClick}
-          className="shrink-0 md:hidden"
+          className="shrink-0 md:hidden rounded-full size-9"
         >
-          <Search className="size-5" />
+          <Search className="size-4" />
         </Button>
 
         {actions}
 
-        <Button variant="ghost" size="icon" className="relative shrink-0 rounded-xl">
-          <Bell className="size-5" />
+        <Button variant="ghost" size="icon" className="relative shrink-0 rounded-full size-9">
+          <Bell className="size-4" />
           {notificationCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 flex min-w-5 h-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.3)]">
               {notificationCount > 99 ? "99+" : notificationCount}
@@ -121,37 +121,37 @@ function Header({
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 rounded-xl"
+          className="shrink-0 rounded-full size-9"
           onClick={() => router.push("/dms")}
         >
-          <Phone className="size-5" />
+          <Phone className="size-4" />
         </Button>
 
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 rounded-xl"
+          className="shrink-0 rounded-full size-9"
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
-          <ThemeIcon className="size-5" />
+          <ThemeIcon className="size-4" />
         </Button>
 
-        <div className="mx-1.5 h-7 w-px bg-border/60" />
+        <div className="mx-1 h-6 w-px bg-border/60" />
 
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          className="shrink-0 rounded-full size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
           title="Sign Out"
         >
-          <LogOut className="size-5" />
+          <LogOut className="size-4" />
         </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <button className="flex items-center gap-2.5 rounded-xl px-2 py-1.5 transition-colors hover:bg-muted" />
+              <button className="flex items-center gap-2.5 rounded-full px-2 py-1.5 transition-colors hover:bg-muted" />
             }
           >
             <div className="relative">
@@ -159,10 +159,10 @@ function Header({
                 <img
                   src={userAvatar}
                   alt={userName || ""}
-                  className="size-9 rounded-xl object-cover ring-2 ring-primary/15"
+                  className="size-8 rounded-full object-cover ring-2 ring-primary/15"
                 />
               ) : (
-                <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 text-sm font-semibold text-primary">
+                <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5 text-xs font-semibold text-primary">
                   {(userName || userEmail || "?").slice(0, 2).toUpperCase()}
                 </div>
               )}

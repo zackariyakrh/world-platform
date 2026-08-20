@@ -446,7 +446,7 @@ export function GlobalMusicPlayerBar() {
       {/* Fullscreen player overlay — fixed within content area, never covers sidebar/header */}
       {fullscreenOpen && createPortal(
         <div className="fixed z-[200] flex flex-col items-center justify-center gap-6 overflow-y-auto" style={{
-          top: "80px",
+          top: "56px",
           left: "var(--sidebar-width, 0px)",
           right: 0,
           bottom: playerVisible ? "500px" : 0,
