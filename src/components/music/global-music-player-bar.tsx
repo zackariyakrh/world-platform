@@ -591,7 +591,7 @@ export function GlobalMusicPlayerBar() {
 
       {/* Bottom Player Bar */}
       {playerVisible && (
-      <div className={cn("shrink-0 border-t h-[100px] flex flex-col", isDark ? "bg-gray-900 border-white/[0.06]" : "bg-white border-gray-200")} style={{ boxShadow: isDark ? "0 -6px 40px rgba(120,60,200,0.25), 0 -2px 16px rgba(120,60,200,0.15), 0 -4px 24px rgba(0,0,0,0.4)" : "0 -4px 32px rgba(120,60,200,0.1), 0 -2px 12px rgba(0,0,0,0.06)" }}>
+      <div className={cn("shrink-0 border-t h-[200px] flex flex-col", isDark ? "bg-gray-900 border-white/[0.06]" : "bg-white border-gray-200")} style={{ boxShadow: isDark ? "0 -6px 40px rgba(120,60,200,0.25), 0 -2px 16px rgba(120,60,200,0.15), 0 -4px 24px rgba(0,0,0,0.4)" : "0 -4px 32px rgba(120,60,200,0.1), 0 -2px 12px rgba(0,0,0,0.06)" }}>
         {/* Progress bar */}
         <div onClick={handleSeek} onMouseDown={handleDragStart} className="group relative h-1.5 cursor-pointer" style={{ background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" }}>
           <div className="absolute inset-y-0 left-0 transition-[width] duration-75 player-progress-fill" style={{ width: `${pct}%` }} />
