@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useTheme } from "next-themes"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useMusicStore, type RepeatMode, type Track } from "@/stores/music-store"
@@ -19,8 +20,6 @@ import {
   Heart,
   ListMusic,
   Mic2,
-  Share2,
-  Download,
   Moon,
   Maximize2,
   Minimize2,
@@ -102,6 +101,8 @@ export function GlobalMusicPlayerBar() {
 
   const { theme } = useTheme()
   const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches)
+  const pathname = usePathname()
+  const isMusicPage = pathname === "/music"
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
   const currentTrackRef = React.useRef<Track | null>(null)
@@ -365,13 +366,21 @@ export function GlobalMusicPlayerBar() {
     document.addEventListener("mouseup", onUp)
   }
 
-  function handleVolumeChange(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const pct = Math.round(Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100)))
+  function applyVolumeFromEvent(clientX: number, el: HTMLDivElement) {
+    const rect = el.getBoundingClientRect()
+    const pct = Math.round(Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)))
     setVolume(pct)
     if (pct > 0) setMuted(false)
     if (audioRef.current) audioRef.current.volume = pct / 100
     if (persistentYTPlayer) try { persistentYTPlayer.setVolume(pct) } catch {}
+  }
+
+  function handleVolumeDragStart(e: React.MouseEvent<HTMLDivElement>) {
+    applyVolumeFromEvent(e.clientX, e.currentTarget)
+    const onMove = (ev: MouseEvent) => applyVolumeFromEvent(ev.clientX, e.currentTarget)
+    const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp) }
+    document.addEventListener("mousemove", onMove)
+    document.addEventListener("mouseup", onUp)
   }
 
   function toggleMuteFn() {
@@ -390,22 +399,6 @@ export function GlobalMusicPlayerBar() {
     setProgress(newTime)
   }
 
-  function handleShare() {
-    const s = useMusicStore.getState()
-    if (!s.currentTrack) return
-    const url = s.currentTrack.link || `https://www.youtube.com/watch?v=${s.currentTrack.videoId}`
-    if (navigator.share) {
-      navigator.share({ title: s.currentTrack.title, url })
-    } else {
-      navigator.clipboard.writeText(url)
-    }
-  }
-
-  function handleDownload() {
-    const s = useMusicStore.getState()
-    if (!s.currentTrack?.videoId) return
-    window.open(`https://www.youtube.com/watch?v=${s.currentTrack.videoId}`, "_blank")
-  }
 
   function startSleepTimer(minutes: number) {
     setSleepTimerMinutes(minutes)
@@ -536,8 +529,6 @@ export function GlobalMusicPlayerBar() {
             <Button variant="ghost" size="icon" onClick={() => toggleFavorite(currentTrack)} className="size-10">
               <Heart className={cn("size-5", favorites.some(t => t.id === currentTrack.id) ? "fill-red-500 text-red-500" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleShare} className="size-10" title="Share"><Share2 className={cn("size-5", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} /></Button>
-            <Button variant="ghost" size="icon" onClick={handleDownload} className="size-10" title="Open on YouTube"><Download className={cn("size-5", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} /></Button>
           </div>
         </div>
       )}
@@ -647,10 +638,7 @@ export function GlobalMusicPlayerBar() {
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <Button variant="ghost" size="icon" onClick={handleShare} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Share"><Share2 className="size-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={handleDownload} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Open on YouTube"><Download className="size-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={() => setQueueOpen(!queueOpen)} className={cn("size-9", queueOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Queue"><ListMusic className="size-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={() => setLyricsOpen(!lyricsOpen)} className={cn("size-9 inline-flex", lyricsOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Lyrics"><Mic2 className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setQueueOpen(!queueOpen)} className={cn("size-9", queueOpen ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Favorites"><ListMusic className="size-4" /></Button>
             <div className="relative flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={() => setShowSleepMenu(!showSleepMenu)} className={cn("size-9", sleepTimerEnd ? "text-primary" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={sleepTimerEnd ? `Sleep timer: ${getSleepTimerDisplay()}` : "Sleep timer"}>
                 <Moon className="size-4" />
@@ -667,15 +655,18 @@ export function GlobalMusicPlayerBar() {
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2 group/vol">
               <Button variant="ghost" size="icon" onClick={toggleMuteFn} className={cn("size-9", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title={muted ? "Unmute" : "Mute"}>
                 {muted || volume === 0 ? <VolumeX className="size-4" /> : volume < 50 ? <Volume1 className="size-4" /> : <Volume2 className="size-4" />}
               </Button>
-              <div onClick={handleVolumeChange} className="relative h-1 w-20 cursor-pointer rounded-full" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
-                <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-75" style={{ width: `${muted ? 0 : volume}%`, background: isDark ? "rgba(255,255,255,0.6)" : "oklch(0.52 0.22 25)" }} />
+              <div className="relative w-24 h-5 flex items-center cursor-pointer" onMouseDown={handleVolumeDragStart}>
+                <div className="absolute inset-y-0 my-auto h-1 w-full rounded-full" style={{ background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)" }}>
+                  <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-75" style={{ width: `${muted ? 0 : volume}%`, background: isDark ? "rgba(255,255,255,0.6)" : "oklch(0.52 0.22 25)" }} />
+                </div>
+                <div className="absolute top-1/2 -translate-y-1/2 size-3 rounded-full bg-white shadow-md transition-[left] duration-75 pointer-events-none" style={{ left: `calc(${muted ? 0 : volume}% - 6px)` }} />
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(true)} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Fullscreen"><Maximize2 className="size-4" /></Button>
+            {isMusicPage && <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(true)} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Fullscreen"><Maximize2 className="size-4" /></Button>}
             <Button variant="ghost" size="icon" onClick={() => { stopAll(); setIsPlaying(false); setCurrentTrack(null); setPlayerVisible(false) }} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Close player"><X className="size-4" /></Button>
           </div>
         </div>
