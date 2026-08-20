@@ -65,11 +65,12 @@ export function GlobalMusicPlayerBar() {
   const {
     currentTrack, queue, history, isPlaying, progress, duration, volume, muted,
     shuffle, repeat, favorites, queueOpen, lyricsOpen, fullscreenOpen,
-    sleepTimerMinutes, sleepTimerEnd,
+    sleepTimerMinutes, sleepTimerEnd, playerVisible,
     setCurrentTrack,
     setHistory, setIsPlaying, setProgress, setDuration, setVolume, setMuted,
     toggleMute, setShuffle, cycleRepeat, toggleFavorite, setQueueOpen,
     setLyricsOpen, setFullscreenOpen, setSleepTimerMinutes, setSleepTimerEnd,
+    setPlayerVisible,
   } = useMusicStore()
 
   const { theme } = useTheme()
@@ -541,7 +542,7 @@ export function GlobalMusicPlayerBar() {
 
       {/* Favorites Side Panel */}
       {queueOpen && (
-        <div className="absolute bottom-0 right-0 top-0 z-[60] w-96 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)" }}>
+        <div className="fixed inset-y-0 right-0 top-20 bottom-0 z-[60] w-96 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)" }}>
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)" }}>
             <h3 className={cn("font-semibold", isDark ? "text-white" : "text-gray-900")}>Favorites ({favorites.length})</h3>
             <Button variant="ghost" size="icon" onClick={() => setQueueOpen(false)} className="size-8"><X className="size-4" /></Button>
@@ -570,6 +571,7 @@ export function GlobalMusicPlayerBar() {
       )}
 
       {/* Bottom Player Bar */}
+      {playerVisible && (
       <div className={cn("shrink-0 border-t h-[100px] flex flex-col", isDark ? "bg-gray-900 border-white/[0.06]" : "bg-white border-gray-200")} style={{ boxShadow: isDark ? "0 -6px 40px rgba(120,60,200,0.25), 0 -2px 16px rgba(120,60,200,0.15), 0 -4px 24px rgba(0,0,0,0.4)" : "0 -4px 32px rgba(120,60,200,0.1), 0 -2px 12px rgba(0,0,0,0.06)" }}>
         {/* Progress bar */}
         <div onClick={handleSeek} onMouseDown={handleDragStart} className="group relative h-1.5 cursor-pointer" style={{ background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" }}>
@@ -655,9 +657,16 @@ export function GlobalMusicPlayerBar() {
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(true)} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Fullscreen"><Maximize2 className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => setPlayerVisible(false)} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Close player"><X className="size-4" /></Button>
           </div>
         </div>
       </div>
+      )}
+      {!playerVisible && currentTrack && (
+        <Button variant="ghost" size="icon" onClick={() => setPlayerVisible(true)} className="fixed bottom-4 right-4 z-[70] size-10 rounded-full shadow-lg" style={{ background: isDark ? "oklch(0.16 0.02 280)" : "white", boxShadow: isDark ? "0 4px 20px rgba(120,60,200,0.3)" : "0 4px 20px rgba(0,0,0,0.15)" }} title="Show player">
+          <Play className="size-4" />
+        </Button>
+      )}
     </>
   )
 }

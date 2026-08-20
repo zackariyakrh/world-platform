@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/header"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { SearchDialog } from "@/components/ui/search-dialog"
 import { useMusicStore } from "@/stores/music-store"
+import { GlobalMusicPlayerBar } from "@/components/music/global-music-player-bar"
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -85,6 +86,8 @@ function AppLayout({
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>
+
+        <GlobalMusicPlayerBar />
       </div>
 
       <MobileNav

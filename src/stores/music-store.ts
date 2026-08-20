@@ -32,6 +32,7 @@ interface MusicState {
   fullscreenOpen: boolean
   sleepTimerMinutes: number | null
   sleepTimerEnd: number | null
+  playerVisible: boolean
 
   setCurrentTrack: (track: Track | null) => void
   setQueue: (queue: Track[]) => void
@@ -55,6 +56,7 @@ interface MusicState {
   setFullscreenOpen: (open: boolean) => void
   setSleepTimerMinutes: (minutes: number | null) => void
   setSleepTimerEnd: (end: number | null) => void
+  setPlayerVisible: (visible: boolean) => void
 }
 
 export const useMusicStore = create<MusicState>((set, get) => ({
@@ -74,6 +76,7 @@ export const useMusicStore = create<MusicState>((set, get) => ({
   fullscreenOpen: false,
   sleepTimerMinutes: null,
   sleepTimerEnd: null,
+  playerVisible: true,
 
   setCurrentTrack: (track) => set({ currentTrack: track }),
   setQueue: (queue) => set({ queue }),
@@ -105,4 +108,5 @@ export const useMusicStore = create<MusicState>((set, get) => ({
   setFullscreenOpen: (open) => set({ fullscreenOpen: open }),
   setSleepTimerMinutes: (minutes) => set({ sleepTimerMinutes: minutes }),
   setSleepTimerEnd: (end) => set({ sleepTimerEnd: end }),
+  setPlayerVisible: (visible) => set({ playerVisible: visible }),
 }))

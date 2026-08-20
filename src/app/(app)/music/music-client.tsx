@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useMusicStore, type Track } from "@/stores/music-store"
-import { GlobalMusicPlayerBar } from "@/components/music/global-music-player-bar"
 import {
   Music,
   Search,
@@ -136,7 +135,7 @@ export function MusicClient() {
   function fmt(s: number) { if (!s || isNaN(s)) return "0:00"; return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` }
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden">
+    <div className="flex h-full flex-col overflow-hidden">
       {/* Header */}
       <div className="flex shrink-0 flex-col gap-4 p-6 pb-4">
         <div className="flex items-center gap-3">
@@ -254,9 +253,6 @@ export function MusicClient() {
           <div className="py-8 text-center text-sm text-muted-foreground">No more results</div>
         )}
       </div>
-
-      {/* Music Player Bar — only within music page */}
-      <GlobalMusicPlayerBar />
     </div>
   )
 }
