@@ -6,7 +6,6 @@ import { Sidebar } from "@/components/layout/sidebar"
 import { Header } from "@/components/layout/header"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { SearchDialog } from "@/components/ui/search-dialog"
-import { GlobalMusicPlayerBar } from "@/components/music/global-music-player-bar"
 import { useMusicStore } from "@/stores/music-store"
 
 interface AppLayoutProps {
@@ -39,8 +38,8 @@ function AppLayout({
   appName,
 }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
   const [searchOpen, setSearchOpen] = React.useState(false)
-  const currentTrack = useMusicStore(s => s.currentTrack)
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,6 +59,8 @@ function AppLayout({
         workspaceId={workspaceId}
         currentChannelId={channelId}
         open={sidebarOpen}
+        collapsed={sidebarCollapsed}
+        onCollapsedChange={setSidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
         onChannelSelect={(id) => {
           onChannelSelect?.(id)
@@ -81,17 +82,14 @@ function AppLayout({
           userAvatar={userAvatar}
         />
 
-        <main className={cn("flex-1 overflow-y-auto pb-16 md:pb-0", currentTrack && "pb-24 md:pb-20")}>
+        <main className="flex-1 overflow-y-auto">
           {children}
         </main>
       </div>
 
       <MobileNav
         activeHref={channelId ? `/channels/${channelId}` : "/"}
-        className={currentTrack ? "bottom-[76px] md:bottom-0" : ""}
       />
-
-      <GlobalMusicPlayerBar />
 
       <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
     </div>

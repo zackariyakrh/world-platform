@@ -526,7 +526,7 @@ export function GlobalMusicPlayerBar() {
 
       {/* Lyrics Panel */}
       {lyricsOpen && (
-        <div className="fixed inset-y-0 right-0 z-[60] w-80 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)", top: "auto", bottom: 0, height: "calc(100% - 80px)" }}>
+        <div className="fixed inset-y-0 right-0 top-0 z-[60] w-80 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)" }}>
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)" }}>
             <h3 className={cn("font-semibold", isDark ? "text-white" : "text-gray-900")}>Lyrics</h3>
             <Button variant="ghost" size="icon" onClick={() => setLyricsOpen(false)} className="size-8"><X className="size-4" /></Button>
@@ -543,7 +543,7 @@ export function GlobalMusicPlayerBar() {
 
       {/* Queue Side Panel */}
       {queueOpen && (
-        <div className="fixed inset-y-0 right-0 z-[60] w-80 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)", top: "auto", bottom: 0, height: "calc(100% - 80px)" }}>
+        <div className="fixed inset-y-0 right-0 top-0 z-[60] w-80 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)" }}>
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)" }}>
             <h3 className={cn("font-semibold", isDark ? "text-white" : "text-gray-900")}>Queue</h3>
             <div className="flex items-center gap-1">
@@ -593,7 +593,7 @@ export function GlobalMusicPlayerBar() {
       )}
 
       {/* Bottom Player Bar */}
-      <div className={cn("fixed bottom-0 left-0 right-0 z-50 border-t", isDark ? "bg-gray-900 border-white/[0.06]" : "bg-white border-gray-200")} style={{ boxShadow: isDark ? "0 -4px 24px rgba(0,0,0,0.4)" : "0 -2px 12px rgba(0,0,0,0.06)" }}>
+      <div className={cn("shrink-0 border-t", isDark ? "bg-gray-900 border-white/[0.06]" : "bg-white border-gray-200")} style={{ boxShadow: isDark ? "0 -4px 24px rgba(0,0,0,0.4)" : "0 -2px 12px rgba(0,0,0,0.06)" }}>
         {/* Progress bar */}
         <div onClick={handleSeek} onMouseDown={handleDragStart} className="group relative h-1.5 cursor-pointer" style={{ background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" }}>
           <div className="absolute inset-y-0 left-0 transition-[width] duration-75 player-progress-fill" style={{ width: `${pct}%` }} />

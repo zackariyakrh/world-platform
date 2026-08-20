@@ -73,6 +73,8 @@ interface SidebarProps extends React.ComponentProps<"aside"> {
   workspaceId?: string
   currentChannelId?: string
   open?: boolean
+  collapsed?: boolean
+  onCollapsedChange?: (collapsed: boolean) => void
   onClose?: () => void
   onChannelSelect?: (channelId: string) => void
   userRole?: string
@@ -83,6 +85,8 @@ function Sidebar({
   workspaceId,
   currentChannelId,
   open = false,
+  collapsed: collapsedProp,
+  onCollapsedChange,
   onClose,
   onChannelSelect,
   userRole,
@@ -92,7 +96,8 @@ function Sidebar({
 }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = React.useState(false)
+  const [collapsedState, setCollapsedState] = React.useState(false)
+  const collapsed = collapsedProp ?? collapsedState
   const [channels, setChannels] = React.useState<Channel[]>([])
   const [channelsLoading, setChannelsLoading] = React.useState(true)
   const [showDMs, setShowDMs] = React.useState(true)
@@ -403,7 +408,10 @@ function Sidebar({
                 href="#"
                 isActive={false}
                 collapsed={collapsed}
-                onClick={() => setCollapsed(false)}
+                onClick={() => {
+                  setCollapsedState(false)
+                  onCollapsedChange?.(false)
+                }}
               />
             )}
 
@@ -503,7 +511,11 @@ function Sidebar({
             collapsed ? "justify-center px-2 py-2" : "justify-end px-3 py-2"
           )}>
             <button
-              onClick={() => setCollapsed(!collapsed)}
+              onClick={() => {
+                const next = !collapsed
+                setCollapsedState(next)
+                onCollapsedChange?.(next)
+              }}
               className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all duration-200"
             >
               {collapsed ? (

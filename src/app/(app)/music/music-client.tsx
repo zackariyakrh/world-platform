@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useMusicStore, type Track } from "@/stores/music-store"
+import { GlobalMusicPlayerBar } from "@/components/music/global-music-player-bar"
 import {
   Music,
   Search,
@@ -228,7 +229,7 @@ export function MusicClient() {
         {!loading && viewMode === "grid" && tracks.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {tracks.map((track, i) => (
-              <div key={`${track.id}-${i}`} className={cn("group flex flex-col items-center gap-2 rounded-xl p-3 text-center transition-all hover:bg-muted/50", currentTrack?.id === track.id && "bg-primary/5 ring-1 ring-primary/20")}>
+              <div key={`${track.id}-${i}`} className={cn("group flex flex-col items-start gap-2 rounded-xl p-3 text-left transition-all hover:bg-muted/50", currentTrack?.id === track.id && "bg-primary/5 ring-1 ring-primary/20")}>
                 <button onClick={() => playTrackAtIndex(track, i)} className="w-full">
                   <div className="relative size-full aspect-square">
                     <img src={track.thumbnail} alt={track.title} className="size-full rounded-lg object-cover" />
@@ -240,8 +241,8 @@ export function MusicClient() {
                       )}
                     </div>
                   </div>
-                  <p className="truncate w-full text-xs font-medium text-foreground mt-2">{decodeHtmlEntities(track.title)}</p>
-                  <p className="truncate w-full text-xs text-muted-foreground">{decodeHtmlEntities(track.artist)}</p>
+                  <p className="truncate w-full text-xs font-medium text-foreground mt-2 text-left">{decodeHtmlEntities(track.title)}</p>
+                  <p className="truncate w-full text-xs text-muted-foreground text-left">{decodeHtmlEntities(track.artist)}</p>
                 </button>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <Button variant="ghost" size="icon" onClick={() => toggleFavorite(track.id)} className="size-7" title="Like">
@@ -267,6 +268,9 @@ export function MusicClient() {
           <div className="py-8 text-center text-sm text-muted-foreground">No more results</div>
         )}
       </div>
+
+      {/* Music Player Bar — only within music page */}
+      <GlobalMusicPlayerBar />
     </div>
   )
 }
