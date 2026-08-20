@@ -15,9 +15,9 @@ import {
   ExternalLink,
   Volume2,
   VolumeX,
-  PlayCircle,
   LayoutList,
   LayoutGrid,
+  RefreshCw,
 } from "lucide-react"
 
 interface Track {
@@ -25,9 +25,8 @@ interface Track {
   title: string
   artist: string
   thumbnail: string
-  preview?: string
   duration?: number
-  source: "deezer" | "youtube"
+  source: "youtube"
   videoId?: string
   link?: string
 }
@@ -39,11 +38,24 @@ declare global {
   }
 }
 
+const RANDOM_SEARCHES = [
+  "popular music 2026", "trending songs right now", "top hits this week",
+  "best music videos", "viral songs 2026", "new music releases",
+  "chart toppers", "hot songs right now", "music hits of the week",
+  "top 40 songs", "most streamed songs", "best new music",
+  "radio hits 2026", "billboard hot 100", "spotify top 50",
+  "catchy songs", "feel good music", "chill music vibes",
+  "party music hits", "workout playlist songs", "indie music 2026",
+  "electronic music hits", "hip hop hits 2026", "pop music hits",
+  "rock music best", "r&b hits", "latin music hits",
+  "kpop hits 2026", "afrobeats trending", "country music hits",
+]
+
 export function MusicClient() {
-  const [source, setSource] = React.useState<"deezer" | "youtube">("deezer")
   const [query, setQuery] = React.useState("")
   const [tracks, setTracks] = React.useState<Track[]>([])
   const [loading, setLoading] = React.useState(false)
+  const [loadingMore, setLoadingMore] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [currentTrack, setCurrentTrack] = React.useState<Track | null>(null)
   const [isPlaying, setIsPlaying] = React.useState(false)
@@ -53,6 +65,8 @@ export function MusicClient() {
   const [muted, setMuted] = React.useState(false)
   const [queue, setQueue] = React.useState<Track[]>([])
   const [viewMode, setViewMode] = React.useState<"list" | "grid">("list")
+  const [nextPageToken, setNextPageToken] = React.useState<string | null>(null)
+  const [activeQuery, setActiveQuery] = React.useState("")
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
   const ytPlayerRef = React.useRef<any>(null)
@@ -61,9 +75,12 @@ export function MusicClient() {
   const ytReadyRef = React.useRef(false)
   const queueRef = React.useRef<Track[]>([])
   const currentTrackRef = React.useRef<Track | null>(null)
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const loadingMoreRef = React.useRef(false)
 
   React.useEffect(() => { queueRef.current = queue }, [queue])
   React.useEffect(() => { currentTrackRef.current = currentTrack }, [currentTrack])
+  React.useEffect(() => { loadingMoreRef.current = loadingMore }, [loadingMore])
 
   React.useEffect(() => {
     if (window.YT?.Player) { ytReadyRef.current = true; return }
@@ -75,35 +92,53 @@ export function MusicClient() {
 
   React.useEffect(() => () => stopAll(), [])
 
-  // Load default tracks when source changes
   React.useEffect(() => {
-    loadDefaultTracks(source)
-  }, [source])
+    loadRandomTracks()
+  }, [])
 
-  async function loadDefaultTracks(src: "deezer" | "youtube") {
-    setLoading(true); setError(null); setTracks([]); setQuery("")
-    try {
-      if (src === "deezer") {
-        const res = await fetch("/api/music/deezer")
-        if (!res.ok) throw new Error("Failed to load charts")
-        const data = await res.json()
-        setTracks(data.data.map((t: any) => ({
-          id: String(t.id), title: t.title_short || t.title, artist: t.artist.name,
-          thumbnail: t.album.cover_medium || t.album.cover, preview: t.preview,
-          duration: t.duration, source: "deezer" as const, link: t.link,
-        })))
-      } else {
-        const searches = ["popular music 2026", "trending songs", "hit music", "top hits", "best music videos"]
-        const q = searches[Math.floor(Math.random() * searches.length)]
-        const res = await fetch(`/api/music/youtube?q=${encodeURIComponent(q)}`)
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || "Failed to load")
-        setTracks(data.videos.map((v: any) => ({
-          id: v.id, title: v.title, artist: v.channelTitle, thumbnail: v.thumbnail,
-          source: "youtube" as const, videoId: v.id,
-        })))
+  React.useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    function onScroll() {
+      if (loadingMoreRef.current || !nextPageToken) return
+      if (el!.scrollTop + el!.clientHeight >= el!.scrollHeight - 300) {
+        loadMore()
       }
+    }
+    el.addEventListener("scroll", onScroll, { passive: true })
+    return () => el.removeEventListener("scroll", onScroll)
+  }, [nextPageToken, activeQuery])
+
+  async function loadRandomTracks() {
+    setLoading(true); setError(null); setTracks([]); setQuery(""); setActiveQuery(""); setNextPageToken(null)
+    try {
+      const q = RANDOM_SEARCHES[Math.floor(Math.random() * RANDOM_SEARCHES.length)]
+      const res = await fetch(`/api/music/youtube?q=${encodeURIComponent(q)}`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to load")
+      setTracks(data.videos.map((v: any) => ({
+        id: v.id, title: v.title, artist: v.channelTitle, thumbnail: v.thumbnail,
+        source: "youtube" as const, videoId: v.id,
+      })))
+      setNextPageToken(data.nextPageToken || null)
+      setActiveQuery(q)
     } catch (err: any) { setError(err.message) } finally { setLoading(false) }
+  }
+
+  async function loadMore() {
+    if (!nextPageToken || loadingMore || !activeQuery) return
+    setLoadingMore(true)
+    try {
+      const res = await fetch(`/api/music/youtube?q=${encodeURIComponent(activeQuery)}&pageToken=${nextPageToken}`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Failed to load more")
+      const newTracks: Track[] = data.videos.map((v: any) => ({
+        id: v.id, title: v.title, artist: v.channelTitle, thumbnail: v.thumbnail,
+        source: "youtube" as const, videoId: v.id,
+      }))
+      setTracks(prev => [...prev, ...newTracks])
+      setNextPageToken(data.nextPageToken || null)
+    } catch (err: any) { setError(err.message) } finally { setLoadingMore(false) }
   }
 
   function stopAll() {
@@ -126,26 +161,17 @@ export function MusicClient() {
   async function handleSearch(e?: React.FormEvent) {
     e?.preventDefault()
     if (!query.trim()) return
-    setLoading(true); setError(null); setTracks([])
+    setLoading(true); setError(null); setTracks([]); setNextPageToken(null)
     try {
-      if (source === "deezer") {
-        const res = await fetch(`/api/music/deezer?q=${encodeURIComponent(query.trim())}`)
-        if (!res.ok) throw new Error("Search failed")
-        const data = await res.json()
-        setTracks(data.data.map((t: any) => ({
-          id: String(t.id), title: t.title_short || t.title, artist: t.artist.name,
-          thumbnail: t.album.cover_medium || t.album.cover, preview: t.preview,
-          duration: t.duration, source: "deezer" as const, link: t.link,
-        })))
-      } else {
-        const res = await fetch(`/api/music/youtube?q=${encodeURIComponent(query.trim())}`)
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || "Search failed")
-        setTracks(data.videos.map((v: any) => ({
-          id: v.id, title: v.title, artist: v.channelTitle, thumbnail: v.thumbnail,
-          source: "youtube" as const, videoId: v.id,
-        })))
-      }
+      const res = await fetch(`/api/music/youtube?q=${encodeURIComponent(query.trim())}`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || "Search failed")
+      setTracks(data.videos.map((v: any) => ({
+        id: v.id, title: v.title, artist: v.channelTitle, thumbnail: v.thumbnail,
+        source: "youtube" as const, videoId: v.id,
+      })))
+      setNextPageToken(data.nextPageToken || null)
+      setActiveQuery(query.trim())
     } catch (err: any) { setError(err.message) } finally { setLoading(false) }
   }
 
@@ -157,14 +183,7 @@ export function MusicClient() {
     stopAll()
     setCurrentTrack(track); setProgress(0); setDuration(0); setIsPlaying(false)
 
-    if (track.source === "deezer" && track.preview) {
-      const audio = new Audio(track.preview)
-      audio.volume = muted ? 0 : volume / 100
-      audioRef.current = audio
-      audio.addEventListener("loadedmetadata", () => { setDuration(audio.duration); setIsPlaying(true); startProgress() })
-      audio.play().then(() => { setIsPlaying(true); startProgress() }).catch(() => setIsPlaying(false))
-      audio.addEventListener("ended", () => playNextInQueue())
-    } else if (track.source === "youtube" && track.videoId) {
+    if (track.videoId) {
       createYouTubePlayer(track.videoId)
     }
   }
@@ -251,37 +270,33 @@ export function MusicClient() {
           </div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground glow-text">Music</h1>
-            <p className="text-sm text-muted-foreground">Listen with Deezer or YouTube Music</p>
+            <p className="text-sm text-muted-foreground">Listen with YouTube Music</p>
           </div>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex gap-1 rounded-xl bg-muted/50 p-1">
-            <button onClick={() => setSource("deezer")} className={cn("flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all", source === "deezer" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-              <Music className="size-4" /> Deezer
-            </button>
-            <button onClick={() => setSource("youtube")} className={cn("flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all", source === "youtube" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}>
-              <PlayCircle className="size-4" /> YouTube
-            </button>
-          </div>
           <form onSubmit={handleSearch} className="flex flex-1 gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <Input placeholder={source === "deezer" ? "Search songs, artists..." : "Search YouTube Music..."} value={query} onChange={e => setQuery(e.target.value)} className="pl-9" />
+              <Input placeholder="Search YouTube Music..." value={query} onChange={e => setQuery(e.target.value)} className="pl-9" />
             </div>
             <Button type="submit" disabled={loading || !query.trim()} className="glow-button">
               {loading ? <Loader2 className="size-4 animate-spin" /> : <Search className="size-4" />} Search
             </Button>
           </form>
-          <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
-            <button onClick={() => setViewMode("list")} className={cn("rounded-md p-2 transition-all", viewMode === "list" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}><LayoutList className="size-4" /></button>
-            <button onClick={() => setViewMode("grid")} className={cn("rounded-md p-2 transition-all", viewMode === "grid" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}><LayoutGrid className="size-4" /></button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={loadRandomTracks} disabled={loading} className="gap-2 text-muted-foreground hover:text-foreground">
+              <RefreshCw className={cn("size-4", loading && "animate-spin")} /> Refresh
+            </Button>
+            <div className="flex gap-1 rounded-lg bg-muted/50 p-1">
+              <button onClick={() => setViewMode("list")} className={cn("rounded-md p-2 transition-all", viewMode === "list" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}><LayoutList className="size-4" /></button>
+              <button onClick={() => setViewMode("grid")} className={cn("rounded-md p-2 transition-all", viewMode === "grid" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}><LayoutGrid className="size-4" /></button>
+            </div>
           </div>
         </div>
-        {source === "deezer" && <p className="text-xs text-muted-foreground">Deezer free API provides 30-second previews. Full playback requires Deezer Premium.</p>}
       </div>
 
       {/* Scrollable Results */}
-      <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-4">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-6 pb-4">
         {error && <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{error}</div>}
 
         {loading && (
@@ -302,18 +317,16 @@ export function MusicClient() {
         {!loading && viewMode === "list" && tracks.length > 0 && (
           <div className="space-y-1">
             {tracks.map((track, i) => (
-              <button key={`${track.source}-${track.id}`} onClick={() => playTrack(track)} className={cn("group flex w-full items-center gap-4 rounded-xl p-3 text-left transition-all hover:bg-muted/50", currentTrack?.id === track.id && "bg-primary/5 ring-1 ring-primary/20")}>
+              <button key={`${track.id}-${i}`} onClick={() => playTrack(track)} className={cn("group flex w-full items-center gap-4 rounded-xl p-3 text-left transition-all hover:bg-muted/50", currentTrack?.id === track.id && "bg-primary/5 ring-1 ring-primary/20")}>
                 <span className="w-6 text-center text-sm text-muted-foreground">{i + 1}</span>
                 <img src={track.thumbnail} alt={track.title} className="size-12 rounded-lg object-cover" />
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-foreground">{track.title}</p>
                   <p className="truncate text-sm text-muted-foreground">{track.artist}</p>
                 </div>
-                {track.duration && <span className="text-xs text-muted-foreground">{fmt(track.duration)}</span>}
                 <div className="flex items-center gap-1">
                   {currentTrack?.id === track.id && isPlaying ? <Pause className="size-5 text-primary" /> : <Play className="size-5 text-muted-foreground group-hover:text-primary" />}
                 </div>
-                {track.link && <a href={track.link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className="rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground"><ExternalLink className="size-4" /></a>}
               </button>
             ))}
           </div>
@@ -322,8 +335,8 @@ export function MusicClient() {
         {/* Grid View */}
         {!loading && viewMode === "grid" && tracks.length > 0 && (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {tracks.map((track) => (
-              <button key={`${track.source}-${track.id}`} onClick={() => playTrack(track)} className={cn("group flex flex-col items-center gap-2 rounded-xl p-3 text-center transition-all hover:bg-muted/50", currentTrack?.id === track.id && "bg-primary/5 ring-1 ring-primary/20")}>
+            {tracks.map((track, i) => (
+              <button key={`${track.id}-${i}`} onClick={() => playTrack(track)} className={cn("group flex flex-col items-center gap-2 rounded-xl p-3 text-center transition-all hover:bg-muted/50", currentTrack?.id === track.id && "bg-primary/5 ring-1 ring-primary/20")}>
                 <div className="relative size-full aspect-square">
                   <img src={track.thumbnail} alt={track.title} className="size-full rounded-lg object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 opacity-0 group-hover:bg-black/30 group-hover:opacity-100 transition-all">
@@ -341,12 +354,23 @@ export function MusicClient() {
           </div>
         )}
 
+        {/* Infinite scroll loader */}
+        {loadingMore && (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="size-6 animate-spin text-primary" />
+          </div>
+        )}
+
+        {!loading && tracks.length > 0 && !nextPageToken && (
+          <div className="py-8 text-center text-sm text-muted-foreground">No more results</div>
+        )}
+
         {queue.length > 0 && (
           <div className="mt-6">
             <h3 className="mb-2 text-sm font-medium text-muted-foreground">Queue ({queue.length})</h3>
             <div className="space-y-1">
               {queue.map((track, i) => (
-                <div key={`q-${track.source}-${track.id}-${i}`} className="flex items-center gap-3 rounded-lg p-2 text-sm">
+                <div key={`q-${track.id}-${i}`} className="flex items-center gap-3 rounded-lg p-2 text-sm">
                   <span className="w-4 text-center text-xs text-muted-foreground">{i + 1}</span>
                   <img src={track.thumbnail} alt="" className="size-8 rounded object-cover" />
                   <div className="min-w-0 flex-1"><p className="truncate text-foreground">{track.title}</p><p className="truncate text-xs text-muted-foreground">{track.artist}</p></div>
@@ -360,30 +384,37 @@ export function MusicClient() {
 
       {/* Player Bar — only visible when a track is playing */}
       {currentTrack && (
-        <div className="sticky bottom-0 -mx-6 px-6 pb-4 pt-3" style={{ background: "linear-gradient(135deg, oklch(0.25 0.15 300), oklch(0.20 0.18 320), oklch(0.18 0.12 280))", boxShadow: "0 -4px 24px oklch(0.5 0.25 300 / 0.3), 0 -1px 8px oklch(0.6 0.3 320 / 0.2), inset 0 1px 0 oklch(1 0 0 / 0.08)", borderTop: "1px solid oklch(0.6 0.2 300 / 0.15)" }}>
-          <div className="flex items-center gap-2 px-2 py-1.5 sm:gap-3">
-            <img src={currentTrack.thumbnail} alt={currentTrack.title} className="size-9 rounded-lg object-cover shrink-0 ring-2 ring-white/15 shadow-[0_0_12px_oklch(0.6 0.25 300 / 0.3)]" />
-            <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium text-white">{currentTrack.title}</p><p className="truncate text-xs text-white/50">{currentTrack.artist}</p></div>
-            <div className="flex items-center gap-0.5 shrink-0">
-              <Button variant="ghost" size="icon" onClick={() => { if (currentTrack) { setProgress(0); if (audioRef.current) audioRef.current.currentTime = 0; if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(0, true) } catch {} } }} className="size-9 text-white/60 hover:text-white hover:bg-white/10"><SkipBack className="size-4" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => { if (isPlaying) pauseTrack(); else resumeTrack(); }} className="size-9 text-white hover:text-white hover:bg-white/15 shadow-[0_0_16px_oklch(0.7 0.3 300 / 0.4)]">{isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}</Button>
-              <Button variant="ghost" size="icon" onClick={() => playNextInQueue()} className="size-9 text-white/60 hover:text-white hover:bg-white/10"><SkipForward className="size-4" /></Button>
+        <div className="shrink-0 border-t" style={{ background: "linear-gradient(135deg, oklch(0.25 0.15 300), oklch(0.20 0.18 320), oklch(0.18 0.12 280))", boxShadow: "0 -4px 24px oklch(0.5 0.25 300 / 0.3), 0 -1px 8px oklch(0.6 0.3 320 / 0.2), inset 0 1px 0 oklch(1 0 0 / 0.08)", borderTop: "1px solid oklch(0.6 0.2 300 / 0.15)" }}>
+          {/* Progress bar — full width at top */}
+          <div onClick={handleSeek} className="group relative h-1 cursor-pointer bg-white/10">
+            <div className="absolute inset-y-0 left-0 transition-[width] duration-100" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%", background: "linear-gradient(90deg, oklch(0.7 0.25 300), oklch(0.75 0.2 330), oklch(0.8 0.18 30))", boxShadow: "0 0 10px oklch(0.6 0.25 310 / 0.5), 0 0 4px oklch(0.7 0.3 300 / 0.3)" }} />
+            <div className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-white opacity-0 shadow-[0_0_8px_rgba(255,255,255,0.6)] group-hover:opacity-100 transition-opacity" style={{ left: duration ? `calc(${(progress / duration) * 100}% - 6px)` : "-6px" }} />
+          </div>
+          <div className="flex items-center gap-3 px-6 py-4 sm:gap-4">
+            <img src={currentTrack.thumbnail} alt={currentTrack.title} className="size-14 rounded-xl object-cover shrink-0 ring-2 ring-white/15 shadow-[0_0_16px_oklch(0.6 0.25 300 / 0.3)]" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-white">{currentTrack.title}</p>
+              <p className="truncate text-xs text-white/50">{currentTrack.artist}</p>
             </div>
-            <div className="hidden sm:flex items-center gap-2 flex-1 max-w-md">
+            <div className="flex items-center gap-1 shrink-0">
+              <Button variant="ghost" size="icon" onClick={() => { if (currentTrack) { setProgress(0); if (audioRef.current) audioRef.current.currentTime = 0; if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(0, true) } catch {} } }} className="size-10 text-white/60 hover:text-white hover:bg-white/10"><SkipBack className="size-5" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => { if (isPlaying) pauseTrack(); else resumeTrack(); }} className="size-12 text-white hover:text-white hover:bg-white/15 shadow-[0_0_20px_oklch(0.7 0.3 300 / 0.4)]">{isPlaying ? <Pause className="size-6" /> : <Play className="size-6 ml-0.5" />}</Button>
+              <Button variant="ghost" size="icon" onClick={() => playNextInQueue()} className="size-10 text-white/60 hover:text-white hover:bg-white/10"><SkipForward className="size-5" /></Button>
+            </div>
+            <div className="hidden md:flex items-center gap-2 flex-1 max-w-md">
               <span className="w-10 text-right text-xs text-white/40 tabular-nums">{fmt(progress)}</span>
-              <div onClick={handleSeek} className="group relative h-1 flex-1 cursor-pointer rounded-full bg-white/10">
+              <div onClick={handleSeek} className="group relative h-1.5 flex-1 cursor-pointer rounded-full bg-white/10">
                 <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-100" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%", background: "linear-gradient(90deg, oklch(0.7 0.25 300), oklch(0.75 0.2 330), oklch(0.8 0.18 30))", boxShadow: "0 0 10px oklch(0.6 0.25 310 / 0.5), 0 0 4px oklch(0.7 0.3 300 / 0.3)" }} />
-                <div className="absolute top-1/2 size-2.5 -translate-y-1/2 rounded-full bg-white opacity-0 shadow-[0_0_6px_rgba(255,255,255,0.6)] group-hover:opacity-100 transition-opacity" style={{ left: duration ? `calc(${(progress / duration) * 100}% - 5px)` : "-5px" }} />
+                <div className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-white opacity-0 shadow-[0_0_8px_rgba(255,255,255,0.6)] group-hover:opacity-100 transition-opacity" style={{ left: duration ? `calc(${(progress / duration) * 100}% - 6px)` : "-6px" }} />
               </div>
               <span className="w-10 text-xs text-white/40 tabular-nums">-{fmt(duration > progress ? duration - progress : 0)}</span>
             </div>
-            <div className="hidden sm:flex items-center gap-1 shrink-0">
-              <Button variant="ghost" size="icon" onClick={toggleMute} className="size-9 text-white/50 hover:text-white hover:bg-white/10">{muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}</Button>
-              <div onClick={handleVolumeChange} className="relative h-1 w-16 cursor-pointer rounded-full bg-white/10">
+            <div className="hidden sm:flex items-center gap-2 shrink-0">
+              <Button variant="ghost" size="icon" onClick={toggleMute} className="size-10 text-white/50 hover:text-white hover:bg-white/10">{muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}</Button>
+              <div onClick={handleVolumeChange} className="relative h-1.5 w-20 cursor-pointer rounded-full bg-white/10">
                 <div className="absolute inset-y-0 left-0 rounded-full bg-white/60" style={{ width: `${muted ? 0 : volume}%` }} />
               </div>
             </div>
-            {currentTrack.link && <a href={currentTrack.link} target="_blank" rel="noopener noreferrer" className="rounded-lg p-1.5 text-white/40 hover:text-white shrink-0"><ExternalLink className="size-4" /></a>}
           </div>
         </div>
       )}
