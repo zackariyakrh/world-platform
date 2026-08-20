@@ -676,7 +676,7 @@ export function GlobalMusicPlayerBar() {
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(true)} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Fullscreen"><Maximize2 className="size-4" /></Button>
-            <Button variant="ghost" size="icon" onClick={() => { stopAll(); setIsPlaying(false); setCurrentTrack(null); setPlayerVisible(false) }} className={cn("size-9 hidden sm:inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Close player"><X className="size-4" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => { stopAll(); setIsPlaying(false); setCurrentTrack(null); setPlayerVisible(false) }} className={cn("size-9 inline-flex", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} title="Close player"><X className="size-4" /></Button>
           </div>
         </div>
       </div>

@@ -54,6 +54,7 @@ import {
   Briefcase,
   FolderOpen,
   Music,
+  CalendarDays,
 } from "lucide-react"
 
 interface Channel {
@@ -315,6 +316,13 @@ function Sidebar({
               label="Music"
               href="/music"
               isActive={isActive("/music")}
+              collapsed={collapsed}
+            />
+            <SidebarLink
+              icon={CalendarDays}
+              label="Calendar"
+              href="/calendar"
+              isActive={isActive("/calendar")}
               collapsed={collapsed}
             />
 

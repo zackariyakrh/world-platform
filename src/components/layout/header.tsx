@@ -137,6 +137,16 @@ function Header({
 
         <div className="mx-1.5 h-7 w-px bg-border/60" />
 
+        <Button
+          variant="ghost"
+          size="icon"
+          className="shrink-0 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
+          title="Sign Out"
+        >
+          <LogOut className="size-5" />
+        </Button>
+
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
