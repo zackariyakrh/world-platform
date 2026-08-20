@@ -18,6 +18,7 @@ import {
   LayoutList,
   LayoutGrid,
   RefreshCw,
+  Repeat,
 } from "lucide-react"
 
 interface Track {
@@ -67,6 +68,7 @@ export function MusicClient() {
   const [viewMode, setViewMode] = React.useState<"list" | "grid">("list")
   const [nextPageToken, setNextPageToken] = React.useState<string | null>(null)
   const [activeQuery, setActiveQuery] = React.useState("")
+  const [repeatOne, setRepeatOne] = React.useState(false)
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
   const ytPlayerRef = React.useRef<any>(null)
@@ -228,6 +230,11 @@ export function MusicClient() {
   }
 
   function playNextInQueue() {
+    if (repeatOne && currentTrackRef.current) {
+      const t = currentTrackRef.current
+      setTimeout(() => playTrack(t), 0)
+      return
+    }
     const q = queueRef.current
     if (q.length > 0) { const next = q[0]; setQueue(p => p.slice(1)); setTimeout(() => playTrack(next), 0) }
     else { setIsPlaying(false); setProgress(0); if (progressInterval.current) clearInterval(progressInterval.current) }
@@ -384,39 +391,74 @@ export function MusicClient() {
 
       {/* Player Bar — only visible when a track is playing */}
       {currentTrack && (
-        <div className="shrink-0 border-t" style={{ background: "linear-gradient(135deg, oklch(0.25 0.15 300), oklch(0.20 0.18 320), oklch(0.18 0.12 280))", boxShadow: "0 -4px 24px oklch(0.5 0.25 300 / 0.3), 0 -1px 8px oklch(0.6 0.3 320 / 0.2), inset 0 1px 0 oklch(1 0 0 / 0.08)", borderTop: "1px solid oklch(0.6 0.2 300 / 0.15)" }}>
-          {/* Progress bar — full width at top */}
-          <div onClick={handleSeek} className="group relative h-1 cursor-pointer bg-white/10">
-            <div className="absolute inset-y-0 left-0 transition-[width] duration-100" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%", background: "linear-gradient(90deg, oklch(0.7 0.25 300), oklch(0.75 0.2 330), oklch(0.8 0.18 30))", boxShadow: "0 0 10px oklch(0.6 0.25 310 / 0.5), 0 0 4px oklch(0.7 0.3 300 / 0.3)" }} />
-            <div className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-white opacity-0 shadow-[0_0_8px_rgba(255,255,255,0.6)] group-hover:opacity-100 transition-opacity" style={{ left: duration ? `calc(${(progress / duration) * 100}% - 6px)` : "-6px" }} />
-          </div>
-          <div className="flex items-center gap-3 px-6 py-4 sm:gap-4">
-            <img src={currentTrack.thumbnail} alt={currentTrack.title} className="size-14 rounded-xl object-cover shrink-0 ring-2 ring-white/15 shadow-[0_0_16px_oklch(0.6 0.25 300 / 0.3)]" />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold text-white">{currentTrack.title}</p>
-              <p className="truncate text-xs text-white/50">{currentTrack.artist}</p>
+        <>
+          <style>{`
+            @keyframes playerGlow {
+              0%, 100% { background-position: 0% 50%; }
+              50% { background-position: 100% 50%; }
+            }
+            @keyframes progressGlow {
+              0%, 100% { box-shadow: 0 0 10px oklch(0.6 0.25 310 / 0.5), 0 0 4px oklch(0.7 0.3 300 / 0.3); }
+              50% { box-shadow: 0 0 18px oklch(0.6 0.25 310 / 0.7), 0 0 8px oklch(0.7 0.3 300 / 0.5); }
+            }
+            @keyframes thumbPulse {
+              0%, 100% { box-shadow: 0 0 8px rgba(255,255,255,0.6); }
+              50% { box-shadow: 0 0 16px rgba(255,255,255,0.9); }
+            }
+            .player-glow-bg {
+              background: linear-gradient(135deg, oklch(0.25 0.15 300), oklch(0.22 0.2 320), oklch(0.20 0.18 340), oklch(0.18 0.15 280), oklch(0.25 0.15 300));
+              background-size: 300% 300%;
+              animation: playerGlow 8s ease infinite;
+            }
+            .progress-glow {
+              background: linear-gradient(90deg, oklch(0.7 0.25 300), oklch(0.75 0.22 330), oklch(0.8 0.2 360), oklch(0.75 0.22 330), oklch(0.7 0.25 300));
+              background-size: 200% 100%;
+              animation: progressGlow 2s ease-in-out infinite;
+            }
+            .progress-fill-animated {
+              background: linear-gradient(90deg, oklch(0.7 0.25 300), oklch(0.75 0.22 330), oklch(0.8 0.2 30), oklch(0.75 0.22 330), oklch(0.7 0.25 300));
+              background-size: 200% 100%;
+              animation: playerGlow 4s ease infinite;
+            }
+            .thumb-glow { animation: thumbPulse 3s ease-in-out infinite; }
+          `}</style>
+          <div className="shrink-0 border-t player-glow-bg" style={{ boxShadow: "0 -6px 32px oklch(0.5 0.25 300 / 0.35), 0 -2px 12px oklch(0.6 0.3 320 / 0.25), inset 0 1px 0 oklch(1 0 0 / 0.08)", borderTop: "1px solid oklch(0.6 0.2 300 / 0.15)" }}>
+            {/* Progress bar — full width at top */}
+            <div onClick={handleSeek} className="group relative h-1.5 cursor-pointer bg-white/10">
+              <div className="absolute inset-y-0 left-0 transition-[width] duration-100 progress-fill-animated" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%" }} />
+              <div className="absolute inset-y-0 left-0 rounded-full progress-glow opacity-50" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%" }} />
+              <div className="absolute top-1/2 size-3.5 -translate-y-1/2 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity" style={{ left: duration ? `calc(${(progress / duration) * 100}% - 7px)` : "-7px", boxShadow: "0 0 10px rgba(255,255,255,0.7)" }} />
             </div>
-            <div className="flex items-center gap-1 shrink-0">
-              <Button variant="ghost" size="icon" onClick={() => { if (currentTrack) { setProgress(0); if (audioRef.current) audioRef.current.currentTime = 0; if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(0, true) } catch {} } }} className="size-10 text-white/60 hover:text-white hover:bg-white/10"><SkipBack className="size-5" /></Button>
-              <Button variant="ghost" size="icon" onClick={() => { if (isPlaying) pauseTrack(); else resumeTrack(); }} className="size-12 text-white hover:text-white hover:bg-white/15 shadow-[0_0_20px_oklch(0.7 0.3 300 / 0.4)]">{isPlaying ? <Pause className="size-6" /> : <Play className="size-6 ml-0.5" />}</Button>
-              <Button variant="ghost" size="icon" onClick={() => playNextInQueue()} className="size-10 text-white/60 hover:text-white hover:bg-white/10"><SkipForward className="size-5" /></Button>
-            </div>
-            <div className="hidden md:flex items-center gap-2 flex-1 max-w-md">
-              <span className="w-10 text-right text-xs text-white/40 tabular-nums">{fmt(progress)}</span>
-              <div onClick={handleSeek} className="group relative h-1.5 flex-1 cursor-pointer rounded-full bg-white/10">
-                <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-100" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%", background: "linear-gradient(90deg, oklch(0.7 0.25 300), oklch(0.75 0.2 330), oklch(0.8 0.18 30))", boxShadow: "0 0 10px oklch(0.6 0.25 310 / 0.5), 0 0 4px oklch(0.7 0.3 300 / 0.3)" }} />
-                <div className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-white opacity-0 shadow-[0_0_8px_rgba(255,255,255,0.6)] group-hover:opacity-100 transition-opacity" style={{ left: duration ? `calc(${(progress / duration) * 100}% - 6px)` : "-6px" }} />
+            <div className="flex items-center gap-3 px-6 py-5 sm:gap-4">
+              <img src={currentTrack.thumbnail} alt={currentTrack.title} className="size-16 rounded-xl object-cover shrink-0 ring-2 ring-white/15 thumb-glow" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-white">{currentTrack.title}</p>
+                <p className="truncate text-xs text-white/50">{currentTrack.artist}</p>
               </div>
-              <span className="w-10 text-xs text-white/40 tabular-nums">-{fmt(duration > progress ? duration - progress : 0)}</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-2 shrink-0">
-              <Button variant="ghost" size="icon" onClick={toggleMute} className="size-10 text-white/50 hover:text-white hover:bg-white/10">{muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}</Button>
-              <div onClick={handleVolumeChange} className="relative h-1.5 w-20 cursor-pointer rounded-full bg-white/10">
-                <div className="absolute inset-y-0 left-0 rounded-full bg-white/60" style={{ width: `${muted ? 0 : volume}%` }} />
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button variant="ghost" size="icon" onClick={() => { if (currentTrack) { setProgress(0); if (audioRef.current) audioRef.current.currentTime = 0; if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(0, true) } catch {} } }} className="size-10 text-white/60 hover:text-white hover:bg-white/10"><SkipBack className="size-5" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => { if (isPlaying) pauseTrack(); else resumeTrack(); }} className="size-12 text-white hover:text-white hover:bg-white/15 shadow-[0_0_24px_oklch(0.7 0.3 300 / 0.5)] transition-shadow hover:shadow-[0_0_32px_oklch(0.7 0.3 300 / 0.7)]">{isPlaying ? <Pause className="size-6" /> : <Play className="size-6 ml-0.5" />}</Button>
+                <Button variant="ghost" size="icon" onClick={() => playNextInQueue()} className="size-10 text-white/60 hover:text-white hover:bg-white/10"><SkipForward className="size-5" /></Button>
+              </div>
+              <div className="hidden md:flex items-center gap-2 flex-1 max-w-md">
+                <span className="w-10 text-right text-xs text-white/40 tabular-nums">{fmt(progress)}</span>
+                <div onClick={handleSeek} className="group relative h-1.5 flex-1 cursor-pointer rounded-full bg-white/10">
+                  <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-100 progress-fill-animated" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%" }} />
+                  <div className="absolute inset-y-0 left-0 rounded-full progress-glow opacity-40" style={{ width: duration ? `${(progress / duration) * 100}%` : "0%" }} />
+                  <div className="absolute top-1/2 size-3 -translate-y-1/2 rounded-full bg-white opacity-0 shadow-[0_0_8px_rgba(255,255,255,0.6)] group-hover:opacity-100 transition-opacity" style={{ left: duration ? `calc(${(progress / duration) * 100}% - 6px)` : "-6px" }} />
+                </div>
+                <span className="w-10 text-xs text-white/40 tabular-nums">-{fmt(duration > progress ? duration - progress : 0)}</span>
+              </div>
+              <div className="hidden sm:flex items-center gap-2.5 shrink-0">
+                <Button variant="ghost" size="icon" onClick={() => setRepeatOne(r => !r)} className={cn("size-9 transition-colors", repeatOne ? "text-primary shadow-[0_0_12px_oklch(0.7 0.3 300 / 0.5)]" : "text-white/50 hover:text-white hover:bg-white/10")}><Repeat className="size-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={toggleMute} className="size-9 text-white/50 hover:text-white hover:bg-white/10">{muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}</Button>
+                <div onClick={handleVolumeChange} className="relative h-1.5 w-24 cursor-pointer rounded-full bg-white/10">
+                  <div className="absolute inset-y-0 left-0 rounded-full bg-white/70 transition-[width] duration-75" style={{ width: `${muted ? 0 : volume}%` }} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   )
