@@ -446,9 +446,15 @@ export function GlobalMusicPlayerBar() {
 
       <div className="sr-only" aria-hidden="true" />
 
-      {/* Fullscreen player overlay — portal into main content only */}
+      {/* Fullscreen player overlay — fixed within content area, never covers sidebar/header */}
       {fullscreenOpen && createPortal(
-        <div className="absolute inset-0 z-[200] flex flex-col items-center justify-center gap-6 overflow-y-auto" style={{ background: isDark ? "oklch(0.1 0.02 280)" : "oklch(0.96 0.005 80)" }}>
+        <div className="fixed z-[200] flex flex-col items-center justify-center gap-6 overflow-y-auto" style={{
+          top: "80px",
+          left: "var(--sidebar-width, 0px)",
+          right: 0,
+          bottom: playerVisible ? "500px" : 0,
+          background: isDark ? "oklch(0.1 0.02 280)" : "oklch(0.96 0.005 80)",
+        }}>
           <Button variant="ghost" size="icon" onClick={() => setFullscreenOpen(false)} className="absolute top-4 right-4 z-10"><Minimize2 className="size-5" /></Button>
           <img src={currentTrack.thumbnail} alt={decodedTitle} className="size-64 rounded-2xl object-cover shadow-2xl ring-2 ring-white/10" />
           <div className="text-center">

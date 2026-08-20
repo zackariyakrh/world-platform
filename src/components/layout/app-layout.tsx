@@ -55,7 +55,7 @@ function AppLayout({
   }, [])
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden" style={{ "--sidebar-width": sidebarCollapsed ? "68px" : "256px" } as React.CSSProperties}>
       <Sidebar
         workspaceId={workspaceId}
         currentChannelId={channelId}
