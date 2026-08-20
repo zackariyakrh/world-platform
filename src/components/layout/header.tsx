@@ -3,8 +3,6 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { StatusBadge } from "@/components/ui/status-badge"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,10 +17,10 @@ import {
   Settings,
   User,
   LogOut,
-  Moon,
-  Sun,
   HelpCircle,
   Phone,
+  Sun,
+  Moon,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
@@ -54,42 +52,40 @@ function Header({
   const { theme, setTheme } = useTheme()
   const router = useRouter()
 
-  const themeLabel = theme === "dark" ? "Light Mode" : "Dark Mode"
   const ThemeIcon = theme === "dark" ? Sun : Moon
 
   return (
     <header
       data-slot="header"
       className={cn(
-        "sticky top-0 z-30 flex h-16 shrink-0 items-center gap-3 border-b border-border/50 bg-background/60 pl-4 pr-6 backdrop-blur-xl",
+        "sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border/50 bg-background/60 px-6 backdrop-blur-xl",
         "shadow-[0_1px_3px_oklch(from_var(--glow)_l_c_h_/_0.06)]",
         className
       )}
       {...props}
     >
-      {/* Mobile menu */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onMenuClick}
-        className="shrink-0 md:hidden"
-      >
-        <Menu className="size-5" />
-      </Button>
+      {/* Left — menu + title */}
+      <div className="flex items-center gap-3 shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onMenuClick}
+          className="shrink-0 md:hidden"
+        >
+          <Menu className="size-5" />
+        </Button>
+        {title && (
+          <h1 className="truncate text-lg font-semibold">{title}</h1>
+        )}
+      </div>
 
-      {/* Page title (mobile) */}
-      {title && (
-        <h1 className="truncate text-lg font-semibold md:hidden">{title}</h1>
-      )}
-
-      {/* Search bar — prominent, centered */}
+      {/* Center — search */}
       <button
         onClick={onSearchClick}
         className={cn(
           "hidden md:flex items-center gap-3 rounded-xl border border-border/60 bg-muted/40 px-4 py-2.5 text-sm text-muted-foreground",
           "transition-all duration-200 hover:bg-muted/70 hover:border-border hover:text-foreground",
-          "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40",
-          "min-w-0 max-w-md flex-1"
+          "max-w-lg flex-1"
         )}
       >
         <Search className="size-4 shrink-0" />
@@ -99,23 +95,19 @@ function Header({
         </kbd>
       </button>
 
-      {/* Mobile search */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onSearchClick}
-        className="shrink-0 md:hidden"
-      >
-        <Search className="size-5" />
-      </Button>
+      {/* Right — actions + profile */}
+      <div className="flex items-center gap-1 shrink-0">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onSearchClick}
+          className="shrink-0 md:hidden"
+        >
+          <Search className="size-5" />
+        </Button>
 
-      <div className="flex-1 md:flex-none" />
+        {actions}
 
-      {actions}
-
-      {/* Right side actions */}
-      <div className="flex items-center gap-1">
-        {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative shrink-0 rounded-xl">
           <Bell className="size-5" />
           {notificationCount > 0 && (
@@ -125,7 +117,6 @@ function Header({
           )}
         </Button>
 
-        {/* Calls / DMs */}
         <Button
           variant="ghost"
           size="icon"
@@ -135,7 +126,6 @@ function Header({
           <Phone className="size-5" />
         </Button>
 
-        {/* Theme toggle */}
         <Button
           variant="ghost"
           size="icon"
@@ -145,9 +135,8 @@ function Header({
           <ThemeIcon className="size-5" />
         </Button>
 
-        <Separator orientation="vertical" className="mx-1 h-7" />
+        <div className="mx-1.5 h-7 w-px bg-border/60" />
 
-        {/* User avatar dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -166,11 +155,7 @@ function Header({
                   {(userName || userEmail || "?").slice(0, 2).toUpperCase()}
                 </div>
               )}
-              <StatusBadge
-                status="online"
-                size="sm"
-                className="absolute -right-0.5 -bottom-0.5"
-              />
+              <span className="absolute -right-0.5 -bottom-0.5 block size-2.5 rounded-full border-2 border-background bg-emerald-500" />
             </div>
             <div className="hidden lg:flex flex-col items-start">
               <span className="text-sm font-medium leading-tight">{userName || "User"}</span>
@@ -191,7 +176,10 @@ function Header({
               Help & Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}>
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
+            >
               <LogOut className="size-4" />
               Sign Out
             </DropdownMenuItem>
