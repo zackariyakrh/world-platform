@@ -100,6 +100,21 @@ export function GlobalMusicPlayerBar() {
   React.useEffect(() => { shuffleRef.current = shuffle }, [shuffle])
   React.useEffect(() => { repeatRef.current = repeat }, [repeat])
 
+  // Auto-play when currentTrack changes externally (e.g. from music page clicking a song)
+  const prevTrackIdRef = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (currentTrack && currentTrack.id !== prevTrackIdRef.current) {
+      prevTrackIdRef.current = currentTrack.id
+      // If isPlaying is true, the track was set externally — start playback
+      if (isPlaying && currentTrack.videoId) {
+        stopAll()
+        setProgress(0)
+        setDuration(0)
+        createYouTubePlayer(currentTrack.videoId)
+      }
+    }
+  }, [currentTrack, isPlaying])
+
   React.useEffect(() => {
     if (window.YT?.Player) { ytReadyRef.current = true; return }
     const tag = document.createElement("script")

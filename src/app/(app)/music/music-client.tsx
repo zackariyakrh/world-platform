@@ -128,13 +128,12 @@ export function MusicClient() {
   }
 
   function playTrackAtIndex(track: Track, index: number) {
-    // Set remaining tracks as queue
     const remaining = tracks.slice(index + 1)
     setQueue(remaining)
     setCurrentTrack(track)
     setProgress(0)
     setDuration(0)
-    setIsPlaying(false)
+    setIsPlaying(true)
   }
 
   function handleAddToQueue(track: Track) {
@@ -200,13 +199,13 @@ export function MusicClient() {
         {!loading && viewMode === "list" && tracks.length > 0 && (
           <div className="space-y-1">
             {tracks.map((track, i) => (
-              <div key={`${track.id}-${i}`} className={cn("group flex w-full items-center gap-4 rounded-xl p-3 text-left transition-all hover:bg-muted/50", currentTrack?.id === track.id && "bg-primary/5 ring-1 ring-primary/20")}>
-                <button onClick={() => playTrackAtIndex(track, i)} className="flex flex-1 items-center gap-4 min-w-0">
+              <div key={`${track.id}-${i}`} className={cn("group flex w-full items-center gap-[10px] rounded-xl p-3 text-left transition-all hover:bg-muted/50", currentTrack?.id === track.id && "bg-primary/5 ring-1 ring-primary/20")}>
+                <button onClick={() => playTrackAtIndex(track, i)} className="flex flex-1 items-center gap-[10px] min-w-0 text-left">
                   <span className="w-6 text-center text-sm text-muted-foreground">{i + 1}</span>
-                  <img src={track.thumbnail} alt={track.title} className="size-12 rounded-lg object-cover" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-foreground">{decodeHtmlEntities(track.title)}</p>
-                    <p className="truncate text-sm text-muted-foreground">{decodeHtmlEntities(track.artist)}</p>
+                  <img src={track.thumbnail} alt={track.title} className="size-12 rounded-lg object-cover shrink-0" />
+                  <div className="min-w-0 flex-1 text-left">
+                    <p className="truncate text-sm font-medium text-foreground text-left">{decodeHtmlEntities(track.title)}</p>
+                    <p className="truncate text-sm text-muted-foreground text-left">{decodeHtmlEntities(track.artist)}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     {currentTrack?.id === track.id && isPlaying ? <Pause className="size-5 text-primary" /> : <Play className="size-5 text-muted-foreground group-hover:text-primary" />}
