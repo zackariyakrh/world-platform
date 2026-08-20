@@ -61,6 +61,33 @@ const SLEEP_OPTIONS = [
   { label: "2 hours", minutes: 120 },
 ]
 
+// Module-level persistent state — survives component remounts across navigations
+let persistentYTContainer: HTMLDivElement | null = null
+let persistentYTPlayer: any = null
+let persistentYTReady = false
+let persistentProgressInterval: ReturnType<typeof setInterval> | null = null
+
+function getOrCreateYTContainer() {
+  if (typeof window === "undefined") return null
+  if (!persistentYTContainer) {
+    persistentYTContainer = document.createElement("div")
+    persistentYTContainer.id = "nexus-yt-player-root"
+    persistentYTContainer.style.cssText = "position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;pointer-events:none;z-index:-1;"
+    document.body.appendChild(persistentYTContainer)
+  }
+  return persistentYTContainer
+}
+
+function loadYTScript() {
+  if (typeof window === "undefined") return
+  if (window.YT?.Player) { persistentYTReady = true; return }
+  if (document.querySelector('script[src*="youtube.com/iframe_api"]')) return
+  const tag = document.createElement("script")
+  tag.src = "https://www.youtube.com/iframe_api"
+  document.head.appendChild(tag)
+  window.onYouTubeIframeAPIReady = () => { persistentYTReady = true }
+}
+
 export function GlobalMusicPlayerBar() {
   const {
     currentTrack, queue, history, isPlaying, progress, duration, volume, muted,
@@ -77,10 +104,6 @@ export function GlobalMusicPlayerBar() {
   const isDark = theme === "dark" || (theme === "system" && typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches)
 
   const audioRef = React.useRef<HTMLAudioElement | null>(null)
-  const ytPlayerRef = React.useRef<any>(null)
-  const ytContainerRef = React.useRef<HTMLDivElement>(null)
-  const progressInterval = React.useRef<ReturnType<typeof setInterval> | null>(null)
-  const ytReadyRef = React.useRef(false)
   const currentTrackRef = React.useRef<Track | null>(null)
   const queueRef = React.useRef<Track[]>([])
   const historyRef = React.useRef<Track[]>([])
@@ -106,7 +129,6 @@ export function GlobalMusicPlayerBar() {
   React.useEffect(() => {
     if (currentTrack && currentTrack.id !== prevTrackIdRef.current) {
       prevTrackIdRef.current = currentTrack.id
-      // If isPlaying is true, the track was set externally — start playback
       if (isPlaying && currentTrack.videoId) {
         stopAll()
         setProgress(0)
@@ -117,15 +139,11 @@ export function GlobalMusicPlayerBar() {
   }, [currentTrack, isPlaying])
 
   React.useEffect(() => {
-    if (window.YT?.Player) { ytReadyRef.current = true; return }
-    const tag = document.createElement("script")
-    tag.src = "https://www.youtube.com/iframe_api"
-    document.head.appendChild(tag)
-    window.onYouTubeIframeAPIReady = () => { ytReadyRef.current = true }
+    loadYTScript()
   }, [])
 
   React.useEffect(() => () => {
-    if (progressInterval.current) clearInterval(progressInterval.current)
+    if (persistentProgressInterval) clearInterval(persistentProgressInterval)
     if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current)
   }, [])
 
@@ -150,19 +168,19 @@ export function GlobalMusicPlayerBar() {
 
   function stopAll() {
     if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; audioRef.current = null }
-    if (ytPlayerRef.current) { try { ytPlayerRef.current.destroy() } catch {} ytPlayerRef.current = null }
-    if (progressInterval.current) clearInterval(progressInterval.current)
+    if (persistentYTPlayer) { try { persistentYTPlayer.destroy() } catch {} persistentYTPlayer = null }
+    if (persistentProgressInterval) clearInterval(persistentProgressInterval)
   }
 
   function startProgress() {
-    if (progressInterval.current) clearInterval(progressInterval.current)
-    progressInterval.current = setInterval(() => {
+    if (persistentProgressInterval) clearInterval(persistentProgressInterval)
+    persistentProgressInterval = setInterval(() => {
       if (isDraggingRef.current) return
       if (audioRef.current && !audioRef.current.paused) {
         useMusicStore.getState().setProgress(audioRef.current.currentTime)
       }
-      if (ytPlayerRef.current && typeof ytPlayerRef.current.getCurrentTime === "function") {
-        const t = ytPlayerRef.current.getCurrentTime()
+      if (persistentYTPlayer && typeof persistentYTPlayer.getCurrentTime === "function") {
+        const t = persistentYTPlayer.getCurrentTime()
         if (typeof t === "number" && !isNaN(t)) {
           useMusicStore.getState().setProgress(t)
         }
@@ -196,9 +214,10 @@ export function GlobalMusicPlayerBar() {
 
   function createYouTubePlayer(videoId: string) {
     const doCreate = () => {
-      if (!ytContainerRef.current) return
-      if (ytPlayerRef.current) { try { ytPlayerRef.current.destroy() } catch {} ytPlayerRef.current = null }
-      const container = ytContainerRef.current; container.innerHTML = ""
+      const container = getOrCreateYTContainer()
+      if (!container) return
+      if (persistentYTPlayer) { try { persistentYTPlayer.destroy() } catch {} persistentYTPlayer = null }
+      container.innerHTML = ""
       const div = document.createElement("div"); div.id = "yt-player-global"; container.appendChild(div)
 
       new window.YT.Player(div, {
@@ -206,7 +225,7 @@ export function GlobalMusicPlayerBar() {
         playerVars: { autoplay: 1, controls: 0, disablekb: 1, fs: 0, iv_load_policy: 3, modestbranding: 1, rel: 0, showinfo: 0 },
         events: {
           onReady: (e: any) => {
-            ytPlayerRef.current = e.target
+            persistentYTPlayer = e.target
             const s = useMusicStore.getState()
             e.target.setVolume(s.muted ? 0 : s.volume)
             setDuration(e.target.getDuration())
@@ -219,11 +238,11 @@ export function GlobalMusicPlayerBar() {
               startProgress()
             } else if (e.data === window.YT.PlayerState.PAUSED) {
               setIsPlaying(false)
-              if (progressInterval.current) clearInterval(progressInterval.current)
+              if (persistentProgressInterval) clearInterval(persistentProgressInterval)
             } else if (e.data === window.YT.PlayerState.ENDED) {
               setIsPlaying(false)
               setProgress(0)
-              if (progressInterval.current) clearInterval(progressInterval.current)
+              if (persistentProgressInterval) clearInterval(persistentProgressInterval)
               handleTrackEnd()
             }
           },
@@ -234,10 +253,10 @@ export function GlobalMusicPlayerBar() {
         },
       })
     }
-    if (ytReadyRef.current && window.YT?.Player) { doCreate() }
+    if (persistentYTReady && window.YT?.Player) { doCreate() }
     else {
       const c = setInterval(() => {
-        if (ytReadyRef.current && window.YT?.Player) { clearInterval(c); doCreate() }
+        if (persistentYTReady && window.YT?.Player) { clearInterval(c); doCreate() }
       }, 100)
       setTimeout(() => clearInterval(c), 10000)
     }
@@ -268,7 +287,7 @@ export function GlobalMusicPlayerBar() {
     } else {
       setIsPlaying(false)
       setProgress(0)
-      if (progressInterval.current) clearInterval(progressInterval.current)
+      if (persistentProgressInterval) clearInterval(persistentProgressInterval)
     }
   }
 
@@ -279,7 +298,7 @@ export function GlobalMusicPlayerBar() {
     if (p > 3) {
       setProgress(0)
       if (audioRef.current) audioRef.current.currentTime = 0
-      if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(0, true) } catch {}
+      if (persistentYTPlayer) try { persistentYTPlayer.seekTo(0, true) } catch {}
       return
     }
 
@@ -291,21 +310,21 @@ export function GlobalMusicPlayerBar() {
     } else if (ct) {
       setProgress(0)
       if (audioRef.current) audioRef.current.currentTime = 0
-      if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(0, true) } catch {}
+      if (persistentYTPlayer) try { persistentYTPlayer.seekTo(0, true) } catch {}
     }
   }
 
   function pausePlayback() {
     setIsPlaying(false)
     if (audioRef.current) audioRef.current.pause()
-    if (ytPlayerRef.current) try { ytPlayerRef.current.pauseVideo() } catch {}
-    if (progressInterval.current) clearInterval(progressInterval.current)
+    if (persistentYTPlayer) try { persistentYTPlayer.pauseVideo() } catch {}
+    if (persistentProgressInterval) clearInterval(persistentProgressInterval)
   }
 
   function resumePlayback() {
     setIsPlaying(true)
     if (audioRef.current) audioRef.current.play().catch(() => setIsPlaying(false))
-    if (ytPlayerRef.current) try { ytPlayerRef.current.playVideo() } catch {}
+    if (persistentYTPlayer) try { persistentYTPlayer.playVideo() } catch {}
     startProgress()
   }
 
@@ -315,7 +334,7 @@ export function GlobalMusicPlayerBar() {
     const rect = e.currentTarget.getBoundingClientRect()
     const newTime = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * d
     if (audioRef.current) audioRef.current.currentTime = newTime
-    if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(newTime, true) } catch {}
+    if (persistentYTPlayer) try { persistentYTPlayer.seekTo(newTime, true) } catch {}
     setProgress(newTime)
   }
 
@@ -335,7 +354,7 @@ export function GlobalMusicPlayerBar() {
       const p = Math.max(0, Math.min(1, (ev.clientX - rect.left) / rect.width))
       const newTime = p * d
       if (audioRef.current) audioRef.current.currentTime = newTime
-      if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(newTime, true) } catch {}
+      if (persistentYTPlayer) try { persistentYTPlayer.seekTo(newTime, true) } catch {}
       setProgress(newTime)
       setDragProgress(null)
       isDraggingRef.current = false
@@ -352,7 +371,7 @@ export function GlobalMusicPlayerBar() {
     setVolume(pct)
     if (pct > 0) setMuted(false)
     if (audioRef.current) audioRef.current.volume = pct / 100
-    if (ytPlayerRef.current) try { ytPlayerRef.current.setVolume(pct) } catch {}
+    if (persistentYTPlayer) try { persistentYTPlayer.setVolume(pct) } catch {}
   }
 
   function toggleMuteFn() {
@@ -360,14 +379,14 @@ export function GlobalMusicPlayerBar() {
     const newMuted = !s.muted
     setMuted(newMuted)
     if (audioRef.current) audioRef.current.volume = newMuted ? 0 : s.volume / 100
-    if (ytPlayerRef.current) try { newMuted ? ytPlayerRef.current.mute() : ytPlayerRef.current.unMute() } catch {}
+    if (persistentYTPlayer) try { newMuted ? persistentYTPlayer.mute() : persistentYTPlayer.unMute() } catch {}
   }
 
   function seekRelative(seconds: number) {
     const s = useMusicStore.getState()
     const newTime = Math.max(0, Math.min(s.duration || 0, s.progress + seconds))
     if (audioRef.current) audioRef.current.currentTime = newTime
-    if (ytPlayerRef.current) try { ytPlayerRef.current.seekTo(newTime, true) } catch {}
+    if (persistentYTPlayer) try { persistentYTPlayer.seekTo(newTime, true) } catch {}
     setProgress(newTime)
   }
 
@@ -430,12 +449,12 @@ export function GlobalMusicPlayerBar() {
         case "ArrowUp":
           e.preventDefault()
           setVolume(Math.min(100, s.volume + 5))
-          if (ytPlayerRef.current) try { ytPlayerRef.current.setVolume(Math.min(100, s.volume + 5)) } catch {}
+          if (persistentYTPlayer) try { persistentYTPlayer.setVolume(Math.min(100, s.volume + 5)) } catch {}
           break
         case "ArrowDown":
           e.preventDefault()
           setVolume(Math.max(0, s.volume - 5))
-          if (ytPlayerRef.current) try { ytPlayerRef.current.setVolume(Math.max(0, s.volume - 5)) } catch {}
+          if (persistentYTPlayer) try { persistentYTPlayer.setVolume(Math.max(0, s.volume - 5)) } catch {}
           break
         case "KeyN":
           if (e.ctrlKey || e.metaKey) { e.preventDefault(); playNext() }
@@ -481,7 +500,7 @@ export function GlobalMusicPlayerBar() {
         }
       `}</style>
 
-      <div ref={ytContainerRef} className="absolute w-0 h-0 overflow-hidden opacity-0" aria-hidden="true" />
+      <div className="sr-only" aria-hidden="true" />
 
       {/* Fullscreen player overlay */}
       {fullscreenOpen && (
