@@ -212,8 +212,8 @@ export function MusicClient() {
                   </div>
                 </button>
                 <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" onClick={() => toggleFavorite(track.id)} className="size-8" title="Like">
-                    <Heart className={cn("size-4", favorites.has(track.id) ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-foreground")} />
+                  <Button variant="ghost" size="icon" onClick={() => toggleFavorite(track)} className="size-8" title="Like">
+                    <Heart className={cn("size-4", favorites.some(t => t.id === track.id) ? "fill-red-500 text-red-500" : "text-muted-foreground hover:text-foreground")} />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={() => handleAddToQueue(track)} className="size-8" title="Add to queue">
                     <Plus className="size-4 text-muted-foreground hover:text-foreground" />
@@ -244,8 +244,8 @@ export function MusicClient() {
                   <p className="truncate w-full text-xs text-muted-foreground text-left">{decodeHtmlEntities(track.artist)}</p>
                 </button>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" onClick={() => toggleFavorite(track.id)} className="size-7" title="Like">
-                    <Heart className={cn("size-3.5", favorites.has(track.id) ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+                  <Button variant="ghost" size="icon" onClick={() => toggleFavorite(track)} className="size-7" title="Like">
+                    <Heart className={cn("size-3.5", favorites.some(t => t.id === track.id) ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
                   </Button>
                   <Button variant="ghost" size="icon" onClick={() => handleAddToQueue(track)} className="size-7" title="Add to queue">
                     <Plus className="size-3.5 text-muted-foreground" />

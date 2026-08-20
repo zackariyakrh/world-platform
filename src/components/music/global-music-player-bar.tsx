@@ -27,8 +27,8 @@ import {
   Rewind,
   FastForward,
   X,
-  GripVertical,
-  Music,
+
+
   ChevronUp,
 } from "lucide-react"
 
@@ -66,7 +66,7 @@ export function GlobalMusicPlayerBar() {
     currentTrack, queue, history, isPlaying, progress, duration, volume, muted,
     shuffle, repeat, favorites, queueOpen, lyricsOpen, fullscreenOpen,
     sleepTimerMinutes, sleepTimerEnd,
-    setCurrentTrack, setQueue, addToQueue, removeFromQueue, clearQueue,
+    setCurrentTrack, setQueue,
     setHistory, setIsPlaying, setProgress, setDuration, setVolume, setMuted,
     toggleMute, setShuffle, cycleRepeat, toggleFavorite, setQueueOpen,
     setLyricsOpen, setFullscreenOpen, setSleepTimerMinutes, setSleepTimerEnd,
@@ -530,8 +530,8 @@ export function GlobalMusicPlayerBar() {
             </Button>
           </div>
           <div className="flex items-center gap-3 mt-2">
-            <Button variant="ghost" size="icon" onClick={() => toggleFavorite(currentTrack.id)} className="size-10">
-              <Heart className={cn("size-5", favorites.has(currentTrack.id) ? "fill-red-500 text-red-500" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} />
+            <Button variant="ghost" size="icon" onClick={() => toggleFavorite(currentTrack)} className="size-10">
+              <Heart className={cn("size-5", favorites.some(t => t.id === currentTrack.id) ? "fill-red-500 text-red-500" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} />
             </Button>
             <Button variant="ghost" size="icon" onClick={handleShare} className="size-10" title="Share"><Share2 className={cn("size-5", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} /></Button>
             <Button variant="ghost" size="icon" onClick={handleDownload} className="size-10" title="Open on YouTube"><Download className={cn("size-5", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} /></Button>
@@ -556,51 +556,30 @@ export function GlobalMusicPlayerBar() {
         </div>
       )}
 
-      {/* Queue Side Panel */}
+      {/* Favorites Side Panel */}
       {queueOpen && (
         <div className="absolute bottom-0 right-0 top-0 z-[60] w-96 flex flex-col border-l" style={{ background: isDark ? "oklch(0.14 0.02 280)" : "oklch(0.98 0.005 80)" }}>
           <div className="flex items-center justify-between border-b px-4 py-3" style={{ borderColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)" }}>
-            <h3 className={cn("font-semibold", isDark ? "text-white" : "text-gray-900")}>Queue</h3>
-            <div className="flex items-center gap-1">
-              {queue.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={clearQueue} className={cn("text-xs h-7", isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")}>Clear</Button>
-              )}
-              <Button variant="ghost" size="icon" onClick={() => setQueueOpen(false)} className="size-8"><X className="size-4" /></Button>
-            </div>
+            <h3 className={cn("font-semibold", isDark ? "text-white" : "text-gray-900")}>Favorites ({favorites.length})</h3>
+            <Button variant="ghost" size="icon" onClick={() => setQueueOpen(false)} className="size-8"><X className="size-4" /></Button>
           </div>
           <div className="flex-1 overflow-y-auto p-2">
-            {currentTrack && (
-              <div className="mb-3">
-                <p className={cn("text-xs font-medium mb-2 px-2", isDark ? "text-white/40" : "text-gray-400")}>Now Playing</p>
-                <div className="flex items-center gap-3 rounded-lg p-2" style={{ background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)" }}>
-                  <img src={currentTrack.thumbnail} alt="" className="size-10 rounded-lg object-cover" />
+            {favorites.length > 0 ? (
+              favorites.map((track, i) => (
+                <div key={`fav-${track.id}-${i}`} className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/5 transition-colors group cursor-pointer" onClick={() => { setCurrentTrack(track); setProgress(0); setDuration(0); setIsPlaying(true); setQueue(favorites.filter((_, j) => j !== i)); }}>
+                  <img src={track.thumbnail} alt="" className="size-10 rounded-lg object-cover" />
                   <div className="min-w-0 flex-1">
-                    <p className={cn("truncate text-sm font-medium", isDark ? "text-white" : "text-gray-900")}>{decodeHtmlEntities(currentTrack.title)}</p>
-                    <p className={cn("truncate text-xs", isDark ? "text-white/50" : "text-gray-500")}>{decodeHtmlEntities(currentTrack.artist)}</p>
+                    <p className={cn("truncate text-sm", isDark ? "text-white/80" : "text-gray-700")}>{decodeHtmlEntities(track.title)}</p>
+                    <p className={cn("truncate text-xs", isDark ? "text-white/40" : "text-gray-400")}>{decodeHtmlEntities(track.artist)}</p>
                   </div>
+                  <button onClick={(e) => { e.stopPropagation(); toggleFavorite(track) }} className={cn("opacity-0 group-hover:opacity-100 transition-opacity", isDark ? "text-white/40 hover:text-red-400" : "text-gray-400 hover:text-red-500")} title="Remove from favorites"><X className="size-4" /></button>
                 </div>
-              </div>
-            )}
-            {queue.length > 0 && (
-              <div>
-                <p className={cn("text-xs font-medium mb-2 px-2", isDark ? "text-white/40" : "text-gray-400")}>Next Up ({queue.length})</p>
-                {queue.map((track, i) => (
-                  <div key={`q-${track.id}-${i}`} className="flex items-center gap-3 rounded-lg p-2 hover:bg-white/5 transition-colors group">
-                    <GripVertical className={cn("size-4 shrink-0 opacity-0 group-hover:opacity-50", isDark ? "text-white" : "text-gray-400")} />
-                    <img src={track.thumbnail} alt="" className="size-10 rounded-lg object-cover" />
-                    <div className="min-w-0 flex-1">
-                      <p className={cn("truncate text-sm", isDark ? "text-white/80" : "text-gray-700")}>{decodeHtmlEntities(track.title)}</p>
-                      <p className={cn("truncate text-xs", isDark ? "text-white/40" : "text-gray-400")}>{decodeHtmlEntities(track.artist)}</p>
-                    </div>
-                    <button onClick={() => removeFromQueue(i)} className={cn("opacity-0 group-hover:opacity-100 transition-opacity", isDark ? "text-white/40 hover:text-red-400" : "text-gray-400 hover:text-red-500")}>&times;</button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {queue.length === 0 && !currentTrack && (
+              ))
+            ) : (
               <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Music className={cn("size-12 mb-3", isDark ? "text-white/10" : "text-gray-200")} />
-                <p className={cn("text-sm", isDark ? "text-white/30" : "text-gray-400")}>Queue is empty</p>
+                <Heart className={cn("size-12 mb-3", isDark ? "text-white/10" : "text-gray-200")} />
+                <p className={cn("text-sm", isDark ? "text-white/30" : "text-gray-400")}>No favorites yet</p>
+                <p className={cn("text-xs mt-1", isDark ? "text-white/20" : "text-gray-300")}>Heart songs to add them here</p>
               </div>
             )}
           </div>
@@ -623,8 +602,8 @@ export function GlobalMusicPlayerBar() {
               <p className={cn("truncate text-sm font-semibold", isDark ? "text-white" : "text-gray-900")}>{decodedTitle}</p>
               <p className={cn("truncate text-xs", isDark ? "text-white/50" : "text-gray-500")}>{decodedArtist}</p>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => toggleFavorite(currentTrack.id)} className="size-9 shrink-0 hidden sm:inline-flex" title={favorites.has(currentTrack.id) ? "Unlike" : "Like"}>
-              <Heart className={cn("size-4", favorites.has(currentTrack.id) ? "fill-red-500 text-red-500" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} />
+            <Button variant="ghost" size="icon" onClick={() => toggleFavorite(currentTrack)} className="size-9 shrink-0 hidden sm:inline-flex" title={favorites.some(t => t.id === currentTrack.id) ? "Unlike" : "Like"}>
+              <Heart className={cn("size-4", favorites.some(t => t.id === currentTrack.id) ? "fill-red-500 text-red-500" : isDark ? "text-white/40 hover:text-white" : "text-gray-400 hover:text-gray-900")} />
             </Button>
           </div>
 

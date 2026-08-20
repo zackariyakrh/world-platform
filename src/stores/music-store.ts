@@ -26,7 +26,7 @@ interface MusicState {
   muted: boolean
   shuffle: boolean
   repeat: RepeatMode
-  favorites: Set<string>
+  favorites: Track[]
   queueOpen: boolean
   lyricsOpen: boolean
   fullscreenOpen: boolean
@@ -48,7 +48,7 @@ interface MusicState {
   setShuffle: (shuffle: boolean) => void
   setRepeat: (repeat: RepeatMode) => void
   cycleRepeat: () => void
-  toggleFavorite: (trackId: string) => void
+  toggleFavorite: (track: Track) => void
   isFavorite: (trackId: string) => boolean
   setQueueOpen: (open: boolean) => void
   setLyricsOpen: (open: boolean) => void
@@ -68,7 +68,7 @@ export const useMusicStore = create<MusicState>((set, get) => ({
   muted: false,
   shuffle: false,
   repeat: "off",
-  favorites: new Set<string>(),
+  favorites: [],
   queueOpen: false,
   lyricsOpen: false,
   fullscreenOpen: false,
@@ -94,13 +94,12 @@ export const useMusicStore = create<MusicState>((set, get) => ({
   cycleRepeat: () => set((s) => ({
     repeat: s.repeat === "off" ? "all" : s.repeat === "all" ? "one" : "off",
   })),
-  toggleFavorite: (trackId) => set((s) => {
-    const newFavs = new Set(s.favorites)
-    if (newFavs.has(trackId)) newFavs.delete(trackId)
-    else newFavs.add(trackId)
-    return { favorites: newFavs }
+  toggleFavorite: (track) => set((s) => {
+    const exists = s.favorites.find(t => t.id === track.id)
+    if (exists) return { favorites: s.favorites.filter(t => t.id !== track.id) }
+    return { favorites: [...s.favorites, track] }
   }),
-  isFavorite: (trackId) => get().favorites.has(trackId),
+  isFavorite: (trackId) => get().favorites.some(t => t.id === trackId),
   setQueueOpen: (open) => set({ queueOpen: open }),
   setLyricsOpen: (open) => set({ lyricsOpen: open }),
   setFullscreenOpen: (open) => set({ fullscreenOpen: open }),
