@@ -83,6 +83,7 @@ model User {
   ownedGroups      Group[]
   departmentId     String?
   department       Department? @relation(fields: [departmentId], references: [id])
+  spotifyConnection SpotifyConnection?
 }
 
 model Profile {
@@ -928,4 +929,24 @@ model GroupInvitation {
   createdAt DateTime @default(now())
 
   @@unique([groupId, userId])
+}
+
+model SpotifyConnection {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  spotifyUserId     String
+  spotifyDisplayName String
+  spotifyEmail      String?
+  spotifyAvatarUrl  String?
+  accessToken       String
+  refreshToken      String
+  expiresAt         DateTime
+  scopes            String
+  showOnProfile     Boolean  @default(true)
+  showCurrentlyPlaying Boolean @default(true)
+  privacyLevel      String   @default("everyone") // everyone, members, hidden
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -61,6 +61,24 @@ const NEW_TABLES = [
     FOREIGN KEY ("invitedById") REFERENCES "User"("id"),
     UNIQUE("groupId", "userId")
   )`,
+  `CREATE TABLE IF NOT EXISTS "SpotifyConnection" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL UNIQUE,
+    "spotifyUserId" TEXT NOT NULL,
+    "spotifyDisplayName" TEXT NOT NULL,
+    "spotifyEmail" TEXT,
+    "spotifyAvatarUrl" TEXT,
+    "accessToken" TEXT NOT NULL,
+    "refreshToken" TEXT NOT NULL,
+    "expiresAt" DATETIME NOT NULL,
+    "scopes" TEXT NOT NULL,
+    "showOnProfile" BOOLEAN NOT NULL DEFAULT true,
+    "showCurrentlyPlaying" BOOLEAN NOT NULL DEFAULT true,
+    "privacyLevel" TEXT NOT NULL DEFAULT 'everyone',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" DATETIME NOT NULL,
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE
+  )`,
 ];
 
 async function main() {

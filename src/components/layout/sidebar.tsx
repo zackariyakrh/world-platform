@@ -54,6 +54,9 @@ import {
   ChevronRight,
   Zap,
   Calendar,
+  Briefcase,
+  FolderOpen,
+  Music,
 } from "lucide-react"
 
 interface Channel {
@@ -322,6 +325,27 @@ function Sidebar({
               isActive={isActive("/groups")}
               collapsed={collapsed}
               onClick={() => router.push("/groups")}
+            />
+            <SidebarItem
+              icon={Briefcase}
+              label="Projects"
+              isActive={isActive("/projects")}
+              collapsed={collapsed}
+              onClick={() => router.push("/projects")}
+            />
+            <SidebarItem
+              icon={FolderOpen}
+              label="Workspaces"
+              isActive={isActive("/workspaces")}
+              collapsed={collapsed}
+              onClick={() => router.push("/workspaces")}
+            />
+            <SidebarItem
+              icon={Music}
+              label="Spotify"
+              isActive={isActive("/spotify")}
+              collapsed={collapsed}
+              onClick={() => router.push("/spotify")}
             />
 
             <div className="my-2">
