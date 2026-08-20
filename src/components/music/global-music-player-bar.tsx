@@ -608,14 +608,14 @@ export function GlobalMusicPlayerBar() {
       )}
 
       {/* Bottom Player Bar */}
-      <div className={cn("shrink-0 border-t h-[100px]", isDark ? "bg-gray-900 border-white/[0.06]" : "bg-white border-gray-200")} style={{ boxShadow: isDark ? "0 -6px 40px rgba(120,60,200,0.25), 0 -2px 16px rgba(120,60,200,0.15), 0 -4px 24px rgba(0,0,0,0.4)" : "0 -4px 32px rgba(120,60,200,0.1), 0 -2px 12px rgba(0,0,0,0.06)" }}>
+      <div className={cn("shrink-0 border-t h-[100px] flex flex-col", isDark ? "bg-gray-900 border-white/[0.06]" : "bg-white border-gray-200")} style={{ boxShadow: isDark ? "0 -6px 40px rgba(120,60,200,0.25), 0 -2px 16px rgba(120,60,200,0.15), 0 -4px 24px rgba(0,0,0,0.4)" : "0 -4px 32px rgba(120,60,200,0.1), 0 -2px 12px rgba(0,0,0,0.06)" }}>
         {/* Progress bar */}
         <div onClick={handleSeek} onMouseDown={handleDragStart} className="group relative h-1.5 cursor-pointer" style={{ background: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)" }}>
           <div className="absolute inset-y-0 left-0 transition-[width] duration-75 player-progress-fill" style={{ width: `${pct}%` }} />
           <div className="absolute top-1/2 size-3.5 -translate-y-1/2 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity shadow-lg" style={{ left: `calc(${pct}% - 7px)`, boxShadow: isDark ? "0 0 8px rgba(255,255,255,0.5)" : "0 0 8px rgba(0,0,0,0.3)" }} />
         </div>
 
-        <div className="flex items-center gap-2 px-4 py-2 sm:gap-3 md:px-6 h-[calc(100%-6px)]">
+        <div className="flex items-center gap-2 px-4 sm:gap-3 md:px-6 flex-1">
           {/* Track info */}
           <div className="flex items-center gap-3 min-w-0 flex-1 sm:flex-none sm:w-64 md:w-72">
             <img src={currentTrack.thumbnail} alt={decodedTitle} className={cn("size-9 rounded-lg object-cover shrink-0 ring-1", isDark ? "ring-white/10" : "ring-black/[0.08]")} />
