@@ -58,7 +58,7 @@ function Header({
     <header
       data-slot="header"
       className={cn(
-        "sticky top-0 z-30 flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border/50 bg-background/60 px-6 backdrop-blur-xl",
+        "sticky top-0 z-30 flex h-20 shrink-0 items-center justify-between gap-4 border-b border-border/50 bg-background/60 px-6 backdrop-blur-xl",
         "shadow-[0_1px_3px_oklch(from_var(--glow)_l_c_h_/_0.06)]",
         className
       )}
