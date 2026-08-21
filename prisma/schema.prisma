@@ -81,6 +81,8 @@ model User {
   groupInvitations GroupInvitation[]
   invitedByGroups  GroupInvitation[] @relation("InvitedByUser")
   ownedGroups      Group[]
+  friends          Friend[]           @relation("FriendUser")
+  friendOf         Friend[]           @relation("FriendOf")
   departmentId     String?
   department       Department? @relation(fields: [departmentId], references: [id])
 }
@@ -340,6 +342,20 @@ model PollVote {
   user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([optionId, userId])
+}
+
+// ─── Friends ─────────────────────────────────────────────────
+model Friend {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  status    String   @default("accepted") // pending, accepted
+  createdAt DateTime @default(now())
+
+  user     User @relation("FriendUser", fields: [userId], references: [id], onDelete: Cascade)
+  friend   User @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
 }
 
 // ─── Direct Messages ────────────────────────────────────────
