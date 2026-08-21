@@ -68,10 +68,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Cannot add yourself" }, { status: 400 })
     }
 
-    const targetUser = await db.user.findUnique({ where: { id: friendId }, select: { id: true } })
+    const [targetUser, senderUser] = await Promise.all([
+      db.user.findUnique({ where: { id: friendId }, select: { id: true, name: true } }),
+      db.user.findUnique({ where: { id: userId }, select: { id: true, name: true } }),
+    ])
+
     if (!targetUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
+
+    const senderName = senderUser?.name || "Someone"
 
     // Check existing friendship
     const existing = await db.friend.findFirst({
@@ -93,6 +99,29 @@ export async function POST(request: NextRequest) {
         }
         // Auto-accept if the other user already sent a request
         await db.friend.update({ where: { id: existing.id }, data: { status: "accepted" } })
+
+        // Notify both users
+        await Promise.all([
+          db.notification.create({
+            data: {
+              type: "friend_request",
+              title: "Friend request accepted",
+              content: `${senderName} accepted your friend request.`,
+              url: "/people",
+              userId: friendId,
+            },
+          }),
+          db.notification.create({
+            data: {
+              type: "friend_request",
+              title: "You are now friends",
+              content: `You and ${senderName} are now friends.`,
+              url: "/people",
+              userId,
+            },
+          }),
+        ])
+
         return NextResponse.json({ status: "accepted" })
       }
     }
@@ -118,6 +147,17 @@ export async function POST(request: NextRequest) {
 
     const friend = await db.friend.create({
       data: { userId, friendId, status: "pending" },
+    })
+
+    // Notify the recipient
+    await db.notification.create({
+      data: {
+        type: "friend_request",
+        title: "Friend request received",
+        content: `${senderName} sent you a friend request.`,
+        url: "/people",
+        userId: friendId,
+      },
     })
 
     return NextResponse.json({ status: "pending", id: friend.id })
@@ -152,11 +192,38 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Friend request not found" }, { status: 404 })
     }
 
+    const recipientUser = await db.user.findUnique({ where: { id: userId }, select: { name: true } })
+    const recipientName = recipientUser?.name || "Someone"
+
     if (action === "accept") {
       await db.friend.update({ where: { id: friendship.id }, data: { status: "accepted" } })
+
+      // Notify the sender that their request was accepted
+      await db.notification.create({
+        data: {
+          type: "friend_request",
+          title: "Friend request accepted",
+          content: `${recipientName} accepted your friend request.`,
+          url: "/people",
+          userId: friendId,
+        },
+      })
+
       return NextResponse.json({ status: "accepted" })
     } else if (action === "decline" || action === "remove") {
       await db.friend.delete({ where: { id: friendship.id } })
+
+      // Notify the sender that their request was declined
+      await db.notification.create({
+        data: {
+          type: "friend_request",
+          title: "Friend request declined",
+          content: `${recipientName} declined your friend request.`,
+          url: "/people",
+          userId: friendId,
+        },
+      })
+
       return NextResponse.json({ status: "removed" })
     } else {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 })
