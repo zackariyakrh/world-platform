@@ -592,7 +592,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
                     >
                       <MoreHorizontal className="size-3.5" />
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuItem onClick={() => setViewUser(user)}><Eye className="size-3.5" />View Details</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openResetPw(user)}><KeyRound className="size-3.5" />Reset Password</DropdownMenuItem>
                       <DropdownMenuSeparator />
