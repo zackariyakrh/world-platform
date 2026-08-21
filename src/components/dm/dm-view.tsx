@@ -22,6 +22,7 @@ import {
   Smile,
 } from "lucide-react"
 import { EmojiPicker } from "@/components/chat/emoji-picker"
+import { PickerPopup } from "@/components/ui/picker-popup"
 import { UserProfileDialog } from "@/components/dm/user-profile-panel"
 
 interface DMUser {
@@ -78,6 +79,12 @@ function getInitials(name: string | null): string {
     .join("")
     .toUpperCase()
     .slice(0, 2)
+}
+
+function isGifUrl(content: string): boolean {
+  const trimmed = content.trim()
+  if (trimmed.startsWith("http") && (trimmed.includes(".gif") || trimmed.includes("giphy.com") || trimmed.includes("media.tenor.com"))) return true
+  return false
 }
 
 export function DMView({ conversationId, initialMessages, otherUser }: DMViewProps) {
@@ -251,6 +258,15 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
                   <div className={cn("text-sm leading-relaxed", isOwn && "ml-auto")}>
                     {message.isDeleted ? (
                       <span className="italic text-muted-foreground">This message was deleted</span>
+                    ) : isGifUrl(message.content) ? (
+                      <div className="overflow-hidden rounded-lg">
+                        <img
+                          src={message.content.trim()}
+                          alt="GIF"
+                          className="max-w-[280px] max-h-[200px] rounded-lg object-cover"
+                          loading="lazy"
+                        />
+                      </div>
                     ) : (
                       <div className="inline-block rounded-lg bg-muted/50 px-3 py-2 text-left">
                         <div className="whitespace-pre-wrap break-words">{message.content}</div>
@@ -294,20 +310,38 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
                   >
                     <Smile className="size-4" />
                   </TooltipTrigger>
-                  <TooltipContent>Emoji</TooltipContent>
+                  <TooltipContent>Emoji & GIFs</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              {showEmojiPicker && (
-                <div className="absolute bottom-full left-0 mb-2 z-50">
-                  <EmojiPicker
-                    onSelect={(emoji) => {
-                      setInputValue((prev) => prev + emoji)
-                      setShowEmojiPicker(false)
-                      textareaRef.current?.focus()
-                    }}
-                  />
-                </div>
-              )}
+              <PickerPopup open={showEmojiPicker} onClose={() => setShowEmojiPicker(false)} className="absolute bottom-full left-0 mb-2 z-50">
+                <EmojiPicker
+                  onSelect={(emoji) => {
+                    setInputValue((prev) => prev + emoji)
+                    setShowEmojiPicker(false)
+                    textareaRef.current?.focus()
+                  }}
+                  onGifSelect={async (url) => {
+                    setShowEmojiPicker(false)
+                    if (isSending) return
+                    setIsSending(true)
+                    try {
+                      const res = await fetch(`/api/dm/messages`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ conversationId, content: url }),
+                      })
+                      if (res.ok) {
+                        const newMessage = await res.json()
+                        setMessages((prev) => [...prev, newMessage])
+                      }
+                    } catch {
+                      // ignore
+                    } finally {
+                      setIsSending(false)
+                    }
+                  }}
+                />
+              </PickerPopup>
             </div>
           </div>
 
@@ -316,7 +350,7 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`Message ${otherUser.name || otherUser.username || ""}`}
+            placeholder="Type a message..."
             disabled={isSending}
             className="min-h-[24px] max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-muted-foreground/40 focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
             rows={1}

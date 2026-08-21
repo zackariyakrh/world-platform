@@ -149,7 +149,7 @@ export function ChatView({ channelId, initialMessages, channel }: ChatViewProps)
 
         <MessageInput
           onSend={handleSend}
-          placeholder={`Message #${channel.name}`}
+          placeholder="Type a message..."
           disabled={isSending}
         />
       </div>

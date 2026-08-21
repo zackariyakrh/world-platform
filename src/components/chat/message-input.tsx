@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { EmojiPicker } from "@/components/chat/emoji-picker"
+import { PickerPopup } from "@/components/ui/picker-popup"
 import { cn } from "@/lib/utils"
 import {
   Send,
@@ -113,15 +114,19 @@ export function MessageInput({ onSend, placeholder = "Type a message...", disabl
                 >
                   <Smile className="size-4" />
                 </TooltipTrigger>
-                <TooltipContent side="top">Emoji</TooltipContent>
+                <TooltipContent side="top">Emoji & GIFs</TooltipContent>
               </Tooltip>
             </TooltipProvider>
 
-            {showEmojiPicker && (
-              <div className="absolute bottom-full left-0 z-20 mb-2">
-                <EmojiPicker onSelect={handleEmojiSelect} />
-              </div>
-            )}
+            <PickerPopup open={showEmojiPicker} onClose={() => setShowEmojiPicker(false)} className="absolute bottom-full left-0 z-20 mb-2">
+              <EmojiPicker
+                onSelect={handleEmojiSelect}
+                onGifSelect={(url) => {
+                  onSend(url)
+                  setShowEmojiPicker(false)
+                }}
+              />
+            </PickerPopup>
           </div>
 
           <TooltipProvider>
@@ -150,7 +155,7 @@ export function MessageInput({ onSend, placeholder = "Type a message...", disabl
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
-          className="min-h-[24px] max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="min-h-[24px] max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-muted-foreground/40 focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
           rows={1}
         />
 

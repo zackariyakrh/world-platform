@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { EmojiPicker } from "@/components/chat/emoji-picker"
+import { PickerPopup } from "@/components/ui/picker-popup"
 import { toast } from "sonner"
 
 interface ChatUser {
@@ -204,6 +205,15 @@ export function ChatMessage({ message, onReply }: ChatMessageProps) {
         <div className="mt-0.5 text-sm leading-relaxed">
           {message.isDeleted ? (
             <span className="italic text-muted-foreground">This message was deleted</span>
+          ) : /^(https?:\/\/[^\s]+\.gif\b|https?:\/\/[^\s]*giphy\.com[^\s]*|https?:\/\/[^\s]*media\.tenor\.com[^\s]*)$/i.test(message.content.trim()) ? (
+            <div className="overflow-hidden rounded-lg">
+              <img
+                src={message.content.trim()}
+                alt="GIF"
+                className="max-w-[280px] max-h-[200px] rounded-lg object-cover"
+                loading="lazy"
+              />
+            </div>
           ) : (
             <div className="whitespace-pre-wrap break-words">{parseMarkdown(message.content)}</div>
           )}
@@ -302,16 +312,14 @@ export function ChatMessage({ message, onReply }: ChatMessageProps) {
         </div>
       )}
 
-      {showEmojiPicker && (
-        <div className="absolute -top-2 right-2 z-20 -translate-y-full">
-          <EmojiPicker
-            onSelect={(emoji) => {
-              console.log("Add reaction:", emoji)
-              setShowEmojiPicker(false)
-            }}
-          />
-        </div>
-      )}
+      <PickerPopup open={showEmojiPicker} onClose={() => setShowEmojiPicker(false)} className="absolute -top-2 right-2 z-20 -translate-y-full">
+        <EmojiPicker
+          onSelect={(emoji) => {
+            console.log("Add reaction:", emoji)
+            setShowEmojiPicker(false)
+          }}
+        />
+      </PickerPopup>
     </div>
   )
 }
