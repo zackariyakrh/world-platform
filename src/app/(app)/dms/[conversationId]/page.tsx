@@ -68,6 +68,11 @@ export default async function DMConversationPage({ params }: DMConversationPageP
           username: otherUser.username,
           avatar: otherUser.avatar,
           status: otherUser.status,
+          bio: otherUser.bio,
+          jobTitle: otherUser.jobTitle,
+          customStatus: otherUser.customStatus,
+          lastSeenAt: otherUser.lastSeenAt?.toISOString() || null,
+          createdAt: otherUser.createdAt.toISOString(),
         }}
       />
     </div>

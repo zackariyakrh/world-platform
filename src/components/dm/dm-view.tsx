@@ -21,6 +21,7 @@ import {
   Paperclip,
   Smile,
 } from "lucide-react"
+import { UserProfilePanel } from "@/components/dm/user-profile-panel"
 
 interface DMUser {
   id: string
@@ -28,6 +29,11 @@ interface DMUser {
   username: string | null
   avatar: string | null
   status: string
+  bio: string | null
+  jobTitle: string | null
+  customStatus: string | null
+  lastSeenAt: string | null
+  createdAt: string
 }
 
 interface DMMessageData {
@@ -77,6 +83,7 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
   const [messages, setMessages] = React.useState<DMMessageData[]>(initialMessages)
   const [inputValue, setInputValue] = React.useState("")
   const [isSending, setIsSending] = React.useState(false)
+  const [profileOpen, setProfileOpen] = React.useState(false)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const bottomRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
@@ -137,32 +144,37 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
   )
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
       <div className="flex items-center gap-3 border-b px-4 py-3">
-        <div className="relative">
-          <Avatar>
-            <AvatarImage
-              src={otherUser.avatar || undefined}
-              alt={otherUser.name || "User"}
+        <button
+          onClick={() => setProfileOpen(true)}
+          className="flex items-center gap-3 rounded-lg px-1 py-1 -ml-1 hover:bg-muted/50 transition-colors"
+        >
+          <div className="relative shrink-0">
+            <Avatar>
+              <AvatarImage
+                src={otherUser.avatar || undefined}
+                alt={otherUser.name || "User"}
+              />
+              <AvatarFallback>{getInitials(otherUser.name)}</AvatarFallback>
+            </Avatar>
+            <span
+              className={cn(
+                "absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full ring-2 ring-background",
+                statusColors[otherUser.status] || statusColors.offline
+              )}
             />
-            <AvatarFallback>{getInitials(otherUser.name)}</AvatarFallback>
-          </Avatar>
-          <span
-            className={cn(
-              "absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full ring-2 ring-background",
-              statusColors[otherUser.status] || statusColors.offline
-            )}
-          />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold">
-            {otherUser.name || otherUser.username || "Unknown"}
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            {statusLabels[otherUser.status] || "Offline"}
-          </p>
-        </div>
-        <div className="flex items-center gap-1">
+          </div>
+          <div className="min-w-0 text-left">
+            <h2 className="text-sm font-semibold">
+              {otherUser.name || otherUser.username || "Unknown"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {statusLabels[otherUser.status] || "Offline"}
+            </p>
+          </div>
+        </button>
+        <div className="ml-auto flex items-center gap-1">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger
@@ -306,6 +318,12 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
           </Button>
         </div>
       </div>
+
+      <UserProfilePanel
+        userId={otherUser.id}
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+      />
     </div>
   )
 }
