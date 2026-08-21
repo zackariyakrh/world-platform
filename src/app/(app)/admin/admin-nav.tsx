@@ -17,7 +17,6 @@ import {
   Lock,
   ScrollText,
   Settings,
-  Database,
 } from "lucide-react"
 
 const NAV_ITEMS = [
@@ -29,7 +28,6 @@ const NAV_ITEMS = [
   { label: "Projects", href: "/admin/projects", icon: Briefcase },
   { label: "Groups", href: "/admin/groups", icon: Users },
   { label: "Roles", href: "/admin/roles", icon: Shield },
-  { label: "Seed Data", href: "/admin/seed", icon: Database },
   { label: "AI Config", href: "/admin/ai-config", icon: Bot },
   { label: "Branding", href: "/admin/branding", icon: Palette },
   { label: "Security", href: "/admin/settings", icon: Lock },
