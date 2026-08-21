@@ -433,7 +433,7 @@ function Sidebar({
             </div>
 
             {/* Direct Messages Section */}
-            {!collapsed && (
+            {!collapsed ? (
               <div className="group/dm-section">
                 <button
                   onClick={() => setShowDMs(!showDMs)}
@@ -445,6 +445,18 @@ function Sidebar({
                   Direct Messages
                 </button>
               </div>
+            ) : (
+              <SidebarLink
+                icon={MessageSquare}
+                label="Direct Messages"
+                href="#"
+                isActive={false}
+                collapsed={collapsed}
+                onClick={() => {
+                  setCollapsedState(false)
+                  onCollapsedChange?.(false)
+                }}
+              />
             )}
           </div>
         </ScrollArea>
