@@ -89,6 +89,8 @@ function Sidebar({
   const [showFriends, setShowFriends] = React.useState(true)
   const [friends, setFriends] = React.useState<{ id: string; name: string | null; username: string | null; avatar: string | null }[]>([])
   const [friendsLoading, setFriendsLoading] = React.useState(true)
+  const [dmConversations, setDmConversations] = React.useState<{ id: string; lastMessage: string | null; lastMessageAt: string | null; unreadCount: number; otherUser: { id: string; name: string | null; username: string | null; avatar: string | null; status: string } }[]>([])
+  const [dmsLoading, setDmsLoading] = React.useState(true)
   const [createOpen, setCreateOpen] = React.useState(false)
   const [createName, setCreateName] = React.useState("")
   const [createDesc, setCreateDesc] = React.useState("")
@@ -166,6 +168,24 @@ function Sidebar({
     }
     loadFriends()
   }, [isAdmin])
+
+  React.useEffect(() => {
+    async function loadDMs() {
+      setDmsLoading(true)
+      try {
+        const res = await fetch("/api/dm/conversations/list")
+        if (res.ok) {
+          const data = await res.json()
+          setDmConversations(data || [])
+        }
+      } catch {
+        // keep empty
+      } finally {
+        setDmsLoading(false)
+      }
+    }
+    loadDMs()
+  }, [])
 
   async function handleCreateChannel() {
     if (!createName.trim()) return
@@ -460,6 +480,55 @@ function Sidebar({
                 />
                 Direct Messages
               </button>
+              {showDMs && (
+                <div className="mt-1 flex flex-col gap-0.5">
+                  {dmsLoading ? (
+                    <div className="px-2 py-1 text-xs text-muted-foreground">Loading...</div>
+                  ) : dmConversations.length === 0 ? (
+                    <div className="px-2 py-1 text-xs text-muted-foreground">No conversations yet</div>
+                  ) : (
+                    dmConversations.map((conv) => (
+                      <button
+                        key={conv.id}
+                        onClick={() => router.push(`/dms/${conv.id}`)}
+                        className={cn(
+                          "relative flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-base transition-all duration-200",
+                          pathname === `/dms/${conv.id}`
+                            ? "bg-primary/10 text-primary shadow-[inset_0_0_24px_oklch(from_var(--primary)_l_c_h_/_0.08)]"
+                            : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
+                        )}
+                      >
+                        <div className="relative shrink-0">
+                          <div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-medium">
+                            {conv.otherUser.name?.[0]?.toUpperCase() || "?"}
+                          </div>
+                          <span className={cn(
+                            "absolute -right-0.5 -bottom-0.5 size-2 rounded-full ring-2 ring-sidebar",
+                            conv.otherUser.status === "online" ? "bg-emerald-500"
+                              : conv.otherUser.status === "away" ? "bg-amber-500"
+                              : conv.otherUser.status === "busy" || conv.otherUser.status === "dnd" ? "bg-red-500"
+                              : "bg-muted-foreground/50"
+                          )} />
+                        </div>
+                        <div className="min-w-0 flex-1 text-left">
+                          <span className="truncate text-sm font-medium">{conv.otherUser.name || conv.otherUser.username || "Unknown"}</span>
+                          {conv.lastMessage && (
+                            <p className="truncate text-xs text-muted-foreground">{conv.lastMessage}</p>
+                          )}
+                        </div>
+                        {conv.unreadCount > 0 && (
+                          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                            {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
+                          </span>
+                        )}
+                        {pathname === `/dms/${conv.id}` && (
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.4)]" />
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
