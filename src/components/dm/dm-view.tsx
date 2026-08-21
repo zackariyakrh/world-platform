@@ -21,7 +21,7 @@ import {
   Paperclip,
   Smile,
 } from "lucide-react"
-import { UserProfilePanel } from "@/components/dm/user-profile-panel"
+import { UserProfileDialog } from "@/components/dm/user-profile-panel"
 
 interface DMUser {
   id: string
@@ -144,7 +144,7 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
   )
 
   return (
-    <div className="relative flex h-full flex-col">
+    <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b px-4 py-3">
         <button
           onClick={() => setProfileOpen(true)}
@@ -319,10 +319,10 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
         </div>
       </div>
 
-      <UserProfilePanel
+      <UserProfileDialog
         userId={otherUser.id}
         open={profileOpen}
-        onClose={() => setProfileOpen(false)}
+        onOpenChange={setProfileOpen}
       />
     </div>
   )
