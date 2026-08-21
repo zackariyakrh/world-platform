@@ -35,6 +35,7 @@ import {
   Hash,
   MoreHorizontal,
   Plus,
+  Pencil,
   Trash2,
   Loader2,
   ExternalLink,
@@ -59,9 +60,13 @@ export function AdminChannelsClient({ channels: initial }: { channels: ChannelRo
   const [channels, setChannels] = React.useState(initial)
   const [search, setSearch] = React.useState("")
   const [createOpen, setCreateOpen] = React.useState(false)
+  const [editOpen, setEditOpen] = React.useState(false)
+  const [editChannel, setEditChannel] = React.useState<ChannelRow | null>(null)
   const [creating, setCreating] = React.useState(false)
+  const [saving, setSaving] = React.useState(false)
   const [deletingId, setDeletingId] = React.useState<string | null>(null)
   const [form, setForm] = React.useState({ name: "", description: "" })
+  const [editForm, setEditForm] = React.useState({ name: "", description: "", isPrivate: false })
 
   const filtered = React.useMemo(() => {
     if (!search) return channels
@@ -106,6 +111,42 @@ export function AdminChannelsClient({ channels: initial }: { channels: ChannelRo
       toast.error("Something went wrong")
     } finally {
       setCreating(false)
+    }
+  }
+
+  function openEdit(ch: ChannelRow) {
+    setEditChannel(ch)
+    setEditForm({ name: ch.name, description: ch.description || "", isPrivate: ch.isPrivate })
+    setEditOpen(true)
+  }
+
+  async function handleEdit() {
+    if (!editChannel || !editForm.name.trim()) return
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/channels/${editChannel.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editForm.name.trim(),
+          description: editForm.description.trim() || null,
+          isPrivate: editForm.isPrivate,
+        }),
+      })
+      if (res.ok) {
+        const ch = await res.json()
+        setChannels((prev) => prev.map((c) => c.id === editChannel.id ? { ...c, name: ch.name, description: ch.description, isPrivate: ch.isPrivate } : c))
+        setEditOpen(false)
+        setEditChannel(null)
+        toast.success("Channel updated")
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Failed to update channel")
+      }
+    } catch {
+      toast.error("Something went wrong")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -181,6 +222,52 @@ export function AdminChannelsClient({ channels: initial }: { channels: ChannelRo
         </Dialog>
       </div>
 
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Channel</DialogTitle>
+            <DialogDescription>Update channel details.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-2">
+            <div className="flex flex-col gap-2">
+              <Label>Name</Label>
+              <Input
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                className="glow-input"
+                onKeyDown={(e) => { if (e.key === "Enter") handleEdit() }}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Description</Label>
+              <Input
+                placeholder="What is this channel about?"
+                value={editForm.description}
+                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                className="glow-input"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="edit-private"
+                checked={editForm.isPrivate}
+                onChange={(e) => setEditForm({ ...editForm, isPrivate: e.target.checked })}
+                className="size-4"
+              />
+              <Label htmlFor="edit-private">Private channel</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button onClick={handleEdit} disabled={saving || !editForm.name.trim()} className="glow-button">
+              {saving ? <Loader2 className="size-3.5 animate-spin" /> : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="text-xs text-muted-foreground">
         {filtered.length} channel{filtered.length !== 1 ? "s" : ""}
       </div>
@@ -250,6 +337,10 @@ export function AdminChannelsClient({ channels: initial }: { channels: ChannelRo
                       <DropdownMenuItem onClick={() => router.push(`/channels/${ch.id}`)}>
                         <ExternalLink className="size-3.5" />
                         Open Channel
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openEdit(ch)}>
+                        <Pencil className="size-3.5" />
+                        Edit Channel
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem

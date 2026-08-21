@@ -27,6 +27,7 @@ import {
 import {
   FolderOpen,
   Plus,
+  Pencil,
   Users,
   Hash,
   Briefcase,
@@ -48,9 +49,14 @@ interface Workspace {
 export function AdminWorkspacesClient({ workspaces: initial }: { workspaces: Workspace[] }) {
   const [workspaces, setWorkspaces] = React.useState(initial)
   const [createOpen, setCreateOpen] = React.useState(false)
+  const [editOpen, setEditOpen] = React.useState(false)
+  const [editWs, setEditWs] = React.useState<Workspace | null>(null)
   const [name, setName] = React.useState("")
   const [desc, setDesc] = React.useState("")
   const [creating, setCreating] = React.useState(false)
+  const [saving, setSaving] = React.useState(false)
+  const [editName, setEditName] = React.useState("")
+  const [editDesc, setEditDesc] = React.useState("")
 
   async function handleCreate() {
     if (!name.trim()) return
@@ -76,6 +82,38 @@ export function AdminWorkspacesClient({ workspaces: initial }: { workspaces: Wor
       toast.error("Something went wrong")
     } finally {
       setCreating(false)
+    }
+  }
+
+  function openEdit(ws: Workspace) {
+    setEditWs(ws)
+    setEditName(ws.name)
+    setEditDesc(ws.description || "")
+    setEditOpen(true)
+  }
+
+  async function handleEdit() {
+    if (!editWs || !editName.trim()) return
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/workspaces/${editWs.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName.trim(), description: editDesc.trim() || null }),
+      })
+      if (res.ok) {
+        setWorkspaces((prev) => prev.map((w) => w.id === editWs.id ? { ...w, name: editName.trim(), description: editDesc.trim() || null } : w))
+        setEditOpen(false)
+        setEditWs(null)
+        toast.success("Workspace updated")
+      } else {
+        const data = await res.json()
+        toast.error(data.error || "Failed to update workspace")
+      }
+    } catch {
+      toast.error("Something went wrong")
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -133,6 +171,32 @@ export function AdminWorkspacesClient({ workspaces: initial }: { workspaces: Wor
         </Dialog>
       </div>
 
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Workspace</DialogTitle>
+            <DialogDescription>Update workspace details.</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-1">
+            <div className="flex flex-col gap-2">
+              <Label>Name</Label>
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-2">
+              <Label>Description</Label>
+              <Input placeholder="What is this workspace for?" value={editDesc} onChange={(e) => setEditDesc(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button onClick={handleEdit} disabled={saving || !editName.trim()}>
+              {saving ? <Loader2 className="size-4 animate-spin" /> : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="glow-card rounded-xl bg-card">
         <Table>
           <TableHeader>
@@ -178,14 +242,25 @@ export function AdminWorkspacesClient({ workspaces: initial }: { workspaces: Wor
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => handleDelete(ws.id)}
-                  >
-                    <Trash2 className="size-3.5" />
-                  </Button>
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      onClick={() => openEdit(ws)}
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      onClick={() => {
+                        if (window.confirm(`Delete workspace "${ws.name}"?`)) handleDelete(ws.id)
+                      }}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

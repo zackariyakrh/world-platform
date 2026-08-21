@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { label: "Workspaces", href: "/admin/workspaces", icon: FolderOpen },
   { label: "Channels", href: "/admin/channels", icon: Hash },
   { label: "Projects", href: "/admin/projects", icon: Briefcase },
+  { label: "Groups", href: "/admin/groups", icon: Users },
   { label: "Roles", href: "/admin/roles", icon: Shield },
   { label: "AI Config", href: "/admin/ai-config", icon: Bot },
   { label: "Branding", href: "/admin/branding", icon: Palette },
