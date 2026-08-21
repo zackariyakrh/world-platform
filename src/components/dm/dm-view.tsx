@@ -20,7 +20,20 @@ import {
   Send,
   Paperclip,
   Smile,
+  BellOff,
+  Bell,
+  ShieldOff,
+  Shield,
+  Trash2,
+  UserMinus,
 } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { EmojiPicker } from "@/components/chat/emoji-picker"
 import { PickerPopup } from "@/components/ui/picker-popup"
 import { UserProfileDialog } from "@/components/dm/user-profile-panel"
@@ -93,6 +106,9 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
   const [isSending, setIsSending] = React.useState(false)
   const [profileOpen, setProfileOpen] = React.useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = React.useState(false)
+  const [isMuted, setIsMuted] = React.useState(false)
+  const [isBlocked, setIsBlocked] = React.useState(false)
+  const [dropdownOpen, setDropdownOpen] = React.useState(false)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const bottomRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
@@ -115,6 +131,50 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
   React.useEffect(() => {
     adjustHeight()
   }, [inputValue, adjustHeight])
+
+  React.useEffect(() => {
+    fetch(`/api/dm/${conversationId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setIsMuted(data.muted)
+        setIsBlocked(data.blocked)
+      })
+      .catch(() => {})
+  }, [conversationId])
+
+  const handleToggleMute = React.useCallback(async () => {
+    const method = isMuted ? "DELETE" : "POST"
+    const res = await fetch(`/api/dm/${conversationId}/mute`, { method })
+    if (res.ok) setIsMuted((prev) => !prev)
+    setDropdownOpen(false)
+  }, [conversationId, isMuted])
+
+  const handleToggleBlock = React.useCallback(async () => {
+    const method = isBlocked ? "DELETE" : "POST"
+    const res = await fetch(`/api/dm/${conversationId}/block`, { method })
+    if (res.ok) setIsBlocked((prev) => !prev)
+    setDropdownOpen(false)
+  }, [conversationId, isBlocked])
+
+  const handleDeleteConversation = React.useCallback(async () => {
+    const res = await fetch(`/api/dm/${conversationId}`, { method: "DELETE" })
+    if (res.ok) {
+      window.location.href = "/dashboard"
+    }
+    setDropdownOpen(false)
+  }, [conversationId])
+
+  const handleUnfriend = React.useCallback(async () => {
+    const res = await fetch(`/api/friends`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ friendId: otherUser.id }),
+    })
+    if (res.ok) {
+      window.location.href = "/dashboard"
+    }
+    setDropdownOpen(false)
+  }, [otherUser.id])
 
   const handleSend = React.useCallback(async () => {
     if (!inputValue.trim() || isSending) return
@@ -204,16 +264,34 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
               <TooltipContent>Video Call</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger
-                render={<Button variant="ghost" size="icon-sm" />}
-              >
-                <MoreHorizontal className="size-4" />
-              </TooltipTrigger>
-              <TooltipContent>More</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="icon-sm" />
+              }
+            >
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="bottom" align="end">
+              <DropdownMenuItem onClick={handleToggleMute}>
+                {isMuted ? <Bell className="size-4" /> : <BellOff className="size-4" />}
+                {isMuted ? "Unmute" : "Mute"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleToggleBlock}>
+                {isBlocked ? <Shield className="size-4" /> : <ShieldOff className="size-4" />}
+                {isBlocked ? "Unblock" : "Block"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleDeleteConversation} className="text-destructive focus:text-destructive">
+                <Trash2 className="size-4" />
+                Delete Conversation
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleUnfriend} className="text-destructive focus:text-destructive">
+                <UserMinus className="size-4" />
+                Unfriend
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 

@@ -81,8 +81,12 @@ model User {
   groupInvitations GroupInvitation[]
   invitedByGroups  GroupInvitation[] @relation("InvitedByUser")
   ownedGroups      Group[]
-  friends          Friend[]           @relation("FriendUser")
-  friendOf         Friend[]           @relation("FriendOf")
+   friends          Friend[]           @relation("FriendUser")
+   friendOf         Friend[]           @relation("FriendOf")
+   dmMutes          DMMute[]
+   dmMutedBy        DMMute[]           @relation("DMMuteTarget")
+   dmBlocks         DMBlock[]
+   dmBlockedBy      DMBlock[]          @relation("DMBlockTarget")
   departmentId     String?
   department       Department? @relation(fields: [departmentId], references: [id])
 }
@@ -358,6 +362,35 @@ model Friend {
   @@unique([userId, friendId])
 }
 
+// ─── DM Mutes & Blocks ──────────────────────────────────────
+model DMMute {
+  id             String         @id @default(cuid())
+  userId         String
+  mutedUserId    String
+  conversationId String
+  createdAt      DateTime       @default(now())
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mutedUser    User           @relation("DMMuteTarget", fields: [mutedUserId], references: [id], onDelete: Cascade)
+  conversation DMConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, mutedUserId, conversationId])
+}
+
+model DMBlock {
+  id             String         @id @default(cuid())
+  userId         String
+  blockedUserId  String
+  conversationId String
+  createdAt      DateTime       @default(now())
+
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blockedUser  User           @relation("DMBlockTarget", fields: [blockedUserId], references: [id], onDelete: Cascade)
+  conversation DMConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blockedUserId, conversationId])
+}
+
 // ─── Direct Messages ────────────────────────────────────────
 model DMConversation {
   id         String   @id @default(cuid())
@@ -371,6 +404,8 @@ model DMConversation {
   user2      User?    @relation("DMUser2", fields: [user2Id], references: [id])
   messages   DMMessage[]
   participants DMParticipant[]
+  mutes      DMMute[]
+  blocks     DMBlock[]
 }
 
 model DMMessage {
