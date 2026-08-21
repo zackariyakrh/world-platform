@@ -333,7 +333,7 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
                   </Avatar>
                 </div>
                 <div className={cn("min-w-0 max-w-[70%]", isOwn && "text-right")}>
-                  <div className={cn("text-sm leading-relaxed", isOwn && "ml-auto")}>
+                  <div className={cn("text-base leading-relaxed", isOwn && "ml-auto")}>
                     {message.isDeleted ? (
                       <span className="italic text-muted-foreground">This message was deleted</span>
                     ) : isGifUrl(message.content) ? (
@@ -430,7 +430,7 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             disabled={isSending}
-            className="min-h-[24px] max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-muted-foreground/40 focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="min-h-[24px] max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-base shadow-none placeholder:text-muted-foreground/40 focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
             rows={1}
           />
 

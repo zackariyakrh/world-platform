@@ -202,7 +202,7 @@ export function ChatMessage({ message, onReply }: ChatMessageProps) {
           )}
         </div>
 
-        <div className="mt-0.5 text-sm leading-relaxed">
+        <div className="mt-0.5 text-base leading-relaxed">
           {message.isDeleted ? (
             <span className="italic text-muted-foreground">This message was deleted</span>
           ) : /^(https?:\/\/[^\s]+\.gif\b|https?:\/\/[^\s]*giphy\.com[^\s]*|https?:\/\/[^\s]*media\.tenor\.com[^\s]*)$/i.test(message.content.trim()) ? (
