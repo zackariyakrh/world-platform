@@ -11,19 +11,28 @@ interface EmojiPickerProps {
 
 const EMOJI_CATEGORIES = [
   {
+    name: "Recent",
+    icon: "🕐",
+    emojis: [],
+  },
+  {
     name: "Smileys",
+    icon: "😃",
     emojis: ["😀", "😃", "😄", "😁", "😅", "😂", "🤣", "😊", "😇", "🙂", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😜", "🤪", "😝", "🤑", "🤗", "🤭", "🤫", "🤔", "🤐", "🤨", "😐", "😑"],
   },
   {
     name: "Gestures",
+    icon: "👍",
     emojis: ["👍", "👎", "👌", "✌️", "🤞", "🤟", "🤘", "🤙", "👋", "🤚", "🖐️", "✋", "🖖", "👏", "🙌", "👐", "🤲", "🤝", "🙏", "💪", "🦾", "🖕", "✍️", "🤳", "💅"],
   },
   {
     name: "Hearts",
+    icon: "❤️",
     emojis: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖", "💘", "💝"],
   },
   {
     name: "Objects",
+    icon: "🔥",
     emojis: ["⭐", "🌟", "✨", "💫", "🔥", "💯", "🎉", "🎊", "🎯", "🚀", "💡", "📌", "📎", "✅", "❌", "⚠️", "💬", "👁️‍🗨️", "🔗", "📝"],
   },
 ]
@@ -50,7 +59,7 @@ function saveRecentEmoji(emoji: string) {
 
 export function EmojiPicker({ onSelect, className }: EmojiPickerProps) {
   const [recentEmojis, setRecentEmojis] = React.useState<string[]>([])
-  const [activeCategory, setActiveCategory] = React.useState(0)
+  const [activeCategory, setActiveCategory] = React.useState(1)
 
   React.useEffect(() => {
     setRecentEmojis(getRecentEmojis())
@@ -62,6 +71,15 @@ export function EmojiPicker({ onSelect, className }: EmojiPickerProps) {
     onSelect(emoji)
   }, [onSelect])
 
+  const recentCategory = EMOJI_CATEGORIES[0]
+  const displayCategories = recentEmojis.length > 0 ? EMOJI_CATEGORIES : EMOJI_CATEGORIES.filter((_, i) => i !== 0)
+  const currentCategory = displayCategories.find((_, i) => {
+    if (activeCategory === 0 && recentEmojis.length > 0) return true
+    const realIndex = recentEmojis.length > 0 ? activeCategory : activeCategory
+    return displayCategories[realIndex] === _
+  })
+  const showRecent = activeCategory === 0 && recentEmojis.length > 0
+
   return (
     <div
       className={cn(
@@ -70,33 +88,23 @@ export function EmojiPicker({ onSelect, className }: EmojiPickerProps) {
       )}
     >
       <div className="flex gap-1 border-b px-2 py-1.5">
-        {recentEmojis.length > 0 && (
-          <button
-            className={cn(
-              "rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-muted",
-              activeCategory === -1 && "bg-muted"
-            )}
-            onClick={() => setActiveCategory(-1)}
-          >
-            Recent
-          </button>
-        )}
-        {EMOJI_CATEGORIES.map((cat, i) => (
+        {displayCategories.map((cat, i) => (
           <button
             key={cat.name}
+            title={cat.name}
             className={cn(
-              "rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-muted",
+              "flex size-7 items-center justify-center rounded text-base transition-colors hover:bg-muted",
               activeCategory === i && "bg-muted"
             )}
             onClick={() => setActiveCategory(i)}
           >
-            {cat.name}
+            {cat.icon}
           </button>
         ))}
       </div>
 
       <div className="h-48 overflow-y-auto p-2">
-        {activeCategory === -1 && recentEmojis.length > 0 && (
+        {showRecent && (
           <div className="grid grid-cols-8 gap-0.5">
             {recentEmojis.map((emoji, i) => (
               <button
@@ -110,9 +118,9 @@ export function EmojiPicker({ onSelect, className }: EmojiPickerProps) {
           </div>
         )}
 
-        {activeCategory >= 0 && EMOJI_CATEGORIES[activeCategory] && (
+        {!showRecent && (
           <div className="grid grid-cols-8 gap-0.5">
-            {EMOJI_CATEGORIES[activeCategory].emojis.map((emoji) => (
+            {(displayCategories[recentEmojis.length > 0 ? activeCategory : activeCategory]?.emojis || []).map((emoji) => (
               <button
                 key={emoji}
                 className="flex size-8 items-center justify-center rounded text-lg transition-colors hover:bg-muted"

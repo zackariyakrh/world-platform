@@ -318,7 +318,7 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
             onKeyDown={handleKeyDown}
             placeholder={`Message ${otherUser.name || otherUser.username || ""}`}
             disabled={isSending}
-            className="min-h-[24px] max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+            className="min-h-[24px] max-h-[200px] flex-1 resize-none border-0 bg-transparent p-0 text-sm shadow-none placeholder:text-muted-foreground/40 focus-visible:border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
             rows={1}
           />
 
