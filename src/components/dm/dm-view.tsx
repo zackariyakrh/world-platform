@@ -272,7 +272,7 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
             >
               <MoreHorizontal className="size-4" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="bottom" align="end">
+            <DropdownMenuContent side="bottom" align="end" className="whitespace-nowrap">
               <DropdownMenuItem onClick={handleToggleMute}>
                 {isMuted ? <Bell className="size-4" /> : <BellOff className="size-4" />}
                 {isMuted ? "Unmute" : "Mute"}
