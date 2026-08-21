@@ -95,6 +95,26 @@ function Sidebar({
   const [creating, setCreating] = React.useState(false)
 
   const isAdmin = userRole === "owner" || userRole === "admin"
+  const [startingDM, setStartingDM] = React.useState<string | null>(null)
+
+  async function handleFriendClick(friendId: string) {
+    setStartingDM(friendId)
+    try {
+      const res = await fetch("/api/dm/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: friendId }),
+      })
+      const data = await res.json()
+      if (res.ok && data.conversationId) {
+        router.push(`/dms/${data.conversationId}`)
+      }
+    } catch {
+      // ignore
+    } finally {
+      setStartingDM(null)
+    }
+  }
 
   React.useEffect(() => {
     async function loadChannels() {
@@ -400,8 +420,9 @@ function Sidebar({
                     friends.map((friend) => (
                       <button
                         key={friend.id}
-                        onClick={() => router.push("/people")}
-                        className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full"
+                        onClick={() => handleFriendClick(friend.id)}
+                        disabled={startingDM === friend.id}
+                        className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full disabled:opacity-50"
                       >
                         <div className="relative shrink-0">
                           {friend.avatar ? (
@@ -412,7 +433,11 @@ function Sidebar({
                             </div>
                           )}
                         </div>
-                        <span className="truncate">{friend.name || friend.username || "Unknown"}</span>
+                        {startingDM === friend.id ? (
+                          <Loader2 className="size-3.5 animate-spin ml-auto" />
+                        ) : (
+                          <span className="truncate">{friend.name || friend.username || "Unknown"}</span>
+                        )}
                       </button>
                     ))
                   )}
