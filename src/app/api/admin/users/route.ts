@@ -52,13 +52,18 @@ export async function PATCH(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { userId, role, isActive, firstName, lastName, phone, gender, address, resetPassword } = body
+    const { userId, role, isActive, firstName, lastName, phone, gender, address, email, username, avatar, status, timezone, language, resetPassword } = body
 
     if (!userId || typeof userId !== "string") {
       return NextResponse.json({ error: "userId is required" }, { status: 400 })
     }
 
-    const updateData: Record<string, string | boolean> = {}
+    const existing = await db.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true, email: true, username: true } })
+    if (!existing) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    const updateData: Record<string, string | boolean | null> = {}
 
     if (resetPassword) {
       if (typeof resetPassword !== "string" || resetPassword.length < 8) {
@@ -79,17 +84,36 @@ export async function PATCH(request: NextRequest) {
       updateData.isActive = Boolean(isActive)
     }
 
+    if (email !== undefined && email !== existing.email) {
+      const emailTaken = await db.user.findUnique({ where: { email } })
+      if (emailTaken) {
+        return NextResponse.json({ error: "Email is already in use" }, { status: 409 })
+      }
+      updateData.email = email
+    }
+
+    if (username !== undefined && username !== existing.username) {
+      const usernameTaken = await db.user.findUnique({ where: { username } })
+      if (usernameTaken) {
+        return NextResponse.json({ error: "Username is already taken" }, { status: 409 })
+      }
+      updateData.username = username
+    }
+
     if (firstName !== undefined) updateData.firstName = firstName
     if (lastName !== undefined) updateData.lastName = lastName
     if (firstName !== undefined || lastName !== undefined) {
-      const existing = await db.user.findUnique({ where: { id: userId }, select: { firstName: true, lastName: true } })
       const fn = firstName ?? existing?.firstName ?? ""
       const ln = lastName ?? existing?.lastName ?? ""
       updateData.name = `${fn} ${ln}`.trim()
     }
-    if (phone !== undefined) updateData.phone = phone
-    if (gender !== undefined) updateData.gender = gender
-    if (address !== undefined) updateData.address = address
+    if (phone !== undefined) updateData.phone = phone || null
+    if (gender !== undefined) updateData.gender = gender || null
+    if (address !== undefined) updateData.address = address || null
+    if (avatar !== undefined) updateData.avatar = avatar || null
+    if (status !== undefined) updateData.status = status || null
+    if (timezone !== undefined) updateData.timezone = timezone || null
+    if (language !== undefined) updateData.language = language || null
 
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })
@@ -104,9 +128,14 @@ export async function PATCH(request: NextRequest) {
         firstName: true,
         lastName: true,
         email: true,
+        username: true,
         phone: true,
         gender: true,
         address: true,
+        avatar: true,
+        status: true,
+        timezone: true,
+        language: true,
         role: true,
         isActive: true,
       },

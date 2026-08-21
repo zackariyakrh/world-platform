@@ -52,6 +52,7 @@ import {
   EyeOff,
   Trash2,
   KeyRound,
+  Pencil,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -109,6 +110,12 @@ export function UserTable({ users }: { users: UserRow[] }) {
 
   const [delUser, setDelUser] = React.useState<UserRow | null>(null)
   const [delBusy, setDelBusy] = React.useState(false)
+
+  const [editUser, setEditUser] = React.useState<UserRow | null>(null)
+  const [editForm, setEditForm] = React.useState({
+    firstName: "", lastName: "", email: "", username: "", phone: "", gender: "", address: "", role: "member",
+  })
+  const [editBusy, setEditBusy] = React.useState(false)
 
   const filtered = React.useMemo(() => {
     let result = [...users]
@@ -223,6 +230,58 @@ export function UserTable({ users }: { users: UserRow[] }) {
       if (res.ok) { toast.success(`Password reset for ${resetPwUser.name || resetPwUser.email}`); setResetPwOpen(false) }
       else { const d = await res.json(); toast.error(d.error || "Failed") }
     } catch { toast.error("Something went wrong") } finally { setResetPwBusy(false) }
+  }
+
+  function openEditUser(u: UserRow) {
+    setEditUser(u)
+    setEditForm({
+      firstName: u.firstName || "",
+      lastName: u.lastName || "",
+      email: u.email || "",
+      username: u.username || "",
+      phone: u.phone || "",
+      gender: u.gender || "",
+      address: u.address || "",
+      role: u.role,
+    })
+  }
+
+  async function saveEditUser() {
+    if (!editUser) return
+    if (!editForm.firstName.trim()) { toast.error("First name is required"); return }
+    if (!editForm.lastName.trim()) { toast.error("Last name is required"); return }
+    if (!editForm.email.trim()) { toast.error("Email is required"); return }
+
+    setEditBusy(true)
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: editUser.id,
+          firstName: editForm.firstName.trim(),
+          lastName: editForm.lastName.trim(),
+          email: editForm.email.trim(),
+          username: editForm.username.trim() || undefined,
+          phone: editForm.phone.trim() || undefined,
+          gender: editForm.gender || undefined,
+          address: editForm.address.trim() || undefined,
+          role: editForm.role,
+        }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(`Updated ${data.name || data.email}`)
+        setEditUser(null)
+        window.location.reload()
+      } else {
+        toast.error(data.error || "Failed to update user")
+      }
+    } catch {
+      toast.error("Something went wrong")
+    } finally {
+      setEditBusy(false)
+    }
   }
 
   function validateForm() {
@@ -594,6 +653,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuItem onClick={() => setViewUser(user)}><Eye className="size-3.5" />View Details</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openEditUser(user)}><Pencil className="size-3.5" />Edit User</DropdownMenuItem>
                       <DropdownMenuItem onClick={() => openResetPw(user)}><KeyRound className="size-3.5" />Reset Password</DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuGroup>
@@ -689,6 +749,79 @@ export function UserTable({ users }: { users: UserRow[] }) {
           )}
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Close</DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editUser} onOpenChange={(o) => { if (!o) setEditUser(null) }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>Update profile information for {editUser?.name || editUser?.email}.</DialogDescription>
+          </DialogHeader>
+          {editUser && (
+            <div className="flex flex-col gap-4 py-1">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>First Name *</Label>
+                  <Input value={editForm.firstName} onChange={(e) => setEditForm({ ...editForm, firstName: e.target.value })} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Last Name *</Label>
+                  <Input value={editForm.lastName} onChange={(e) => setEditForm({ ...editForm, lastName: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Email *</Label>
+                  <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Username</Label>
+                  <Input value={editForm.username} onChange={(e) => setEditForm({ ...editForm, username: e.target.value })} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2">
+                  <Label>Phone</Label>
+                  <Input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Gender</Label>
+                  <Select value={editForm.gender} onValueChange={(v) => setEditForm({ ...editForm, gender: v ?? "" })}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Address</Label>
+                <Input value={editForm.address} onChange={(e) => setEditForm({ ...editForm, address: e.target.value })} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Role</Label>
+                <Select value={editForm.role} onValueChange={(v) => setEditForm({ ...editForm, role: v ?? "member" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ROLES.filter((r) => r !== "owner").map((r) => (
+                      <SelectItem key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
+            <Button onClick={saveEditUser} disabled={editBusy}>
+              {editBusy ? <><Loader2 className="size-3.5 animate-spin" /> Saving...</> : "Save Changes"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
