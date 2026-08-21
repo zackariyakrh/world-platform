@@ -137,10 +137,15 @@ function Sidebar({
     async function loadFriends() {
       setFriendsLoading(true)
       try {
-        const res = await fetch("/api/friends")
+        const url = isAdmin ? "/api/dm/users" : "/api/friends"
+        const res = await fetch(url)
         if (res.ok) {
           const data = await res.json()
-          setFriends(data.friends || [])
+          if (isAdmin) {
+            setFriends(data || [])
+          } else {
+            setFriends(data.friends || [])
+          }
         }
       } catch {
         // keep empty
@@ -149,7 +154,7 @@ function Sidebar({
       }
     }
     loadFriends()
-  }, [])
+  }, [isAdmin])
 
   async function handleCreateChannel() {
     if (!createName.trim()) return
