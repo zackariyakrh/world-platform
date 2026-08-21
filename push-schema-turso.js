@@ -61,6 +61,28 @@ const NEW_TABLES = [
     FOREIGN KEY ("invitedById") REFERENCES "User"("id"),
     UNIQUE("groupId", "userId")
   )`,
+  `CREATE TABLE IF NOT EXISTS "DMMute" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "mutedUserId" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("mutedUserId") REFERENCES "User"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("conversationId") REFERENCES "DMConversation"("id") ON DELETE CASCADE,
+    UNIQUE("userId", "mutedUserId", "conversationId")
+  )`,
+  `CREATE TABLE IF NOT EXISTS "DMBlock" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "blockedUserId" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("blockedUserId") REFERENCES "User"("id") ON DELETE CASCADE,
+    FOREIGN KEY ("conversationId") REFERENCES "DMConversation"("id") ON DELETE CASCADE,
+    UNIQUE("userId", "blockedUserId", "conversationId")
+  )`,
 ];
 
 async function main() {
