@@ -38,41 +38,15 @@ export async function GET(
     return NextResponse.json({ error: "User not found" }, { status: 404 })
   }
 
-  const [
-    commonWorkspaces,
-    commonChannels,
-    commonGroups,
-    commonProjects,
-    friendship,
-  ] = await Promise.all([
-    db.workspace.findMany({
-      where: {
-        members: { some: { userId: currentUserId } },
-        AND: { members: { some: { userId } } },
-      },
-      select: { id: true, name: true, icon: true },
-    }),
-    db.channel.findMany({
-      where: {
-        members: { some: { userId: currentUserId } },
-        AND: { members: { some: { userId } } },
-      },
-      select: { id: true, name: true, type: true },
-    }),
-    db.group.findMany({
-      where: {
-        members: { some: { userId: currentUserId } },
-        AND: { members: { some: { userId } } },
-      },
-      select: { id: true, name: true, avatar: true },
-    }),
-    db.project.findMany({
-      where: {
-        members: { some: { userId: currentUserId } },
-        AND: { members: { some: { userId } } },
-      },
-      select: { id: true, name: true },
-    }),
+  const [myWorkspaces, theirWorkspaces, myChannels, theirChannels, myGroups, theirGroups, myProjects, theirProjects, friendship] = await Promise.all([
+    db.workspaceMember.findMany({ where: { userId: currentUserId }, select: { workspaceId: true } }),
+    db.workspaceMember.findMany({ where: { userId }, select: { workspaceId: true } }),
+    db.channelMember.findMany({ where: { userId: currentUserId }, select: { channelId: true } }),
+    db.channelMember.findMany({ where: { userId }, select: { channelId: true } }),
+    db.groupMember.findMany({ where: { userId: currentUserId }, select: { groupId: true } }),
+    db.groupMember.findMany({ where: { userId }, select: { groupId: true } }),
+    db.projectMember.findMany({ where: { userId: currentUserId }, select: { projectId: true } }),
+    db.projectMember.findMany({ where: { userId }, select: { projectId: true } }),
     db.friend.findFirst({
       where: {
         OR: [
@@ -82,6 +56,26 @@ export async function GET(
       },
       select: { status: true },
     }),
+  ])
+
+  const commonWorkspaceIds = myWorkspaces.map(m => m.workspaceId).filter(id => theirWorkspaces.some(m => m.workspaceId === id))
+  const commonChannelIds = myChannels.map(m => m.channelId).filter(id => theirChannels.some(m => m.channelId === id))
+  const commonGroupIds = myGroups.map(m => m.groupId).filter(id => theirGroups.some(m => m.groupId === id))
+  const commonProjectIds = myProjects.map(m => m.projectId).filter(id => theirProjects.some(m => m.projectId === id))
+
+  const [commonWorkspaces, commonChannels, commonGroups, commonProjects] = await Promise.all([
+    commonWorkspaceIds.length > 0
+      ? db.workspace.findMany({ where: { id: { in: commonWorkspaceIds } }, select: { id: true, name: true, icon: true } })
+      : Promise.resolve([]),
+    commonChannelIds.length > 0
+      ? db.channel.findMany({ where: { id: { in: commonChannelIds } }, select: { id: true, name: true, type: true } })
+      : Promise.resolve([]),
+    commonGroupIds.length > 0
+      ? db.group.findMany({ where: { id: { in: commonGroupIds } }, select: { id: true, name: true, avatar: true } })
+      : Promise.resolve([]),
+    commonProjectIds.length > 0
+      ? db.project.findMany({ where: { id: { in: commonProjectIds } }, select: { id: true, name: true } })
+      : Promise.resolve([]),
   ])
 
   return NextResponse.json({
