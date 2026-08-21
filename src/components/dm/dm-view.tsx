@@ -21,6 +21,7 @@ import {
   Paperclip,
   Smile,
 } from "lucide-react"
+import { EmojiPicker } from "@/components/chat/emoji-picker"
 import { UserProfileDialog } from "@/components/dm/user-profile-panel"
 
 interface DMUser {
@@ -84,6 +85,7 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
   const [inputValue, setInputValue] = React.useState("")
   const [isSending, setIsSending] = React.useState(false)
   const [profileOpen, setProfileOpen] = React.useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = React.useState(false)
   const scrollRef = React.useRef<HTMLDivElement>(null)
   const bottomRef = React.useRef<HTMLDivElement>(null)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
@@ -282,18 +284,31 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
                 <TooltipContent>Attach file</TooltipContent>
               </Tooltip>
             </TooltipProvider>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button variant="ghost" size="icon-sm" disabled={isSending} />
-                  }
-                >
-                  <Smile className="size-4" />
-                </TooltipTrigger>
-                <TooltipContent>Emoji</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <div className="relative">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button variant="ghost" size="icon-sm" disabled={isSending} onClick={() => setShowEmojiPicker(!showEmojiPicker)} />
+                    }
+                  >
+                    <Smile className="size-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>Emoji</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              {showEmojiPicker && (
+                <div className="absolute bottom-full left-0 mb-2 z-50">
+                  <EmojiPicker
+                    onSelect={(emoji) => {
+                      setInputValue((prev) => prev + emoji)
+                      setShowEmojiPicker(false)
+                      textareaRef.current?.focus()
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           <Textarea
