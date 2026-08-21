@@ -43,8 +43,6 @@ import {
   Users,
   Pin,
   Loader2,
-  HelpCircle,
-  Paintbrush,
   Shield,
   Bell,
   ChevronLeft,
@@ -212,35 +210,116 @@ function Sidebar({
                 <ChevronsUpDown className="ml-auto size-4 shrink-0 text-muted-foreground" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuItem onClick={() => router.push("/explore")}>
+                  <Compass className="size-4" />
+                  Explore
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/threads")}>
+                  <MessageSquare className="size-4" />
+                  Threads
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/bookmarks")}>
+                  <Pin className="size-4" />
+                  Saved Items
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/notifications")}>
+                  <Bell className="size-4" />
+                  Notifications
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/groups")}>
+                  <Users className="size-4" />
+                  Groups
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/projects")}>
+                  <Briefcase className="size-4" />
+                  Projects
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/workspaces")}>
+                  <FolderOpen className="size-4" />
+                  Workspaces
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/music")}>
+                  <Music className="size-4" />
+                  Music
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/calendar")}>
+                  <CalendarDays className="size-4" />
+                  Calendar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => router.push("/settings")}>
                   <Settings className="size-4" />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push("/help")}>
-                  <HelpCircle className="size-4" />
-                  Help & Support
-                </DropdownMenuItem>
                 {isAdmin && (
                   <DropdownMenuItem onClick={() => router.push("/admin/users")}>
-                    <Users className="size-4" />
+                    <Shield className="size-4" />
                     Admin Panel
-                  </DropdownMenuItem>
-                )}
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => router.push("/admin/branding")}>
-                    <Paintbrush className="size-4" />
-                    Branding
                   </DropdownMenuItem>
                 )}
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link
-              href="/dashboard"
-              className="flex size-9 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground shadow-[0_0_12px_oklch(from_var(--primary)_l_c_h_/_0.3)] hover:shadow-[0_0_20px_oklch(from_var(--primary)_l_c_h_/_0.4)] transition-shadow"
-            >
-              {appName.charAt(0).toUpperCase()}
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button className="flex size-9 items-center justify-center rounded-lg bg-primary text-xs font-bold text-primary-foreground shadow-[0_0_12px_oklch(from_var(--primary)_l_c_h_/_0.3)] hover:shadow-[0_0_20px_oklch(from_var(--primary)_l_c_h_/_0.4)] transition-shadow" />
+                }
+              >
+                {appName.charAt(0).toUpperCase()}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuItem onClick={() => router.push("/explore")}>
+                  <Compass className="size-4" />
+                  Explore
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/threads")}>
+                  <MessageSquare className="size-4" />
+                  Threads
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/bookmarks")}>
+                  <Pin className="size-4" />
+                  Saved Items
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/notifications")}>
+                  <Bell className="size-4" />
+                  Notifications
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/groups")}>
+                  <Users className="size-4" />
+                  Groups
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/projects")}>
+                  <Briefcase className="size-4" />
+                  Projects
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/workspaces")}>
+                  <FolderOpen className="size-4" />
+                  Workspaces
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/music")}>
+                  <Music className="size-4" />
+                  Music
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/calendar")}>
+                  <CalendarDays className="size-4" />
+                  Calendar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/settings")}>
+                  <Settings className="size-4" />
+                  Settings
+                </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => router.push("/admin/users")}>
+                    <Shield className="size-4" />
+                    Admin Panel
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
           {/* Mobile close */}
@@ -259,75 +338,6 @@ function Sidebar({
         {/* Navigation Items */}
         <ScrollArea className="flex-1 px-2">
           <div className="flex flex-col gap-0.5">
-            {/* Main Navigation */}
-            <SidebarLink
-              icon={Compass}
-              label="Explore"
-              href="/explore"
-              isActive={isActive("/explore")}
-              collapsed={collapsed}
-            />
-            <SidebarLink
-              icon={MessageSquare}
-              label="Threads"
-              href="/threads"
-              isActive={isActive("/threads")}
-              collapsed={collapsed}
-            />
-            <SidebarLink
-              icon={Pin}
-              label="Saved Items"
-              href="/bookmarks"
-              isActive={isActive("/bookmarks")}
-              collapsed={collapsed}
-            />
-            <SidebarLink
-              icon={Bell}
-              label="Notifications"
-              href="/notifications"
-              isActive={isActive("/notifications")}
-              collapsed={collapsed}
-            />
-            <SidebarLink
-              icon={Users}
-              label="Groups"
-              href="/groups"
-              isActive={isActive("/groups")}
-              collapsed={collapsed}
-            />
-            <SidebarLink
-              icon={Briefcase}
-              label="Projects"
-              href="/projects"
-              isActive={isActive("/projects")}
-              collapsed={collapsed}
-            />
-            <SidebarLink
-              icon={FolderOpen}
-              label="Workspaces"
-              href="/workspaces"
-              isActive={isActive("/workspaces")}
-              collapsed={collapsed}
-            />
-            <SidebarLink
-              icon={Music}
-              label="Music"
-              href="/music"
-              isActive={isActive("/music")}
-              collapsed={collapsed}
-            />
-            <SidebarLink
-              icon={CalendarDays}
-              label="Calendar"
-              href="/calendar"
-              isActive={isActive("/calendar")}
-              collapsed={collapsed}
-            />
-
-            <div className="my-2">
-              <Separator />
-            </div>
-
             {/* Channels Section */}
             {!collapsed ? (
               <Collapsible defaultOpen>
