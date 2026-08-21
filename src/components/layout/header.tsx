@@ -21,6 +21,7 @@ import {
   Phone,
   Sun,
   Moon,
+  Sparkles,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useRouter } from "next/navigation"
@@ -51,6 +52,13 @@ function Header({
 }: HeaderProps) {
   const { theme, setTheme } = useTheme()
   const router = useRouter()
+  const [scrolled, setScrolled] = React.useState(false)
+
+  React.useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    window.addEventListener("scroll", onScroll, { passive: true })
+    return () => window.removeEventListener("scroll", onScroll)
+  }, [])
 
   const ThemeIcon = theme === "dark" ? Sun : Moon
 
@@ -58,100 +66,96 @@ function Header({
     <header
       data-slot="header"
       className={cn(
-        "sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between gap-3 border-b border-border/50 bg-background/60 px-5 backdrop-blur-xl",
-        "shadow-[0_1px_3px_oklch(from_var(--glow)_l_c_h_/_0.06)]",
+        "sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 px-4 transition-all duration-300",
+        scrolled
+          ? "border-b border-border/40 bg-background/80 backdrop-blur-2xl shadow-[0_1px_12px_rgba(0,0,0,0.06)]"
+          : "border-b border-transparent bg-background/40 backdrop-blur-xl",
         className
       )}
       {...props}
     >
-      {/* Left — menu + title */}
-      <div className="flex items-center gap-3 shrink-0">
-        <Button
-          variant="ghost"
-          size="icon"
+      {/* Left — menu + branding */}
+      <div className="flex items-center gap-2.5 shrink-0">
+        <button
           onClick={onMenuClick}
-          className="shrink-0 md:hidden rounded-full size-9"
+          className="flex md:hidden size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <Menu className="size-4" />
-        </Button>
-        {title && (
-          <h1 className="truncate text-lg font-semibold">{title}</h1>
-        )}
+        </button>
+
+        <div className="hidden md:flex items-center gap-2">
+          <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Sparkles className="size-3.5" />
+          </div>
+          {title && (
+            <h1 className="text-sm font-semibold tracking-tight">{title}</h1>
+          )}
+        </div>
       </div>
 
       {/* Center — search */}
       <button
         onClick={onSearchClick}
         className={cn(
-          "hidden md:flex items-center gap-3 rounded-full border border-white/20 bg-white/10 backdrop-blur-xl px-5 py-2.5 text-sm text-muted-foreground",
-          "shadow-[0_4px_24px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.1)]",
-          "transition-all duration-300 hover:bg-white/20 hover:border-white/30 hover:text-foreground hover:shadow-[0_8px_32px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.15)]",
-          "max-w-lg flex-1"
+          "hidden md:flex items-center gap-2.5 mx-auto rounded-full px-4 py-2 text-sm text-muted-foreground/70",
+          "border border-border/40 bg-muted/30",
+          "transition-all duration-200",
+          "hover:bg-muted/60 hover:border-border/60 hover:text-foreground hover:shadow-sm",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
+          "max-w-md w-full"
         )}
       >
-        <Search className="size-4 shrink-0 opacity-60" />
-        <span className="truncate opacity-70">Search anything...</span>
-        <kbd className="ml-auto shrink-0 rounded-lg border border-white/15 bg-white/10 backdrop-blur-sm px-2.5 py-1 text-[11px] font-medium text-muted-foreground/80 shadow-sm">
+        <Search className="size-3.5 shrink-0 opacity-50" />
+        <span className="truncate">Search anything...</span>
+        <kbd className="ml-auto shrink-0 rounded-md border border-border/50 bg-background/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground/60">
           Ctrl+K
         </kbd>
       </button>
 
-      {/* Right — actions + profile */}
-      <div className="flex items-center gap-1 shrink-0">
-        <Button
-          variant="ghost"
-          size="icon"
+      {/* Right — compact icon row + profile */}
+      <div className="flex items-center gap-1 shrink-0 ml-auto">
+        <button
           onClick={onSearchClick}
-          className="shrink-0 md:hidden rounded-full size-9"
+          className="flex md:hidden size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
         >
           <Search className="size-4" />
-        </Button>
+        </button>
 
         {actions}
 
-        <Button variant="ghost" size="icon" className="relative shrink-0 rounded-full size-9">
-          <Bell className="size-4" />
+        <button
+          onClick={() => router.push("/dms")}
+          className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          title="Messages"
+        >
+          <Phone className="size-4" />
+        </button>
+
+        <button
+          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+          className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          title="Toggle theme"
+        >
+          <ThemeIcon className="size-4" />
+        </button>
+
+        <div className="relative">
+          <button className="flex size-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+            <Bell className="size-4" />
+          </button>
           {notificationCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex min-w-5 h-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-semibold text-primary-foreground shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.3)]">
+            <span className="absolute -top-0.5 -right-0.5 flex min-w-[18px] h-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-[0_0_8px_oklch(from_var(--primary)_l_c_h_/_0.35)]">
               {notificationCount > 99 ? "99+" : notificationCount}
             </span>
           )}
-        </Button>
+        </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0 rounded-full size-9"
-          onClick={() => router.push("/dms")}
-        >
-          <Phone className="size-4" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0 rounded-full size-9"
-          onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-        >
-          <ThemeIcon className="size-4" />
-        </Button>
-
-        <div className="mx-1 h-6 w-px bg-border/60" />
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0 rounded-full size-9 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-          onClick={() => signOut({ callbackUrl: `${window.location.origin}/auth/login` })}
-          title="Sign Out"
-        >
-          <LogOut className="size-4" />
-        </Button>
+        <div className="mx-1 h-5 w-px bg-border/50" />
 
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <button className="flex items-center gap-2.5 rounded-full px-2 py-1.5 transition-colors hover:bg-muted" />
+              <button className="flex items-center gap-2 rounded-full p-1 transition-colors hover:bg-accent/50" />
             }
           >
             <div className="relative">
@@ -159,21 +163,22 @@ function Header({
                 <img
                   src={userAvatar}
                   alt={userName || ""}
-                  className="size-8 rounded-full object-cover ring-2 ring-primary/15"
+                  className="size-7 rounded-full object-cover ring-2 ring-border/50"
                 />
               ) : (
-                <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5 text-xs font-semibold text-primary">
+                <div className="flex size-7 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary ring-2 ring-border/50">
                   {(userName || userEmail || "?").slice(0, 2).toUpperCase()}
                 </div>
               )}
-              <span className="absolute -right-0.5 -bottom-0.5 block size-2.5 rounded-full border-2 border-background bg-emerald-500" />
-            </div>
-            <div className="hidden lg:flex flex-col items-start">
-              <span className="text-sm font-medium leading-tight">{userName || "User"}</span>
-              <span className="text-xs text-muted-foreground leading-tight">{userEmail || ""}</span>
+              <span className="absolute -bottom-0.5 -right-0.5 block size-2 rounded-full border-[1.5px] border-background bg-emerald-500" />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-52">
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium leading-none">{userName || "User"}</p>
+              <p className="mt-0.5 text-xs leading-none text-muted-foreground">{userEmail || ""}</p>
+            </div>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => router.push("/settings/profile")}>
               <User className="size-4" />
               Profile
