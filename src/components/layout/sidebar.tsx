@@ -95,6 +95,9 @@ function Sidebar({
   const [channels, setChannels] = React.useState<Channel[]>([])
   const [channelsLoading, setChannelsLoading] = React.useState(true)
   const [showDMs, setShowDMs] = React.useState(true)
+  const [showFriends, setShowFriends] = React.useState(true)
+  const [friends, setFriends] = React.useState<{ id: string; name: string | null; username: string | null; avatar: string | null }[]>([])
+  const [friendsLoading, setFriendsLoading] = React.useState(true)
   const [createOpen, setCreateOpen] = React.useState(false)
   const [createName, setCreateName] = React.useState("")
   const [createDesc, setCreateDesc] = React.useState("")
@@ -129,6 +132,24 @@ function Sidebar({
     window.addEventListener("channels:changed", onChannelsChanged)
     return () => window.removeEventListener("channels:changed", onChannelsChanged)
   }, [workspaceId])
+
+  React.useEffect(() => {
+    async function loadFriends() {
+      setFriendsLoading(true)
+      try {
+        const res = await fetch("/api/friends")
+        if (res.ok) {
+          const data = await res.json()
+          setFriends(data.friends || [])
+        }
+      } catch {
+        // keep empty
+      } finally {
+        setFriendsLoading(false)
+      }
+    }
+    loadFriends()
+  }, [])
 
   async function handleCreateChannel() {
     if (!createName.trim()) return
@@ -433,6 +454,66 @@ function Sidebar({
                   setCollapsedState(false)
                   onCollapsedChange?.(false)
                 }}
+              />
+            )}
+
+            <div className="my-2">
+              <Separator />
+            </div>
+
+            {/* Friends Section */}
+            {!collapsed ? (
+              <div className="group/friends-section">
+                <button
+                  onClick={() => setShowFriends(!showFriends)}
+                  className="flex w-full items-center gap-0.5 px-1 py-1 text-sm font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ChevronDown
+                    className={cn("size-3 transition-transform", !showFriends && "-rotate-90")}
+                  />
+                  Friends
+                  {friends.length > 0 && (
+                    <span className="ml-auto text-[10px] font-normal text-muted-foreground">
+                      {friends.length}
+                    </span>
+                  )}
+                </button>
+                {showFriends && (
+                  <div className="flex flex-col gap-0.5">
+                    {friendsLoading ? (
+                      <div className="px-2 py-2 text-sm text-muted-foreground">Loading...</div>
+                    ) : friends.length === 0 ? (
+                      <div className="px-2 py-2 text-sm text-muted-foreground">No friends yet</div>
+                    ) : (
+                      friends.map((friend) => (
+                        <button
+                          key={friend.id}
+                          onClick={() => router.push("/people")}
+                          className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground transition-colors w-full"
+                        >
+                          <div className="relative shrink-0">
+                            {friend.avatar ? (
+                              <img src={friend.avatar} alt="" className="size-6 rounded-full" />
+                            ) : (
+                              <div className="flex size-6 items-center justify-center rounded-full bg-primary/10 text-primary text-[10px] font-medium">
+                                {(friend.name || "?").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                              </div>
+                            )}
+                          </div>
+                          <span className="truncate">{friend.name || friend.username || "Unknown"}</span>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <SidebarLink
+                icon={Users}
+                label="Friends"
+                href="/people"
+                isActive={false}
+                collapsed={collapsed}
               />
             )}
 
