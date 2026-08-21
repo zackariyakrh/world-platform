@@ -492,15 +492,12 @@ function Sidebar({
                 setCollapsedState(next)
                 onCollapsedChange?.(next)
               }}
-              className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all duration-200"
+              className="flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-sidebar-accent transition-all duration-200"
             >
               {collapsed ? (
                 <ChevronRight className="size-4" />
               ) : (
-                <>
-                  <ChevronLeft className="size-4" />
-                  <span>Collapse</span>
-                </>
+                <ChevronLeft className="size-4" />
               )}
             </button>
           </div>
