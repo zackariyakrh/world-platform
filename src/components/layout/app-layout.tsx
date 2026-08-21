@@ -38,7 +38,6 @@ function AppLayout({
   appName,
 }: AppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false)
   const [searchOpen, setSearchOpen] = React.useState(false)
 
   React.useEffect(() => {
@@ -54,13 +53,11 @@ function AppLayout({
   }, [])
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ "--sidebar-width": sidebarCollapsed ? "68px" : "256px" } as React.CSSProperties}>
+    <div className="flex h-screen overflow-hidden" style={{ "--sidebar-width": "256px" } as React.CSSProperties}>
       <Sidebar
         workspaceId={workspaceId}
         currentChannelId={channelId}
         open={sidebarOpen}
-        collapsed={sidebarCollapsed}
-        onCollapsedChange={setSidebarCollapsed}
         onClose={() => setSidebarOpen(false)}
         onChannelSelect={(id) => {
           onChannelSelect?.(id)
