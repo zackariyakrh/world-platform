@@ -609,7 +609,7 @@ export function GlobalMusicPlayerBar() {
               </Button>
               <div className="relative w-28 h-6 flex items-center cursor-pointer group/vol" onMouseDown={handleVolumeDragStart}>
                 <div className="absolute inset-y-0 my-auto h-1.5 w-full rounded-full transition-all duration-200" style={{ background: isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.1)" }}>
-                  <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-100 ease-out" style={{ width: `${muted ? 0 : volume}%`, background: isDark ? "rgba(255,255,255,0.7)" : "oklch(0.52 0.22 25)" }} />
+                  <div className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-100 ease-out" style={{ width: `${muted ? 0 : volume}%`, background: isDark ? "rgba(255,255,255,0.7)" : "oklch(0.50 0.10 80)" }} />
                 </div>
                 <div className="absolute top-1/2 -translate-y-1/2 size-3.5 rounded-full bg-white shadow-lg opacity-80 group-hover/vol:opacity-100 transition-all duration-200 pointer-events-none" style={{ left: `calc(${muted ? 0 : volume}% - 7px)` }} />
               </div>

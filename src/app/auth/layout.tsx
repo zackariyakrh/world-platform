@@ -23,7 +23,7 @@ export default async function AuthLayout({
           <div
             className="absolute -left-32 -top-32 size-96 rounded-full opacity-40"
             style={{
-              background: "radial-gradient(circle, oklch(0.60 0.22 25 / 0.5), transparent 70%)",
+              background: "radial-gradient(circle, oklch(0.55 0.12 80 / 0.5), transparent 70%)",
               animation: "glow-drift 12s ease-in-out infinite",
               filter: "blur(60px)",
             }}
@@ -77,7 +77,7 @@ export default async function AuthLayout({
               style={{
                 background: "oklch(1 0 0 / 0.1)",
                 border: "1px solid oklch(1 0 0 / 0.15)",
-                boxShadow: "0 0 20px oklch(0.55 0.20 25 / 0.3), inset 0 0 20px oklch(1 0 0 / 0.05)",
+                boxShadow: "0 0 20px oklch(0.55 0.12 80 / 0.3), inset 0 0 20px oklch(1 0 0 / 0.05)",
                 animation: "glow-breathe 4s ease-in-out infinite",
               }}
             >
@@ -91,7 +91,7 @@ export default async function AuthLayout({
           <div>
             <h2
               className="text-3xl font-bold leading-tight text-white xl:text-4xl"
-              style={{ textShadow: "0 0 40px oklch(0.55 0.20 25 / 0.3)" }}
+              style={{ textShadow: "0 0 40px oklch(0.55 0.12 80 / 0.3)" }}
             >
               Where teams come
               <br />

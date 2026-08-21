@@ -141,7 +141,7 @@ export default async function DashboardPage() {
           icon={AlertCircle}
           label="Overdue"
           value={overdueTasks}
-          glowColor="oklch(0.60 0.22 25)"
+          glowColor="oklch(0.55 0.12 80)"
         />
         <QuickStatCard
           icon={Calendar}
@@ -153,7 +153,7 @@ export default async function DashboardPage() {
           icon={MessageSquare}
           label="Unread"
           value={recentNotifications.filter((n) => !n.isRead).length}
-          glowColor="oklch(0.55 0.22 300)"
+          glowColor="oklch(0.50 0.12 80)"
         />
       </div>
 

@@ -54,7 +54,7 @@ export default async function AdminOverviewPage() {
       label: "Channels",
       value: totalChannels,
       icon: Hash,
-      glowColor: "oklch(0.55 0.22 300)",
+      glowColor: "oklch(0.50 0.12 80)",
     },
     {
       label: "Projects",
