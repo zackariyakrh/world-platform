@@ -125,7 +125,8 @@ export function MusicClient() {
   }
 
   function playTrackAtIndex(track: Track, index: number) {
-    setQueue([])
+    const remaining = tracks.slice(index + 1)
+    setQueue(remaining)
     setCurrentTrack(track)
     setProgress(0)
     setDuration(0)

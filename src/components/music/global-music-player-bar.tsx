@@ -82,7 +82,7 @@ export function GlobalMusicPlayerBar() {
     shuffle, repeat, favorites, queueOpen, lyricsOpen, fullscreenOpen,
     playerVisible,
     setCurrentTrack,
-    setHistory, setIsPlaying, setProgress, setDuration, setVolume, setMuted,
+    setQueue, setHistory, setIsPlaying, setProgress, setDuration, setVolume, setMuted,
     toggleMute, setShuffle, cycleRepeat, toggleFavorite, setQueueOpen,
     setLyricsOpen, setFullscreenOpen,
     setPlayerVisible,
@@ -116,7 +116,11 @@ export function GlobalMusicPlayerBar() {
   const prevTrackIdRef = React.useRef<string | null>(null)
   React.useEffect(() => {
     if (currentTrack && currentTrack.id !== prevTrackIdRef.current) {
+      const oldTrack = prevTrackIdRef.current ? currentTrackRef.current : null
       prevTrackIdRef.current = currentTrack.id
+      if (oldTrack && oldTrack.id !== currentTrack.id) {
+        setHistory([oldTrack, ...useMusicStore.getState().history].slice(0, 100))
+      }
       if (isPlaying && currentTrack.videoId) {
         stopAll()
         setProgress(0)
@@ -244,9 +248,14 @@ export function GlobalMusicPlayerBar() {
 
   function playNext() {
     const s = useMusicStore.getState()
-    const { history: h, repeat: rep, currentTrack: ct } = s
+    const { queue: q, history: h, repeat: rep, currentTrack: ct } = s
 
-    if (h.length > 0) {
+    if (q.length > 0) {
+      const nextTrack = q[0]
+      setQueue(q.slice(1))
+      if (ct) setHistory([ct, ...h].slice(0, 100))
+      setTimeout(() => playTrack(nextTrack), 0)
+    } else if (h.length > 0) {
       const prevTrack = h[0]
       setHistory(h.slice(1))
       setTimeout(() => playTrack(prevTrack), 0)
@@ -273,7 +282,7 @@ export function GlobalMusicPlayerBar() {
     if (h.length > 0) {
       const prevTrack = h[0]
       setHistory(h.slice(1))
-      if (ct) setHistory([ct, ...s.history].slice(0, 100))
+      if (ct) setQueue([ct, ...s.queue].slice(0, 200))
       setTimeout(() => playTrack(prevTrack), 0)
     } else if (ct) {
       setProgress(0)
