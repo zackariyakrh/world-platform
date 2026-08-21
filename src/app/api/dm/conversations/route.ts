@@ -22,10 +22,31 @@ export async function POST(request: NextRequest) {
 
     const targetUser = await db.user.findUnique({
       where: { id: targetUserId },
-      select: { id: true, name: true },
+      select: { id: true, name: true, role: true },
     })
     if (!targetUser) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
+    }
+
+    // Check friendship (admins can message anyone)
+    const currentUser = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    })
+    const isAdmin = currentUser?.role === "owner" || currentUser?.role === "admin"
+
+    if (!isAdmin) {
+      const friendship = await db.friend.findFirst({
+        where: {
+          OR: [
+            { userId: session.user.id, friendId: targetUserId, status: "accepted" },
+            { userId: targetUserId, friendId: session.user.id, status: "accepted" },
+          ],
+        },
+      })
+      if (!friendship) {
+        return NextResponse.json({ error: "You can only message friends. Send a friend request first." }, { status: 403 })
+      }
     }
 
     // Check if a 1:1 conversation already exists between these two users

@@ -214,6 +214,10 @@ function Sidebar({
                   <Compass className="size-4" />
                   Explore
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/people")}>
+                  <Users className="size-4" />
+                  People
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push("/threads")}>
                   <MessageSquare className="size-4" />
                   Threads
@@ -273,6 +277,10 @@ function Sidebar({
                 <DropdownMenuItem onClick={() => router.push("/explore")}>
                   <Compass className="size-4" />
                   Explore
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/people")}>
+                  <Users className="size-4" />
+                  People
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => router.push("/threads")}>
                   <MessageSquare className="size-4" />
