@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -101,6 +102,7 @@ function isGifUrl(content: string): boolean {
 }
 
 export function DMView({ conversationId, initialMessages, otherUser }: DMViewProps) {
+  const router = useRouter()
   const [messages, setMessages] = React.useState<DMMessageData[]>(initialMessages)
   const [inputValue, setInputValue] = React.useState("")
   const [isSending, setIsSending] = React.useState(false)
@@ -159,10 +161,10 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
   const handleDeleteConversation = React.useCallback(async () => {
     const res = await fetch(`/api/dm/${conversationId}`, { method: "DELETE" })
     if (res.ok) {
-      window.location.href = "/dashboard"
+      router.push("/dashboard")
     }
     setDropdownOpen(false)
-  }, [conversationId])
+  }, [conversationId, router])
 
   const handleUnfriend = React.useCallback(async () => {
     const res = await fetch(`/api/friends`, {
@@ -171,10 +173,10 @@ export function DMView({ conversationId, initialMessages, otherUser }: DMViewPro
       body: JSON.stringify({ friendId: otherUser.id }),
     })
     if (res.ok) {
-      window.location.href = "/dashboard"
+      router.push("/dashboard")
     }
     setDropdownOpen(false)
-  }, [otherUser.id])
+  }, [otherUser.id, router])
 
   const handleSend = React.useCallback(async () => {
     if (!inputValue.trim() || isSending) return

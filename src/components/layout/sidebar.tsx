@@ -99,6 +99,18 @@ function Sidebar({
   const isAdmin = userRole === "owner" || userRole === "admin"
   const [startingDM, setStartingDM] = React.useState<string | null>(null)
 
+  const loadDMs = React.useCallback(async () => {
+    try {
+      const res = await fetch("/api/dm/conversations/list")
+      if (res.ok) {
+        const data = await res.json()
+        setDmConversations(data || [])
+      }
+    } catch {
+      // keep current
+    }
+  }, [])
+
   async function handleFriendClick(friendId: string) {
     setStartingDM(friendId)
     try {
@@ -109,6 +121,8 @@ function Sidebar({
       })
       const data = await res.json()
       if (res.ok && data.conversationId) {
+        await loadDMs()
+        setShowDMs(true)
         router.push(`/dms/${data.conversationId}`)
       }
     } catch {
@@ -170,22 +184,9 @@ function Sidebar({
   }, [isAdmin])
 
   React.useEffect(() => {
-    async function loadDMs() {
-      setDmsLoading(true)
-      try {
-        const res = await fetch("/api/dm/conversations/list")
-        if (res.ok) {
-          const data = await res.json()
-          setDmConversations(data || [])
-        }
-      } catch {
-        // keep empty
-      } finally {
-        setDmsLoading(false)
-      }
-    }
-    loadDMs()
-  }, [])
+    setDmsLoading(true)
+    loadDMs().finally(() => setDmsLoading(false))
+  }, [loadDMs])
 
   async function handleCreateChannel() {
     if (!createName.trim()) return
