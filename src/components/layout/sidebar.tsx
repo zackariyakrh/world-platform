@@ -85,8 +85,8 @@ function Sidebar({
   const pathname = usePathname()
   const [channels, setChannels] = React.useState<Channel[]>([])
   const [channelsLoading, setChannelsLoading] = React.useState(true)
-  const [showDMs, setShowDMs] = React.useState(true)
-  const [showFriends, setShowFriends] = React.useState(true)
+  const [showDMs, setShowDMs] = React.useState(false)
+  const [showFriends, setShowFriends] = React.useState(false)
   const [friends, setFriends] = React.useState<{ id: string; name: string | null; username: string | null; avatar: string | null }[]>([])
   const [friendsLoading, setFriendsLoading] = React.useState(true)
   const [dmConversations, setDmConversations] = React.useState<{ id: string; lastMessage: string | null; lastMessageAt: string | null; unreadCount: number; otherUser: { id: string; name: string | null; username: string | null; avatar: string | null; status: string } }[]>([])
@@ -334,7 +334,7 @@ function Sidebar({
         <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-2 py-2">
           <div className="flex flex-col gap-0.5">
             {/* Channels Section */}
-            <Collapsible defaultOpen>
+            <Collapsible defaultOpen={false}>
               <div className="flex items-center group/category">
                 <CollapsibleTrigger
                   render={
