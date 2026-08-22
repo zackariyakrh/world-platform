@@ -492,7 +492,7 @@ function Sidebar({
                         key={conv.id}
                         onClick={() => router.push(`/dms/${conv.id}`)}
                         className={cn(
-                          "relative flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-base transition-all duration-200",
+                          "relative flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-base transition-all duration-200",
                           pathname === `/dms/${conv.id}`
                             ? "bg-primary/10 text-primary shadow-[inset_0_0_24px_oklch(from_var(--primary)_l_c_h_/_0.08)]"
                             : "text-muted-foreground hover:bg-sidebar-accent/50 hover:text-foreground"
@@ -510,14 +510,9 @@ function Sidebar({
                               : "bg-muted-foreground/50"
                           )} />
                         </div>
-                        <div className="min-w-0 flex-1 text-left">
-                          <span className="truncate text-sm font-medium">{conv.otherUser.name || conv.otherUser.username || "Unknown"}</span>
-                          {conv.lastMessage && (
-                            <p className="truncate text-xs text-muted-foreground">{conv.lastMessage}</p>
-                          )}
-                        </div>
+                        <span className="truncate text-sm">{conv.otherUser.name || conv.otherUser.username || "Unknown"}</span>
                         {conv.unreadCount > 0 && (
-                          <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                          <span className="ml-auto flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
                             {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
                           </span>
                         )}
