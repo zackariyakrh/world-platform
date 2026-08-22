@@ -499,8 +499,12 @@ function Sidebar({
                         )}
                       >
                         <div className="relative shrink-0">
-                          <div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                            {conv.otherUser.name?.[0]?.toUpperCase() || "?"}
+                          <div className="flex size-7 items-center justify-center rounded-full bg-muted text-xs font-medium overflow-hidden">
+                            {conv.otherUser.avatar ? (
+                              <img src={conv.otherUser.avatar} alt="" className="size-full object-cover" />
+                            ) : (
+                              conv.otherUser.name?.[0]?.toUpperCase() || "?"
+                            )}
                           </div>
                           <span className={cn(
                             "absolute -right-0.5 -bottom-0.5 size-2 rounded-full ring-2 ring-sidebar",
